@@ -74,7 +74,8 @@ admet run configs/tox21_gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
 ### Runtime and hardware
 
 Measured, not estimated: every figure below comes from the `timing_seconds`
-field of the committed result files. CPU-only Windows laptop, no GPU.
+field of the committed result files. Windows desktop, 16 threads, 31 GB RAM,
+run **on the CPU** — see the note below the table.
 
 | Step | Time |
 |---|---|
@@ -97,7 +98,27 @@ models at once, which is the point (see *Safeguards*).
 
 These are indicative of relative cost rather than a benchmark: the machine was
 in ordinary use, the baseline uses all cores via `n_jobs=-1`, and the GNN runs
-single-threaded on CPU.
+on the CPU.
+
+### Running the GNN on a GPU
+
+Nothing in the code needs changing — `GNNModel` already picks CUDA whenever
+`torch.cuda.is_available()` is true. The committed runs did not use one only
+because `pip install torch` installs the CPU-only wheel by default on
+Windows. To get a CUDA build instead:
+
+```bash
+pip uninstall torch
+pip install torch --index-url https://download.pytorch.org/whl/cu128
+python -c "import torch; print(torch.cuda.is_available())"   # expect True
+```
+
+Match the `cu…` version to your driver; recent NVIDIA cards need cu128 or
+later. This only speeds up the GNN — the baseline is scikit-learn and stays
+on the CPU either way. Worth doing before attempting the larger datasets in
+[TODO.md](TODO.md), where ToxCast and HIV are expensive on CPU; it is not
+worth re-running the committed results for, since they would change slightly
+and every number in the report is tied to them.
 
 ---
 
@@ -413,8 +434,12 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   offline and every number can be traced to its run file. The whole lot is
   2.8 MB.
 - **CPU, not GPU.** §8 assumes a 16 GB GPU and "a few GPU hours". Everything
-  ran on a CPU-only laptop in 3.83 h, so the feasibility estimate held without
-  the GPU.
+  ran on the CPU in 3.83 h, so the feasibility estimate held comfortably
+  without one. To be precise about why: the machine *does* have an NVIDIA GPU,
+  but `pip install torch` pulls the CPU-only wheel from PyPI by default on
+  Windows, so `torch.cuda.is_available()` was False for every run. The code
+  selects CUDA automatically when it is available (`models/gnn.py`), so this
+  was an environment default rather than a design decision.
 - **No pandas.** Proposal §5 lists it, but its compiled extensions are blocked
   by the Windows Application Control policy on the development machine. The
   loader and the aggregation use the standard library's `csv` plus NumPy.

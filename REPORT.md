@@ -149,7 +149,7 @@ failure mode the study was designed to expose, not a success.
 
 ## 5. Runtime and compute
 
-Measured on a CPU-only Windows laptop with no GPU, from the `timing_seconds`
+Measured on a Windows desktop (16 threads, 31 GB RAM) from the `timing_seconds`
 field of each result file. Total across all 136 runs: **3.83 h (230 min)** of
 wall clock.
 
@@ -239,8 +239,12 @@ numbers do not support.
   clone reproduce this report offline and lets any number be traced to its
   run file; the whole lot is 2.8 MB.
 - **CPU, not GPU.** §8 assumes a 16 GB GPU and "a few GPU hours". Everything
-  ran on a CPU-only laptop in 3.83 h, so the feasibility estimate held
-  without one.
+  ran on the CPU in 3.83 h, so the feasibility estimate held comfortably
+  without one. The machine *does* have an NVIDIA GPU; `pip install torch`
+  takes the CPU-only wheel from PyPI by default on Windows, so
+  `torch.cuda.is_available()` was False for every run. `models/gnn.py`
+  selects CUDA automatically when it is there, so this was an environment
+  default rather than a design decision.
 - **No pandas** (§5 lists it). Its compiled extensions are blocked by the
   Windows Application Control policy on the development machine. The loader
   and the aggregation use the standard library's `csv` plus NumPy.
