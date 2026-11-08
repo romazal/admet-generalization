@@ -5,6 +5,15 @@ __pycache__/
 *.egg-info/
 .pytest_cache/
 .ruff_cache/
-#/data/
-#/results/
-#/figures/
+
+# Raw downloads. Cached by admet.data.loaders on first run and re-fetched
+# from MoleculeNet on demand, so they do not belong in version control.
+/data/
+
+# Run outputs. Regenerated from configs by `make run` / `make plots`, and
+# reproducible from a config plus a seed (proposal §7). The .gitkeep files
+# are tracked so the directories exist in a fresh clone.
+/results/*
+!/results/.gitkeep
+/figures/*
+!/figures/.gitkeep

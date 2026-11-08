@@ -1,5 +1,41 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "admet-generalization"
 version = "0.1.0"
-requires-python = ">=3.14"
-dependencies = []
+description = "When does a GNN outperform a fingerprint model for ADMET prediction?"
+readme = "README.md"
+# A floor, not a pin. Verified against RDKit, PyTorch, scikit-learn and
+# matplotlib wheels; the project is developed on 3.14.
+requires-python = ">=3.12"
+
+dependencies = [
+    "rdkit>=2024.3",          # SMILES parsing, Murcko scaffolds, Morgan fingerprints
+    "torch>=2.2",             # the GNN; CPU wheels are enough for Tox21
+    "scikit-learn>=1.4",      # the random forest baseline, ROC-AUC and PR-AUC
+    "numpy>=1.26",
+    "matplotlib>=3.8",        # figures
+    "pyyaml>=6.0",            # configs
+]
+
+# NOTE: proposal §5 also lists pandas. It is deliberately not a dependency:
+# its compiled extensions are blocked by the Windows Application Control
+# policy on the development machine, and the only things the pipeline needed
+# it for — reading a CSV and grouping rows — are a dozen lines of `csv` and
+# numpy. See AGENT_LOG.md (2026-11-08).
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+admet = "admet.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# src-layout: make `admet` importable in the test session without an install.
+pythonpath = ["src"]
+testpaths = ["tests"]
