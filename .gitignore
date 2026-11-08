@@ -6,14 +6,26 @@ __pycache__/
 .pytest_cache/
 .ruff_cache/
 
-# Raw downloads. Cached by admet.data.loaders on first run and re-fetched
-# from MoleculeNet on demand, so they do not belong in version control.
-/data/
+# Raw datasets are COMMITTED, on purpose.
+#
+# admet.data.loaders caches them here on first run, so a clone that skips
+# this would still work - but only while the MoleculeNet URLs stay up and
+# serve the same bytes. Committing them means every teammate trains on the
+# same file, a changed upstream distribution shows up as a diff instead of
+# as an unexplained change in the numbers, and the project runs offline.
+# They are small: 123 KB for Tox21, 20 KB for ClinTox.
+#
+# Anything else that lands here is a scratch download and stays ignored.
+/data/*
+!/data/tox21.csv.gz
+!/data/clintox.csv.gz
 
-# Run outputs. Regenerated from configs by `make run` / `make plots`, and
-# reproducible from a config plus a seed (proposal §7). The .gitkeep files
-# are tracked so the directories exist in a fresh clone.
-/results/*
+# Run outputs are COMMITTED too, so results are readable without rerunning
+# ~6 h of training. The per-run JSON is the provenance for every number in
+# the CSVs - it carries the config, the seed, the split sizes, every tuning
+# trial, the library versions and the git commit - so committing the tables
+# without it would leave the summary unverifiable.
+#
+# Regenerate with `make aggregate && make plots`; see README > Findings.
 !/results/.gitkeep
-/figures/*
 !/figures/.gitkeep
