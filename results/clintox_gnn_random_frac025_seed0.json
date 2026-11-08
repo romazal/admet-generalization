@@ -1,0 +1,249 @@
+{
+  "run": "clintox_gnn_random_frac025_seed0",
+  "dataset": "clintox",
+  "model": "gnn",
+  "split": "random",
+  "seed": 0,
+  "train_fraction": 0.25,
+  "metrics": {
+    "test": {
+      "roc_auc": 0.8269360269360269,
+      "pr_auc": 0.28726624682507035,
+      "n_tasks_scored": 1,
+      "n_tasks_skipped": 0,
+      "skipped_tasks": {},
+      "per_task": [
+        {
+          "task": "CT_TOX",
+          "roc_auc": 0.8269360269360269,
+          "pr_auc": 0.28726624682507035,
+          "n_labelled": 146,
+          "n_positive": 11,
+          "positive_rate": 0.07534246575342465,
+          "skipped_reason": null
+        }
+      ]
+    },
+    "valid": {
+      "roc_auc": 0.8509763617677287,
+      "pr_auc": 0.41631880024737167,
+      "n_tasks_scored": 1,
+      "n_tasks_skipped": 0,
+      "skipped_tasks": {},
+      "per_task": [
+        {
+          "task": "CT_TOX",
+          "roc_auc": 0.8509763617677287,
+          "pr_auc": 0.41631880024737167,
+          "n_labelled": 146,
+          "n_positive": 7,
+          "positive_rate": 0.04794520547945205,
+          "skipped_reason": null
+        }
+      ]
+    }
+  },
+  "split_sizes": {
+    "train": 292,
+    "valid": 146,
+    "test": 146
+  },
+  "scaffold_disjointness_checked": false,
+  "best_params": {
+    "epochs": 50,
+    "patience": 10,
+    "weight_decay": 0.0,
+    "batch_size": 64,
+    "dropout": 0.1,
+    "hidden_dim": 128,
+    "learning_rate": 0.001,
+    "n_layers": 4,
+    "pooling": "mean"
+  },
+  "tuning": {
+    "budget": 8,
+    "metric": "roc_auc",
+    "n_trials": 8,
+    "trials": [
+      {
+        "trial": 0,
+        "params": {
+          "batch_size": 64,
+          "dropout": 0.1,
+          "hidden_dim": 64,
+          "learning_rate": 0.001,
+          "n_layers": 4,
+          "pooling": "sum"
+        },
+        "valid_roc_auc": 0.8396711202466598,
+        "seconds": 2.62
+      },
+      {
+        "trial": 1,
+        "params": {
+          "batch_size": 64,
+          "dropout": 0.1,
+          "hidden_dim": 128,
+          "learning_rate": 0.001,
+          "n_layers": 4,
+          "pooling": "mean"
+        },
+        "valid_roc_auc": 0.8509763617677287,
+        "seconds": 6.14
+      },
+      {
+        "trial": 2,
+        "params": {
+          "batch_size": 128,
+          "dropout": 0.0,
+          "hidden_dim": 128,
+          "learning_rate": 0.0003,
+          "n_layers": 2,
+          "pooling": "sum"
+        },
+        "valid_roc_auc": 0.8016443987667009,
+        "seconds": 1.92
+      },
+      {
+        "trial": 3,
+        "params": {
+          "batch_size": 128,
+          "dropout": 0.3,
+          "hidden_dim": 256,
+          "learning_rate": 0.0003,
+          "n_layers": 3,
+          "pooling": "mean"
+        },
+        "valid_roc_auc": 0.8458376156217883,
+        "seconds": 11.19
+      },
+      {
+        "trial": 4,
+        "params": {
+          "batch_size": 128,
+          "dropout": 0.0,
+          "hidden_dim": 256,
+          "learning_rate": 0.001,
+          "n_layers": 3,
+          "pooling": "mean"
+        },
+        "valid_roc_auc": 0.8458376156217882,
+        "seconds": 3.33
+      },
+      {
+        "trial": 5,
+        "params": {
+          "batch_size": 64,
+          "dropout": 0.1,
+          "hidden_dim": 128,
+          "learning_rate": 0.003,
+          "n_layers": 4,
+          "pooling": "mean"
+        },
+        "valid_roc_auc": 0.7574511819116135,
+        "seconds": 2.29
+      },
+      {
+        "trial": 6,
+        "params": {
+          "batch_size": 128,
+          "dropout": 0.1,
+          "hidden_dim": 128,
+          "learning_rate": 0.003,
+          "n_layers": 3,
+          "pooling": "mean"
+        },
+        "valid_roc_auc": 0.8119218910585817,
+        "seconds": 4.35
+      },
+      {
+        "trial": 7,
+        "params": {
+          "batch_size": 128,
+          "dropout": 0.0,
+          "hidden_dim": 64,
+          "learning_rate": 0.003,
+          "n_layers": 3,
+          "pooling": "mean"
+        },
+        "valid_roc_auc": 0.7934224049331964,
+        "seconds": 0.74
+      }
+    ]
+  },
+  "dataset_summary": {
+    "name": "clintox",
+    "n_molecules": 1461,
+    "n_tasks": 1,
+    "tasks": [
+      "CT_TOX"
+    ],
+    "label_density": 1.0,
+    "positives_per_task": {
+      "CT_TOX": 103
+    },
+    "n_unparseable_dropped": 4,
+    "n_duplicates_merged": 19,
+    "n_label_conflicts": 19
+  },
+  "config": {
+    "dataset": {
+      "name": "clintox",
+      "tasks": [
+        "CT_TOX"
+      ]
+    },
+    "split": {
+      "kind": "random",
+      "fractions": [
+        0.8,
+        0.1,
+        0.1
+      ],
+      "params": {}
+    },
+    "model": {
+      "name": "gnn",
+      "params": {
+        "epochs": 50,
+        "patience": 10,
+        "weight_decay": 0.0
+      }
+    },
+    "tuning": {
+      "budget": 8,
+      "metric": "roc_auc"
+    },
+    "experiment": {
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "train_fractions": [
+        1.0
+      ]
+    },
+    "output": {
+      "results_dir": "results",
+      "figures_dir": "figures"
+    }
+  },
+  "versions": {
+    "python": "3.14.4",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "numpy": "2.5.4",
+    "sklearn": "1.9.1",
+    "rdkit": "2026.09.1",
+    "torch": "2.15.0+cpu",
+    "yaml": "6.0.3"
+  },
+  "git_commit": "b3f4890e4e98ef7b9cc07107f31b8e083a4c606b",
+  "timing_seconds": {
+    "tuning": 32.58,
+    "total": 33.12
+  },
+  "best_epoch": 35
+}

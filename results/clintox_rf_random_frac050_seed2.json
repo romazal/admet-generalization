@@ -1,0 +1,262 @@
+{
+  "run": "clintox_rf_random_frac050_seed2",
+  "dataset": "clintox",
+  "model": "rf",
+  "split": "random",
+  "seed": 2,
+  "train_fraction": 0.5,
+  "metrics": {
+    "test": {
+      "roc_auc": 0.7779850746268657,
+      "pr_auc": 0.2780621906686148,
+      "n_tasks_scored": 1,
+      "n_tasks_skipped": 0,
+      "skipped_tasks": {},
+      "per_task": [
+        {
+          "task": "CT_TOX",
+          "roc_auc": 0.7779850746268657,
+          "pr_auc": 0.2780621906686148,
+          "n_labelled": 146,
+          "n_positive": 12,
+          "positive_rate": 0.0821917808219178,
+          "skipped_reason": null
+        }
+      ]
+    },
+    "valid": {
+      "roc_auc": 0.8369829683698297,
+      "pr_auc": 0.24122365207396526,
+      "n_tasks_scored": 1,
+      "n_tasks_skipped": 0,
+      "skipped_tasks": {},
+      "per_task": [
+        {
+          "task": "CT_TOX",
+          "roc_auc": 0.8369829683698297,
+          "pr_auc": 0.24122365207396526,
+          "n_labelled": 146,
+          "n_positive": 9,
+          "positive_rate": 0.06164383561643835,
+          "skipped_reason": null
+        }
+      ]
+    }
+  },
+  "split_sizes": {
+    "train": 584,
+    "valid": 146,
+    "test": 146
+  },
+  "scaffold_disjointness_checked": false,
+  "best_params": {
+    "n_jobs": -1,
+    "class_weight": "balanced",
+    "fp_counts": true,
+    "fp_n_bits": 2048,
+    "fp_radius": 3,
+    "max_depth": 12,
+    "max_features": "log2",
+    "min_samples_leaf": 1,
+    "n_estimators": 500
+  },
+  "tuning": {
+    "budget": 8,
+    "metric": "roc_auc",
+    "n_trials": 8,
+    "trials": [
+      {
+        "trial": 0,
+        "params": {
+          "class_weight": null,
+          "fp_counts": false,
+          "fp_n_bits": 1024,
+          "fp_radius": 3,
+          "max_depth": null,
+          "max_features": 0.1,
+          "min_samples_leaf": 5,
+          "n_estimators": 500
+        },
+        "valid_roc_auc": 0.6828872668288727,
+        "seconds": 0.76
+      },
+      {
+        "trial": 1,
+        "params": {
+          "class_weight": "balanced",
+          "fp_counts": false,
+          "fp_n_bits": 1024,
+          "fp_radius": 2,
+          "max_depth": 12,
+          "max_features": 0.1,
+          "min_samples_leaf": 2,
+          "n_estimators": 500
+        },
+        "valid_roc_auc": 0.8094079480940795,
+        "seconds": 0.77
+      },
+      {
+        "trial": 2,
+        "params": {
+          "class_weight": "balanced_subsample",
+          "fp_counts": true,
+          "fp_n_bits": 2048,
+          "fp_radius": 2,
+          "max_depth": null,
+          "max_features": "log2",
+          "min_samples_leaf": 2,
+          "n_estimators": 500
+        },
+        "valid_roc_auc": 0.7899432278994323,
+        "seconds": 0.98
+      },
+      {
+        "trial": 3,
+        "params": {
+          "class_weight": "balanced",
+          "fp_counts": true,
+          "fp_n_bits": 1024,
+          "fp_radius": 2,
+          "max_depth": null,
+          "max_features": "sqrt",
+          "min_samples_leaf": 1,
+          "n_estimators": 300
+        },
+        "valid_roc_auc": 0.7611516626115167,
+        "seconds": 0.52
+      },
+      {
+        "trial": 4,
+        "params": {
+          "class_weight": "balanced",
+          "fp_counts": false,
+          "fp_n_bits": 1024,
+          "fp_radius": 3,
+          "max_depth": 24,
+          "max_features": 0.1,
+          "min_samples_leaf": 5,
+          "n_estimators": 300
+        },
+        "valid_roc_auc": 0.8248175182481752,
+        "seconds": 0.38
+      },
+      {
+        "trial": 5,
+        "params": {
+          "class_weight": "balanced",
+          "fp_counts": true,
+          "fp_n_bits": 2048,
+          "fp_radius": 3,
+          "max_depth": 12,
+          "max_features": "log2",
+          "min_samples_leaf": 1,
+          "n_estimators": 500
+        },
+        "valid_roc_auc": 0.8369829683698297,
+        "seconds": 0.73
+      },
+      {
+        "trial": 6,
+        "params": {
+          "class_weight": "balanced_subsample",
+          "fp_counts": true,
+          "fp_n_bits": 1024,
+          "fp_radius": 3,
+          "max_depth": 12,
+          "max_features": "log2",
+          "min_samples_leaf": 5,
+          "n_estimators": 500
+        },
+        "valid_roc_auc": 0.7615571776155718,
+        "seconds": 1.01
+      },
+      {
+        "trial": 7,
+        "params": {
+          "class_weight": "balanced_subsample",
+          "fp_counts": true,
+          "fp_n_bits": 2048,
+          "fp_radius": 3,
+          "max_depth": 24,
+          "max_features": 0.1,
+          "min_samples_leaf": 5,
+          "n_estimators": 500
+        },
+        "valid_roc_auc": 0.8199513381995134,
+        "seconds": 0.96
+      }
+    ]
+  },
+  "dataset_summary": {
+    "name": "clintox",
+    "n_molecules": 1461,
+    "n_tasks": 1,
+    "tasks": [
+      "CT_TOX"
+    ],
+    "label_density": 1.0,
+    "positives_per_task": {
+      "CT_TOX": 103
+    },
+    "n_unparseable_dropped": 4,
+    "n_duplicates_merged": 19,
+    "n_label_conflicts": 19
+  },
+  "config": {
+    "dataset": {
+      "name": "clintox",
+      "tasks": [
+        "CT_TOX"
+      ]
+    },
+    "split": {
+      "kind": "random",
+      "fractions": [
+        0.8,
+        0.1,
+        0.1
+      ],
+      "params": {}
+    },
+    "model": {
+      "name": "rf",
+      "params": {
+        "n_jobs": -1
+      }
+    },
+    "tuning": {
+      "budget": 8,
+      "metric": "roc_auc"
+    },
+    "experiment": {
+      "seeds": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "train_fractions": [
+        1.0
+      ]
+    },
+    "output": {
+      "results_dir": "results",
+      "figures_dir": "figures"
+    }
+  },
+  "versions": {
+    "python": "3.14.4",
+    "platform": "Windows-11-10.0.26300-SP0",
+    "numpy": "2.5.4",
+    "sklearn": "1.9.1",
+    "rdkit": "2026.09.1",
+    "torch": "2.15.0+cpu",
+    "yaml": "6.0.3"
+  },
+  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "timing_seconds": {
+    "tuning": 6.12,
+    "total": 6.64
+  }
+}
