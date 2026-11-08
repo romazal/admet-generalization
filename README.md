@@ -16,9 +16,11 @@ Course: Biomedical Artificial Intelligence / Drug discovery and development
 
 ## Summary of results
 
-56 runs on Tox21: both models, both splits, five seeds at the full training set
-and three seeds along the learning curve. Full tables and reasoning in
-*[Findings](#findings)*.
+136 runs: both models and both splits on Tox21 (five seeds at the full
+training set, three along the learning curve) and the same grid on ClinTox
+(five seeds throughout). 3.8 h of CPU compute. Full tables, runtimes and
+threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
+*[Findings](#findings)* below.
 
 - **The split type is the whole story.** Scaffold splitting costs the baseline
   0.074 ROC-AUC and the GNN 0.080 — roughly ten times the difference between
@@ -41,6 +43,16 @@ and three seeds along the learning curve. Full tables and reasoning in
   pass put the scaffold gap at −0.016 ± 0.020, which reads as a real effect;
   at five seeds it is −0.004 ± 0.022. The proposal's "target 5, minimum 3" is
   doing real work — three-seed numbers are directional only.
+
+- **ClinTox is inconclusive, and informative anyway.** Every GNN-minus-
+  baseline gap on it is smaller than its own SD (+0.046 ± 0.090 at best), so
+  it settles nothing about H1 or H2. But it scores *higher* than Tox21 on a
+  fifth of the data and loses only 0.022-0.043 ROC-AUC to a scaffold split,
+  where Tox21 loses 0.074-0.080. Together with 19 duplicate structures
+  carrying contradictory labels, that points at dataset provenance rather
+  than at model quality.
+- **The GNN costs 2.5x the baseline on Tox21 and 12x on ClinTox**, for no
+  measurable gain.
 
 The honest one-line answer to the research question: *on this dataset, at this
 tuning budget, the GNN never outperformed the fingerprint baseline — and the
@@ -291,6 +303,7 @@ admet-generalization/
 ├── pyproject.toml          # pinned dependencies, `admet` entry point
 ├── Makefile                # make test / main / sweep / aggregate / plots
 ├── README.md
+├── REPORT.md               # the results report: tables, runtimes, validity
 ├── AGENT_LOG.md            # record of the AI-assisted development
 ├── configs/
 │   ├── base.yaml                   # shared defaults incl. the tuning budget
@@ -314,9 +327,9 @@ admet-generalization/
 │       ├── aggregate.py    # results/*.json -> summary + gap tables
 │       └── plots.py        # the three figures
 ├── tests/                  # 133 tests
-├── data/                   # cached raw downloads (gitignored)
-├── results/                # one JSON per run, plus the CSV tables (gitignored)
-└── figures/                # regenerated from results/ (gitignored)
+├── data/                   # raw datasets, committed so a clone runs offline
+├── results/                # one JSON per run, plus the CSV tables (committed)
+└── figures/                # regenerated from results/ (committed)
 ```
 
 ## Figures
