@@ -259,3 +259,47 @@ the README's Findings section.
 3-seed figure would have been reported as a real effect. The proposal's "target
 5, minimum 3" is doing real work and the minimum should not be used for the
 headline comparison.
+
+## ClinTox grid, the report, and committing the artefacts
+
+**Prompts:** "now also do the clintox and compare with tox21" / "add and make
+appropriate commits of figures and [the CSVs] and also add data so teammates
+can load them upon cloning the repo" / "also u need to include a report file
+in which the results (also time the models where running) and stuff like
+that" / "check the pdf, commits and the whole project"
+
+Ran the full ClinTox grid: 4 configs x 5 seeds x 4 training fractions, 80
+runs, 0 failures. Added `configs/clintox_{rf,gnn}_random.yaml`, which were
+missing - only the scaffold arm existed, so there was nothing to measure the
+random-to-scaffold drop against on the smaller dataset.
+
+**Bug found before it could mislead anyone.** `analysis/plots.py` never
+looked at the `dataset` field although `aggregate.py` keys on it correctly.
+`plot_split_comparison` took the first row matching `(model, split)`, so once
+ClinTox results existed a Tox21 bar could be drawn into a ClinTox figure with
+nothing on the figure to show it. Fixed: all three plot functions take a
+`dataset` argument, `make_all_figures` emits one set per dataset, and the
+dataset is in every filename and title. The two datasets deliberately never
+share an axis.
+
+**Correction made during the review against the proposal PDF.** The README's
+runtime table still held pre-measurement estimates, including "GNN, one epoch
+~1.9 s" from a single one-off measurement, after I had already said it was
+replaced - it had only been fixed in REPORT.md. The table is now derived from
+the `timing_seconds` field of the committed result files.
+
+**Three deviations from the proposal were unrecorded** and are now listed in
+both README and REPORT: ClinTox rather than §3.1's example BBBP; `data/`,
+`results/` and `figures/` committed where §5 gives `.gitignore` the job of
+excluding them; and CPU-only rather than §8's assumed 16 GB GPU - the full
+136 runs took 3.83 h without one, so the feasibility estimate held.
+
+**Verified rather than asserted:** `scaffold_disjointness_checked` is true in
+68 of 68 scaffold result files and false in all 68 random ones.
+
+**Outcome.** ClinTox is reported as inconclusive - every GNN-minus-baseline
+gap on it is smaller than its own SD. The informative part is that it scores
+higher than Tox21 on a fifth of the data (0.90 vs 0.84) and loses only
+0.022-0.043 ROC-AUC to a scaffold split where Tox21 loses 0.074-0.080, which
+together with its 19 contradictory duplicate structures points at dataset
+provenance rather than model quality.

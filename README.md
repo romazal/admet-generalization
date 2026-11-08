@@ -235,23 +235,31 @@ admet run configs/tox21_gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
 
 ### Runtime and hardware
 
-Measured on a CPU-only Windows laptop (no GPU required; Tox21 is small enough
-that the GNN trains on CPU in minutes).
+Measured, not estimated: every figure below comes from the `timing_seconds`
+field of the committed result files. CPU-only Windows laptop, no GPU.
 
 | Step | Time |
 |---|---|
 | Test suite | ~3 s |
-| Tox21 download + parse (first run only) | ~3 s |
-| Baseline, one run (8 tuning trials, 1 seed) | ~2.5 min |
-| GNN, one epoch (hidden 128, 3 layers, full training set) | ~1.9 s |
-| GNN, one run (8 tuning trials x up to 50 epochs, 1 seed) | ~12 min |
-| `make main` (4 configs x 5 seeds) | ~2.5 h |
-| `make sweep` (4 configs x 4 fractions x 3 seeds = 48 runs) | ~3–4 h |
+| Download + parse (first run only; both datasets are committed anyway) | ~3 s |
+| Baseline, one Tox21 run at 100% (8 tuning trials, 1 seed) | 3.2 min |
+| GNN, one Tox21 run at 100% (8 tuning trials, 1 seed) | 9.4 min |
+| Baseline, one ClinTox run at 100% | 7 s |
+| GNN, one ClinTox run at 100% | 1.4 min |
+| `make main` (4 configs x 5 seeds) | ~2.1 h |
+| `make sweep` (the 36 cells below 100%) | ~1.2 h |
+| `make clintox` (4 configs x 5 seeds x 4 fractions) | ~33 min |
+| **Everything: 136 runs** | **3.83 h** |
 
-Early stopping usually ends a GNN trial well before 50 epochs, so these are
-upper estimates. To shorten a pass, lower `tuning.budget` in
-`configs/base.yaml` — it applies to **both** models at once, which is the
-point (see below).
+The GNN costs about 2.5x the baseline on Tox21 and 12x on ClinTox. Early
+stopping ends a GNN trial at a mean best epoch of 34.9 (Tox21) and 22.8
+(ClinTox) against a 50-epoch ceiling, so the ceiling rarely binds. To shorten
+a pass, lower `tuning.budget` in `configs/base.yaml` — it applies to **both**
+models at once, which is the point (see below).
+
+These are indicative of relative cost rather than a benchmark: the machine was
+in ordinary use, the baseline uses all cores via `n_jobs=-1`, and the GNN runs
+single-threaded on CPU.
 
 ## Experimental design
 
@@ -365,8 +373,19 @@ Results will be interpreted against these in the final discussion.
 
 ## Known deviations from the proposal
 
-Both are recorded in `AGENT_LOG.md` with the reasoning.
+All are recorded in `AGENT_LOG.md` with the reasoning.
 
+- **ClinTox as the second dataset, not BBBP.** §3.1 says "for example BBBP",
+  so the slot was open; the team chose ClinTox. Its caveats are in *Data*
+  above and in [REPORT.md](REPORT.md) §4.
+- **`data/`, `results/` and `figures/` are committed.** The §5 file table
+  gives `.gitignore` the job of keeping raw data and large result files out of
+  version control. They are tracked instead so a clone reproduces the report
+  offline and every number can be traced to its run file. The whole lot is
+  1.5 MB.
+- **CPU, not GPU.** §8 assumes a 16 GB GPU and "a few GPU hours". Everything
+  ran on a CPU-only laptop in 3.83 h, so the feasibility estimate held without
+  the GPU.
 - **No pandas.** Proposal §5 lists it, but its compiled extensions are blocked
   by the Windows Application Control policy on the development machine. The
   loader and the aggregation use the standard library's `csv` plus NumPy.

@@ -230,6 +230,15 @@ numbers do not support.
 
 ## 8. Deviations from the proposal
 
+- **ClinTox as the second dataset, not BBBP.** §3.1 names BBBP as an example
+  only, so the slot was open; the team chose ClinTox.
+- **`data/`, `results/` and `figures/` are committed**, where the §5 file
+  table gives `.gitignore` the job of excluding them. Tracking them lets a
+  clone reproduce this report offline and lets any number be traced to its
+  run file; the whole lot is 1.5 MB.
+- **CPU, not GPU.** §8 assumes a 16 GB GPU and "a few GPU hours". Everything
+  ran on a CPU-only laptop in 3.83 h, so the feasibility estimate held
+  without one.
 - **No pandas** (§5 lists it). Its compiled extensions are blocked by the
   Windows Application Control policy on the development machine. The loader
   and the aggregation use the standard library's `csv` plus NumPy.
