@@ -21,11 +21,12 @@ __pycache__/
 !/data/clintox.csv.gz
 
 # Run outputs are COMMITTED too, so results are readable without rerunning
-# ~6 h of training. The per-run JSON is the provenance for every number in
+# 3.83 h of training. The per-run JSON is the provenance for every number in
 # the CSVs - it carries the config, the seed, the split sizes, every tuning
 # trial, the library versions and the git commit - so committing the tables
 # without it would leave the summary unverifiable.
 #
 # Regenerate with `make aggregate && make plots`; see README > Findings.
-!/results/.gitkeep
-!/figures/.gitkeep
+#
+# No .gitkeep placeholders: both directories hold committed content, so they
+# exist in a clone on their own.

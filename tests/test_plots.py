@@ -136,8 +136,14 @@ def test_make_all_figures_writes_one_set_per_dataset(tmp_path: Path) -> None:
     gaps: list[GapRow] = []
     written = make_all_figures(summaries, gaps, tmp_path, metric="roc_auc")
 
-    names = {p.name for p in written}
-    assert "random_vs_scaffold_tox21_roc_auc.png" in names
-    assert "random_vs_scaffold_clintox_roc_auc.png" in names
+    # Each dataset gets its own subdirectory, and the dataset stays in the
+    # filename too, so a figure pasted into a slide still says which it is.
+    relative = {str(p.relative_to(tmp_path)).replace("\\", "/") for p in written}
+    assert "tox21/random_vs_scaffold_tox21_roc_auc.png" in relative
+    assert "clintox/random_vs_scaffold_clintox_roc_auc.png" in relative
     for path in written:
         assert path.exists() and path.stat().st_size > 0
+
+    # No figure may land outside its dataset's folder.
+    for path in written:
+        assert path.parent.name in {"tox21", "clintox"}

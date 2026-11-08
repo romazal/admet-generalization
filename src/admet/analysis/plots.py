@@ -407,32 +407,39 @@ def make_all_figures(
 ) -> list[Path]:
     """Draw all three figures per dataset, returning the paths actually written.
 
-    One set of figures per dataset, with the dataset in every filename. Two
-    datasets must never share an axis here: their class balances and test-set
-    sizes differ, so a shared y-axis would invite a comparison the numbers do
-    not support. The cross-dataset comparison belongs in the tables.
+    One subdirectory per dataset, mirroring ``results/``:
+    ``figures/tox21/random_vs_scaffold_tox21_roc_auc.png``. The dataset stays
+    in the filename as well as the folder, because a figure is usually read
+    after being pasted into a report or a slide, where the folder is gone and
+    the filename is the only thing left saying which dataset it is.
+
+    Two datasets must never share an axis here: their class balances and
+    test-set sizes differ, so a shared y-axis would invite a comparison the
+    numbers do not support. The cross-dataset comparison belongs in the
+    tables.
     """
     directory = Path(figures_dir)
     datasets = sorted({s.dataset for s in summaries} | {g.dataset for g in gaps})
 
     written: list[Path | None] = []
     for dataset in datasets:
+        into = directory / dataset
         written += [
             plot_split_comparison(
                 summaries,
-                directory / f"random_vs_scaffold_{dataset}_{metric}.png",
+                into / f"random_vs_scaffold_{dataset}_{metric}.png",
                 metric=metric,
                 dataset=dataset,
             ),
             plot_learning_curves(
                 summaries,
-                directory / f"learning_curves_{dataset}_{metric}.png",
+                into / f"learning_curves_{dataset}_{metric}.png",
                 metric=metric,
                 dataset=dataset,
             ),
             plot_gap(
                 gaps,
-                directory / f"gnn_minus_rf_gap_{dataset}_{metric}.png",
+                into / f"gnn_minus_rf_gap_{dataset}_{metric}.png",
                 metric=metric,
                 dataset=dataset,
             ),

@@ -45,7 +45,7 @@ from a clone:
 | GNN-minus-baseline gaps | `results/gap.csv` |
 | One row per run | `results/runs.csv` |
 | Every individual run | `results/tox21/*.json`, `results/clintox/*.json` |
-| Figures | `figures/*.png` |
+| Figures | `figures/tox21/*.png`, `figures/clintox/*.png` |
 
 ### 3. Reproduce it
 
@@ -220,10 +220,10 @@ range published for fingerprint models on Tox21, and the scaffold-disjointness
 check is recorded `true` in all 68 scaffold result files and `false` in all 68
 random ones.
 
-Figures: `figures/random_vs_scaffold_tox21_roc_auc.png` (H1),
-`figures/learning_curves_tox21_roc_auc.png` and
-`figures/gnn_minus_rf_gap_tox21_roc_auc.png` (H2), plus the PR-AUC
-counterparts and the same three for ClinTox.
+Figures: `figures/tox21/random_vs_scaffold_tox21_roc_auc.png` (H1),
+`figures/tox21/learning_curves_tox21_roc_auc.png` and
+`figures/tox21/gnn_minus_rf_gap_tox21_roc_auc.png` (H2), plus the PR-AUC
+counterparts and the same three under `figures/clintox/`.
 
 ClinTox results and the cross-dataset comparison are in
 [REPORT.md](REPORT.md) §4.
@@ -360,13 +360,18 @@ admet-generalization/
 │   ├── tox21/              # 56 run files
 │   ├── clintox/            # 80 run files
 │   └── {runs,summary,gap}.csv
-└── figures/                # 12 PNGs, regenerated from results/
+└── figures/
+    ├── tox21/              # 6 PNGs
+    └── clintox/            # 6 PNGs
 ```
 
 ## Figures
 
-Regenerated from `results/` by `make plots`; none is drawn by hand. Named
-`<figure>_<dataset>_<metric>.png`, one set per dataset and metric (12 in all):
+Regenerated from `results/` by `make plots`; none is drawn by hand. One
+subdirectory per dataset, mirroring `results/`, as
+`figures/<dataset>/<figure>_<dataset>_<metric>.png` — 12 in all. The dataset
+is in the filename as well as the folder, because a figure is usually read
+after being pasted into a report or a slide, where the folder is gone:
 
 - `random_vs_scaffold_*.png` — both models under both splits (H1).
 - `learning_curves_*.png` — test score against training-set size (H2).
