@@ -426,7 +426,11 @@ def run_experiment(
         result["best_epoch"] = model.best_epoch
 
     if save:
-        directory = Path(results_dir) if results_dir else _results_dir(config)
+        base = Path(results_dir) if results_dir else _results_dir(config)
+        # One subdirectory per dataset. 136 files in a flat directory is hard
+        # to look through, and the dataset is the first thing a reader wants
+        # to separate on. The aggregation recurses, so nothing else changes.
+        directory = base / config["dataset"]["name"]
         directory.mkdir(parents=True, exist_ok=True)
         path = directory / f"{name}.json"
         path.write_text(json.dumps(result, indent=2, default=str), encoding="utf-8")

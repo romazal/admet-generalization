@@ -92,7 +92,9 @@ def _execute(
 ) -> bool:
     """Run one cell. Returns ``True`` if it completed, ``False`` on failure."""
     name = run_name(config, seed, train_fraction)
-    target = results_dir / f"{name}.json"
+    # Must match where run_experiment() writes, or every cell would look
+    # unfinished and a resumed sweep would redo the whole grid.
+    target = results_dir / config["dataset"]["name"] / f"{name}.json"
     if target.exists() and not overwrite:
         print(f"  [{index}] {name}: already done, skipping")
         return True

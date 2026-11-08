@@ -133,7 +133,12 @@ def _std(values: Sequence[float]) -> float | None:
 
 
 def load_results(results_dir: str | Path) -> list[RunRecord]:
-    """Read every ``*.json`` result file in ``results_dir``.
+    """Read every ``*.json`` result file under ``results_dir``, recursively.
+
+    Runs are written to a per-dataset subdirectory (``results/tox21/…``), so
+    the search recurses. It stays recursive rather than listing the known
+    datasets, so a new dataset needs no change here, and files left in the
+    top level by an older version are still picked up.
 
     Files that are not run results — anything missing the expected keys — are
     skipped rather than raising, so a stray JSON file in the directory cannot
@@ -147,7 +152,7 @@ def load_results(results_dir: str | Path) -> list[RunRecord]:
         raise FileNotFoundError(f"results directory not found: {directory}")
 
     records: list[RunRecord] = []
-    for path in sorted(directory.glob("*.json")):
+    for path in sorted(directory.rglob("*.json")):
         try:
             payload = json.loads(path.read_text(encoding="utf-8"))
         except json.JSONDecodeError as exc:
