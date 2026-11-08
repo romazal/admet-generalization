@@ -100,6 +100,27 @@ def _label(mapping: dict[str, str], key: str) -> str:
     return mapping.get(key, key)
 
 
+def _bar_ylim(metric: str, tops: Sequence[float]) -> tuple[float, float]:
+    """Y-limits for the bar chart, by metric.
+
+    A bar chart's baseline has to be a value the reader can treat as "none of
+    it". For ROC-AUC that is 0.5: chance, not zero, so the axis starts there
+    and the bar length is the part above chance.
+
+    PR-AUC has no such fixed level — its chance value is the positive rate,
+    which differs per assay and per dataset — so the baseline is 0 and the
+    bar length is the score itself.
+
+    This used to be a hardcoded ``(0.5, 1.0)``, which silently clipped every
+    PR-AUC figure: Tox21's PR-AUC is about 0.35-0.47, entirely below the
+    floor, so the chart rendered with no bars at all.
+    """
+    if metric == "roc_auc":
+        return 0.5, 1.0
+    headroom = max(tops, default=1.0) * 1.18
+    return 0.0, min(1.0, max(headroom, 0.1))
+
+
 def _suffix(dataset: str | None) -> str:
     """Name the dataset in the title, so no figure is ambiguous about its source."""
     return f" - {DATASET_LABELS.get(dataset, dataset)}" if dataset else ""
@@ -179,6 +200,7 @@ def plot_split_comparison(
     width = 0.55 / max(len(models), 1)
 
     figure, ax = _new_figure()
+    tops: list[float] = []
     for index, model in enumerate(models):
         positions, heights, errors = [], [], []
         for group, split in enumerate(splits):
@@ -191,6 +213,7 @@ def plot_split_comparison(
             positions.append(group + (index - (len(models) - 1) / 2) * width)
             heights.append(getattr(match, f"{metric}_mean"))
             errors.append(getattr(match, f"{metric}_std") or 0.0)
+            tops.append(heights[-1] + errors[-1])
 
         bars = ax.bar(
             positions,
@@ -219,7 +242,7 @@ def plot_split_comparison(
 
     ax.set_xticks(range(len(splits)))
     ax.set_xticklabels([_label(SPLIT_LABELS, s) for s in splits])
-    ax.set_ylim(0.5, 1.0)  # 0.5 is chance for ROC-AUC, the meaningful floor.
+    ax.set_ylim(*_bar_ylim(metric, tops))
     _style_axes(
         ax,
         title=f"Test {metric.replace('_', '-').upper()} by model and split{_suffix(dataset)}",

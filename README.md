@@ -25,7 +25,7 @@ matplotlib all publish wheels for 3.12–3.14).
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # 133 tests, ~3 s
+make test                        # 143 tests, ~3 s
 ```
 
 No GPU is needed, and no download: both raw datasets are committed under
@@ -354,7 +354,7 @@ admet-generalization/
 │   └── analysis/
 │       ├── aggregate.py    # results/**/*.json -> summary + gap tables
 │       └── plots.py        # the three figures, one set per dataset
-├── tests/                  # 133 tests
+├── tests/                  # 143 tests
 ├── data/                   # raw datasets, committed so a clone runs offline
 ├── results/
 │   ├── tox21/              # 56 run files
