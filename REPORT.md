@@ -88,12 +88,12 @@ Learning curves (3 seeds), GNN − baseline:
 
 | Training set | ROC-AUC, random | ROC-AUC, scaffold | PR-AUC, random | PR-AUC, scaffold |
 |---|---|---|---|---|
-| 10% | −0.016 ± 0.025 | +0.001 ± 0.014 | **−0.086 ± 0.054** | **−0.058 ± 0.030** |
+| 10% | −0.016 ± 0.025 | +0.001 ± 0.014 | **−0.086 ± 0.054** | **−0.057 ± 0.030** |
 | 25% | −0.008 ± 0.019 | −0.013 ± 0.017 | −0.063 ± 0.018 | −0.041 ± 0.019 |
 | 50% | −0.001 ± 0.011 | −0.010 ± 0.018 | −0.028 ± 0.020 | −0.032 ± 0.033 |
 | 100% | +0.003 ± 0.015 | −0.004 ± 0.022 | −0.031 ± 0.037 | −0.026 ± 0.027 |
 
-**The split type dominates.** Scaffold splitting costs the baseline 0.074
+**The split type dominates.** Scaffold splitting costs the baseline 0.073
 ROC-AUC and the GNN 0.080 — roughly ten times the difference between the two
 models in any condition. This is the clearest result in the study.
 
@@ -131,8 +131,8 @@ The informative comparison is the **drop from random to scaffold**:
 
 | Dataset | Training molecules | Baseline drop | GNN drop |
 |---|---|---|---|
-| Tox21 | 6259 | **−0.074** | **−0.080** |
-| ClinTox | 1169 | −0.022 | −0.043 |
+| Tox21 | 6259 | **−0.073** | **−0.080** |
+| ClinTox | 1169 | −0.021 | −0.043 |
 
 ClinTox scores *higher* than Tox21 (0.90 vs 0.84) on a fifth of the data, and
 barely loses anything when the test molecules are forced to be structurally

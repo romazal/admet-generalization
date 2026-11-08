@@ -110,14 +110,14 @@ validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 *[Findings](#findings)* below.
 
 - **The split type is the whole story.** Scaffold splitting costs the baseline
-  0.074 ROC-AUC and the GNN 0.080 — roughly ten times the difference between
+  0.073 ROC-AUC and the GNN 0.080 — roughly ten times the difference between
   the two models in any condition. When the test molecules stop resembling the
   training molecules, both methods degrade far more than either gains from its
   architecture.
 - **H2 (data size): supported.** The fingerprint baseline beats the GNN with
   little data and the advantage closes as data is added — in PR-AUC the gap
   runs from −0.086 at 10% of the training set to −0.031 at 100% under a random
-  split, and from −0.058 to −0.026 under a scaffold split, monotonically in
+  split, and from −0.057 to −0.026 under a scaffold split, monotonically in
   both.
 - **H1 (generalization): not supported, because its premise fails.** At the
   full training set there is no GNN advantage to shrink: +0.003 ± 0.015 under
@@ -129,8 +129,8 @@ validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 - **ClinTox is inconclusive, and informative anyway.** Every GNN-minus-baseline
   gap on it is smaller than its own SD (+0.046 ± 0.090 at best), so it settles
   nothing about H1 or H2. But it scores *higher* than Tox21 on a fifth of the
-  data and loses only 0.022–0.043 ROC-AUC to a scaffold split, where Tox21
-  loses 0.074–0.080. Together with 19 duplicate structures carrying
+  data and loses only 0.021–0.043 ROC-AUC to a scaffold split, where Tox21
+  loses 0.073–0.080. Together with 19 duplicate structures carrying
   contradictory labels, that points at dataset provenance rather than at model
   quality.
 - **The GNN costs 2.5x the baseline on Tox21 and 12x on ClinTox**, for no
@@ -182,7 +182,7 @@ grid is 16× larger). 56 Tox21 runs. Every number below comes from
 
 | Training set | ROC-AUC, random | ROC-AUC, scaffold | PR-AUC, random | PR-AUC, scaffold |
 |---|---|---|---|---|
-| 10% | −0.016 ± 0.025 | +0.001 ± 0.014 | **−0.086 ± 0.054** | **−0.058 ± 0.030** |
+| 10% | −0.016 ± 0.025 | +0.001 ± 0.014 | **−0.086 ± 0.054** | **−0.057 ± 0.030** |
 | 25% | −0.008 ± 0.019 | −0.013 ± 0.017 | −0.063 ± 0.018 | −0.041 ± 0.019 |
 | 50% | −0.001 ± 0.011 | −0.010 ± 0.018 | −0.028 ± 0.020 | −0.032 ± 0.033 |
 | 100% | +0.003 ± 0.015 | −0.004 ± 0.022 | −0.031 ± 0.037 | −0.026 ± 0.027 |
@@ -190,7 +190,7 @@ grid is 16× larger). 56 Tox21 runs. Every number below comes from
 Four things follow, in order of how well the data supports them.
 
 **1. The split type dominates everything else.** Moving from a random to a
-scaffold split costs the baseline 0.074 ROC-AUC and the GNN 0.080 — an order of
+scaffold split costs the baseline 0.073 ROC-AUC and the GNN 0.080 — an order of
 magnitude more than the difference between the two models in any condition.
 Whatever is gained by choosing an architecture here is small next to what is
 lost when the test molecules stop resembling the training molecules. This is
@@ -198,7 +198,7 @@ the result the research question was asked to expose, and it is unambiguous.
 
 **2. H2 is supported.** The baseline is clearly better than the GNN with little
 data, and the advantage closes as data is added. The cleanest evidence is
-PR-AUC, where the 10% gap (−0.086 random, −0.058 scaffold) is larger than its
+PR-AUC, where the 10% gap (−0.086 random, −0.057 scaffold) is larger than its
 own SD and shrinks monotonically to roughly −0.03 at 100% in both splits. The
 ROC-AUC curve under the random split shows the same shape and crosses zero near
 50%. This is the proposal's H2 as stated.
