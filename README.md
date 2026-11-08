@@ -46,6 +46,7 @@ from a clone:
 | One row per run | `results/runs.csv` |
 | Every individual run | `results/tox21/*.json`, `results/clintox/*.json` |
 | Figures | `figures/tox21/*.png`, `figures/clintox/*.png` |
+| Small tasks open for contributors | **[TODO.md](TODO.md)** |
 
 ### 3. Reproduce it
 
@@ -331,6 +332,7 @@ admet-generalization/
 ├── Makefile                # make test / main / sweep / clintox / aggregate / plots
 ├── README.md
 ├── REPORT.md               # the results report: tables, runtimes, validity
+├── TODO.md                 # small contributions open to the team
 ├── AGENT_LOG.md            # record of the AI-assisted development
 ├── configs/
 │   ├── base.yaml                   # shared defaults incl. the tuning budget
