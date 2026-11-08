@@ -65,6 +65,11 @@ class RunRecord:
     test_pr_auc: float | None
     n_train: int
     n_test: int
+    #: Location of the result file *relative to the results directory*, with
+    #: forward slashes — e.g. ``tox21/tox21_rf_random_frac100_seed0.json``.
+    #: It is never absolute: runs.csv is committed, so an absolute path would
+    #: bake one machine's home directory into the repository and guarantee
+    #: the file differs for everyone who regenerates it.
     path: str
 
     @property
@@ -132,6 +137,20 @@ def _std(values: Sequence[float]) -> float | None:
 # --------------------------------------------------------------------------- #
 
 
+def _relative_path(path: Path, directory: Path) -> str:
+    """``path`` relative to ``directory``, POSIX-style.
+
+    Falls back to the bare filename if the two are unrelated, which can only
+    happen if a caller passes a file from outside the results tree. Forward
+    slashes regardless of platform, so the committed runs.csv is identical on
+    Windows and Linux.
+    """
+    try:
+        return path.resolve().relative_to(directory.resolve()).as_posix()
+    except ValueError:
+        return path.name
+
+
 def load_results(results_dir: str | Path) -> list[RunRecord]:
     """Read every ``*.json`` result file under ``results_dir``, recursively.
 
@@ -174,7 +193,7 @@ def load_results(results_dir: str | Path) -> list[RunRecord]:
                 test_pr_auc=test.get("pr_auc"),
                 n_train=int(sizes.get("train", 0)),
                 n_test=int(sizes.get("test", 0)),
-                path=str(path),
+                path=_relative_path(path, directory),
             )
         )
     records.sort(key=lambda r: (*r.condition, r.seed))
