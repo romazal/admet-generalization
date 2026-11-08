@@ -1,0 +1,19 @@
+# Baseline (Morgan fingerprints + random forest) on Tox21, scaffold split.
+#
+# The structural-shift regime of H1: whole Bemis-Murcko scaffold groups are
+# assigned to one part only, so every test molecule carries a ring system the
+# model never trained on. `order: random` is the randomized scaffold split of
+# proposal §3.3 — each seed gives a different split, so the spread over seeds
+# reflects split variance as well as model variance.
+
+extends: base.yaml
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: rf
+  params:
+    n_jobs: -1

@@ -1,0 +1,17 @@
+# GNN (GINE message passing + masked multitask head) on Tox21, random split.
+#
+# The same tuning budget as the baseline, inherited from base.yaml — see
+# proposal §3.4. Epochs and patience are fixed rather than tuned: early
+# stopping on the validation set already selects the effective epoch count.
+
+extends: base.yaml
+
+split:
+  kind: random
+
+model:
+  name: gnn
+  params:
+    epochs: 50
+    patience: 10
+    weight_decay: 0.0

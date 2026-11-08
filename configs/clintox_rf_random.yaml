@@ -1,0 +1,24 @@
+# Baseline on ClinTox, random split — the optional smaller second dataset.
+#
+# Exists so ClinTox has the same 2x2 (model x split) grid as Tox21. Without a
+# random-split arm there is nothing to compare the scaffold arm against, and
+# the random-to-scaffold drop — the one effect Tox21 showed unambiguously —
+# could not be measured on the smaller dataset at all.
+#
+# Only CT_TOX is scored; see clintox_rf_scaffold.yaml for why FDA_APPROVED is
+# excluded, and expect an inconclusive model comparison either way: the test
+# part holds ~146 molecules and ~10-17 positives.
+
+extends: base.yaml
+
+dataset:
+  name: clintox
+  tasks: [CT_TOX]
+
+split:
+  kind: random
+
+model:
+  name: rf
+  params:
+    n_jobs: -1

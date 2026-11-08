@@ -1,0 +1,31 @@
+# Baseline on ClinTox, scaffold split — the optional smaller second dataset.
+#
+# Purpose: compare the effect of DATASET SIZE against Tox21 (proposal §3.1,
+# "if time allows"). This is not a second test of H1/H2 — ClinTox has 10-17
+# positives in a scaffold test split, so the seed-to-seed noise exceeds the
+# GNN-minus-baseline gap the hypotheses are defined to measure. Expect an
+# inconclusive result and report it as one.
+#
+# Only CT_TOX is scored. ClinTox's two labels are the same label (CT_TOX
+# equals NOT FDA_APPROVED for 98.8% of molecules), and FDA_APPROVED's
+# "positive" class is the 91% MAJORITY — its PR-AUC is ~0.98 where a constant
+# predictor scores ~0.91, so including it inflates the macro average and hides
+# the real signal. See the ClinTox section of src/admet/data/loaders.py.
+#
+# Five seeds, not three: the small test part makes this noisier than Tox21.
+
+extends: base.yaml
+
+dataset:
+  name: clintox
+  tasks: [CT_TOX]
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: rf
+  params:
+    n_jobs: -1

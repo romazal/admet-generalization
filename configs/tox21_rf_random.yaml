@@ -1,0 +1,16 @@
+# Baseline (Morgan fingerprints + random forest) on Tox21, random split.
+#
+# The optimistic regime of H1: test molecules are drawn from the same
+# structural distribution as the training molecules, so scaffolds are shared
+# across train, validation and test. Compare against tox21_rf_scaffold.yaml.
+
+extends: base.yaml
+
+split:
+  kind: random
+
+model:
+  name: rf
+  params:
+    # Fixed across trials; everything tunable lives in RandomForestModel.search_space().
+    n_jobs: -1

@@ -1,0 +1,19 @@
+# GNN (GINE message passing + masked multitask head) on Tox21, scaffold split.
+#
+# The condition H1 is really about: if the GNN's advantage over fingerprints
+# comes from memorising scaffold-level patterns rather than from learning
+# chemistry that transfers, this is where it should shrink.
+
+extends: base.yaml
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: gnn
+  params:
+    epochs: 50
+    patience: 10
+    weight_decay: 0.0

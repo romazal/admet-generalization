@@ -1,0 +1,21 @@
+# GNN on ClinTox, random split — the optional smaller second dataset.
+#
+# Exists so ClinTox has the same 2x2 (model x split) grid as Tox21. See
+# clintox_rf_random.yaml for the reasoning and clintox_gnn_scaffold.yaml for
+# why only CT_TOX is scored.
+
+extends: base.yaml
+
+dataset:
+  name: clintox
+  tasks: [CT_TOX]
+
+split:
+  kind: random
+
+model:
+  name: gnn
+  params:
+    epochs: 50
+    patience: 10
+    weight_decay: 0.0
