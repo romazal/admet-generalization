@@ -104,7 +104,80 @@ number mean something.
 
 ---
 
-## 3. MACCS keys as a second fingerprint
+## 3. Add a third dataset
+
+**Difficulty:** ★★☆☆☆ · **~2 h** · the best value for the effort
+
+Adding a dataset is about fifteen lines, because `loaders.py` is a registry:
+you describe the file and everything downstream — splitting, masking,
+tuning, metrics, figures — works unchanged. H1 and H2 currently rest on one
+real dataset (ClinTox was too small to resolve anything), so a third is the
+cheapest way to make the conclusion more than a Tox21 anecdote.
+
+### Hard constraint, read first
+
+This pipeline does **masked multitask binary classification**. A dataset
+whose labels are continuous numbers will not work without new code —
+so ESOL, FreeSolv, Lipophilicity and QM7/QM9 are all **out**, however
+tempting their ADMET relevance. Labels must be 0/1, with blanks for unknown.
+
+### Candidates
+
+All five filenames below were checked against the MoleculeNet mirror and
+exist. The counts are what MoleculeNet documents; treat them as *expected*,
+not verified — the loader prints what it actually parsed, and that is the
+number to write down.
+
+| Dataset | File | Molecules | Tasks | Why it is worth adding |
+|---|---|---|---|---|
+| **BBBP** | `BBBP.csv` | 2050 | 1 | Blood–brain-barrier penetration — the **D** in ADMET, and the proposal's own named example (§3.1). Small and fast. |
+| **SIDER** | `sider.csv.gz` | ~1427 | 27 | Marketed drugs against 27 side-effect classes. The only candidate that genuinely exercises the multitask head the way Tox21 does. |
+| **ToxCast** | `toxcast_data.csv.gz` | ~8575 | 617 | The real stress test for the masked loss — the label matrix is mostly empty. Slow; try one model first. |
+| **HIV** | `HIV.csv` | ~41k | 1 | Large and very imbalanced (~3.5% positives), so PR-AUC finally matters more than ROC-AUC. Hours on CPU for the GNN. |
+| **BACE** | `bace.csv` | ~1513 | 1 | Clean and small, but it is target binding, not ADMET. Only interesting as a contrast. |
+
+**Recommended: BBBP.** It is the dataset the proposal itself named, it is an
+ADMET endpoint, it runs in minutes, and it has a documented quirk worth
+reporting — a number of its SMILES do not parse, which our loader already
+counts and drops. **Second choice: SIDER**, if you want the multitask story.
+
+### How
+
+Add one `DatasetSpec` to `DATASETS` in `src/admet/data/loaders.py`, copying
+the `clintox` entry. The base URL `_MOLECULENET` is already defined, so
+`url=f"{_MOLECULENET}/BBBP.csv"`. The fields you need are `name`, `url`,
+`filename`, `smiles_column` and `task_columns`.
+
+**Get the column names right** — they differ per file and guessing wastes an
+hour. Download it once and look:
+
+```bash
+curl -sL https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/BBBP.csv | head -3
+```
+
+For BBBP this returns `num,name,p_np,smiles` — so `smiles_column="smiles"`,
+`task_columns=("p_np",)`, and `num`/`name` are simply left out. (Checked:
+that is the real header, and the file has 2050 rows.) Then copy the four
+`configs/clintox_*.yaml` files, change `dataset.name`, and drop the
+`tasks:` line if you want every label column.
+
+**Test:** add a case to `tests/test_loaders.py` (Task 6) or
+`tests/test_aggregate.py` asserting the new spec is in `DATASETS` and that
+its `task_columns` do not include the SMILES column — a real and easy
+mistake that silently trains the model to predict its own input.
+
+**Then run it:** `admet run configs/bbbp_rf_scaffold.yaml` takes a couple of
+minutes. Report what you find even if it is dull. A third dataset where the
+scaffold split costs ~0.08 ROC-AUC would be the strongest single result in
+the project; one where it does not is more interesting still.
+
+**Watch for:** a suspiciously high score. BBBP is known to be easy, and
+REPORT §4 already explains why that reads as a dataset problem rather than a
+model success.
+
+---
+
+## 4. MACCS keys as a second fingerprint
 
 **Difficulty:** ★★☆☆☆ · **~2 h**
 
@@ -126,7 +199,7 @@ benzene and cyclohexane give different vectors.
 
 ---
 
-## 4. Per-assay results, not just the average
+## 5. Per-assay results, not just the average
 
 **Difficulty:** ★★★☆☆ · **~3 h** · the most interesting one biologically
 
@@ -155,7 +228,7 @@ dataset and belongs in REPORT.md.
 
 ---
 
-## 5. A `tests/test_loaders.py`
+## 6. A `tests/test_loaders.py`
 
 **Difficulty:** ★★☆☆☆ · **~2 h**
 
@@ -181,7 +254,7 @@ fail is worse than none.
 
 ---
 
-## 6. Smaller things, if you only have an hour
+## 7. Smaller things, if you only have an hour
 
 - **`admet --version`.** Read `__version__` from `src/admet/__init__.py`.
   One line in `build_parser`. ★☆☆☆☆
@@ -222,8 +295,9 @@ Three people, one each, no overlapping files:
 
 | Who | Task |
 |---|---|
-| — | **2** (dummy baseline) — most useful, and REPORT gains a row |
-| — | **4** (per-assay results) — most interesting biologically |
-| — | **1** (datasets command) + one item from **6** — smallest entry point |
+| — | **3** (a third dataset) — best value for the effort; H1/H2 currently rest on one dataset |
+| — | **5** (per-assay results) — most interesting biologically |
+| — | **2** (dummy baseline) — small, and REPORT gains a row |
 
-Task 5 is a good second commit for whoever finishes first.
+Tasks **1** (datasets command) and **6** (loader tests), plus anything in
+**7**, are good second commits for whoever finishes first.
