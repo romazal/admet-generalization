@@ -5,12 +5,98 @@ ADMET property prediction, and does that benefit survive when the test
 molecules are structurally different from the training molecules?**
 
 A reproducible pipeline comparing a classical baseline (Morgan fingerprints +
-random forest) against a message-passing graph neural network on Tox21, under
-a random split and a scaffold split. The focus is on *when* the advanced method
-helps — not on which model reaches the highest number.
+random forest) against a message-passing graph neural network on Tox21 and
+ClinTox, under a random split and a scaffold split. The focus is on *when* the
+advanced method helps — not on which model reaches the highest number.
 
 Course: Biomedical Artificial Intelligence / Drug discovery and development
 (flipped-classroom lecture), Group 2.
+
+---
+
+## Quick start
+
+### 1. Install
+
+Requires Python >= 3.12 (developed on 3.14.4; RDKit, PyTorch, scikit-learn and
+matplotlib all publish wheels for 3.12–3.14).
+
+```bash
+python -m venv .venv
+source .venv/bin/activate        # .venv\Scripts\activate on Windows
+pip install -e ".[dev]"
+make test                        # 133 tests, ~3 s
+```
+
+No GPU is needed, and no download: both raw datasets are committed under
+`data/` (123 KB Tox21, 20 KB ClinTox), so a fresh clone runs offline. Set
+`ADMET_DATA_DIR` to move the cache elsewhere.
+
+### 2. Read the results without running anything
+
+Everything is already committed, so the finished work is readable straight
+from a clone:
+
+| What | Where |
+|---|---|
+| The full written report | **[REPORT.md](REPORT.md)** |
+| Headline numbers | *[Summary of results](#summary-of-results)* below |
+| Per-condition means and SDs | `results/summary.csv` |
+| GNN-minus-baseline gaps | `results/gap.csv` |
+| One row per run | `results/runs.csv` |
+| Every individual run | `results/tox21/*.json`, `results/clintox/*.json` |
+| Figures | `figures/*.png` |
+
+### 3. Reproduce it
+
+A run is fully specified by **one config file plus one seed**, and writes one
+JSON holding the config, the seed, the split sizes, every tuning trial, the
+metrics, the library versions and the git commit.
+
+```bash
+make main        # Tox21: both models x both splits, 5 seeds     (~2.1 h)
+make sweep       # Tox21 learning curves: 10/25/50/100% training (~1.2 h)
+make clintox     # ClinTox: the same grid, 5 seeds x 4 fractions (~33 min)
+
+make aggregate   # results/**/*.json -> runs.csv, summary.csv, gap.csv
+make plots       # -> figures/*.png
+```
+
+`make all` runs the lot in order (~3.8 h on CPU). Every command skips a cell
+that already has a result file, so an interrupted pass resumes by reissuing
+the same command; pass `--overwrite` to redo them. To reproduce a single cell:
+
+```bash
+admet run configs/tox21_gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
+```
+
+### Runtime and hardware
+
+Measured, not estimated: every figure below comes from the `timing_seconds`
+field of the committed result files. CPU-only Windows laptop, no GPU.
+
+| Step | Time |
+|---|---|
+| Test suite | ~3 s |
+| Parse a dataset (no download — both are committed) | ~3 s |
+| Baseline, one Tox21 run at 100% (8 tuning trials, 1 seed) | 3.2 min |
+| GNN, one Tox21 run at 100% (8 tuning trials, 1 seed) | 9.4 min |
+| Baseline, one ClinTox run at 100% | 7 s |
+| GNN, one ClinTox run at 100% | 1.4 min |
+| `make main` (4 configs x 5 seeds) | ~2.1 h |
+| `make sweep` (the 36 cells below 100%) | ~1.2 h |
+| `make clintox` (4 configs x 5 seeds x 4 fractions) | ~33 min |
+| **Everything: 136 runs** | **3.83 h** |
+
+The GNN costs about 2.5x the baseline on Tox21 and 12x on ClinTox. Early
+stopping ends a GNN trial at a mean best epoch of 34.9 (Tox21) and 22.8
+(ClinTox) against a 50-epoch ceiling, so the ceiling rarely binds. To shorten
+a pass, lower `tuning.budget` in `configs/base.yaml` — it applies to **both**
+models at once, which is the point (see *Safeguards*).
+
+These are indicative of relative cost rather than a benchmark: the machine was
+in ordinary use, the baseline uses all cores via `n_jobs=-1`, and the GNN runs
+single-threaded on CPU.
 
 ---
 
@@ -18,8 +104,8 @@ Course: Biomedical Artificial Intelligence / Drug discovery and development
 
 136 runs: both models and both splits on Tox21 (five seeds at the full
 training set, three along the learning curve) and the same grid on ClinTox
-(five seeds throughout). 3.8 h of CPU compute. Full tables, runtimes and
-threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
+(five seeds throughout). 3.83 h of CPU compute. Full tables and threats to
+validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 *[Findings](#findings)* below.
 
 - **The split type is the whole story.** Scaffold splitting costs the baseline
@@ -36,23 +122,22 @@ threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
   full training set there is no GNN advantage to shrink: +0.003 ± 0.015 under
   the random split, −0.004 ± 0.022 under the scaffold split, both within one
   standard deviation of zero and of each other.
-- **Headline numbers** (test ROC-AUC, five seeds): baseline **0.834 ± 0.009**
-  random / **0.760 ± 0.013** scaffold; GNN **0.836 ± 0.011** random /
-  **0.756 ± 0.018** scaffold.
+- **Headline numbers** (Tox21 test ROC-AUC, five seeds): baseline
+  **0.834 ± 0.009** random / **0.760 ± 0.013** scaffold; GNN
+  **0.836 ± 0.011** random / **0.756 ± 0.018** scaffold.
+- **ClinTox is inconclusive, and informative anyway.** Every GNN-minus-baseline
+  gap on it is smaller than its own SD (+0.046 ± 0.090 at best), so it settles
+  nothing about H1 or H2. But it scores *higher* than Tox21 on a fifth of the
+  data and loses only 0.022–0.043 ROC-AUC to a scaffold split, where Tox21
+  loses 0.074–0.080. Together with 19 duplicate structures carrying
+  contradictory labels, that points at dataset provenance rather than at model
+  quality.
+- **The GNN costs 2.5x the baseline on Tox21 and 12x on ClinTox**, for no
+  measurable gain.
 - **A methodological result worth the same weight.** An intermediate three-seed
   pass put the scaffold gap at −0.016 ± 0.020, which reads as a real effect;
   at five seeds it is −0.004 ± 0.022. The proposal's "target 5, minimum 3" is
   doing real work — three-seed numbers are directional only.
-
-- **ClinTox is inconclusive, and informative anyway.** Every GNN-minus-
-  baseline gap on it is smaller than its own SD (+0.046 ± 0.090 at best), so
-  it settles nothing about H1 or H2. But it scores *higher* than Tox21 on a
-  fifth of the data and loses only 0.022-0.043 ROC-AUC to a scaffold split,
-  where Tox21 loses 0.074-0.080. Together with 19 duplicate structures
-  carrying contradictory labels, that points at dataset provenance rather
-  than at model quality.
-- **The GNN costs 2.5x the baseline on Tox21 and 12x on ClinTox**, for no
-  measurable gain.
 
 The honest one-line answer to the research question: *on this dataset, at this
 tuning budget, the GNN never outperformed the fingerprint baseline — and the
@@ -80,7 +165,7 @@ the training data.
 
 Tox21, full tuning budget (8 trials per model). Main experiment: **5 seeds**
 (the proposal's target). Learning curves: **3 seeds** (its stated minimum — the
-grid is 16× larger). 56 runs in total. Every number below comes from
+grid is 16× larger). 56 Tox21 runs. Every number below comes from
 `results/summary.csv` and `results/gap.csv`; none is typed by hand.
 
 ### Main experiment (100% of the training set, 5 seeds)
@@ -132,28 +217,34 @@ only.
 
 Two sanity checks passed: the baseline's 0.834 under a random split sits in the
 range published for fingerprint models on Tox21, and the scaffold-disjointness
-assertion ran on every scaffold split used.
+check is recorded `true` in all 68 scaffold result files and `false` in all 68
+random ones.
 
 Figures: `figures/random_vs_scaffold_tox21_roc_auc.png` (H1),
 `figures/learning_curves_tox21_roc_auc.png` and
 `figures/gnn_minus_rf_gap_tox21_roc_auc.png` (H2), plus the PR-AUC
 counterparts and the same three for ClinTox.
 
+ClinTox results and the cross-dataset comparison are in
+[REPORT.md](REPORT.md) §4.
+
 ## Data
 
-**Tox21** (primary): ~7.8k molecules screened against 12 nuclear-receptor and
-stress-response toxicity assays, loaded from the public MoleculeNet
-distribution and cached under `data/`. It is multitask with **many missing
-labels** — only 83% of the label matrix is observed — which is why masking is
-treated as a correctness concern throughout.
+Both raw files are committed under `data/`, so nothing is downloaded on a
+fresh clone.
 
-As loaded: 7823 molecules (8 unparseable SMILES dropped), 12 assays, 186–942
-positives per assay.
+**Tox21** (primary): 7823 molecules after cleaning (8 unparseable SMILES
+dropped, 0 duplicates), screened against 12 nuclear-receptor and
+stress-response toxicity assays, from the public MoleculeNet distribution.
+It is multitask with **many missing labels** — 82.9% of the label matrix is
+observed — which is why masking is treated as a correctness concern
+throughout. 186–942 positives per assay. Split 6259 / 782 / 782 (scaffold;
+the random split gives 6258 / 782 / 783).
 
-**ClinTox** (optional second): 1461 molecules after cleaning, two labels —
-`FDA_APPROVED` and `CT_TOX`. Registered and downloadable, included to compare
-dataset *sizes* (proposal §3.1, "if time allows"). Tox21 is the primary
-dataset and that is settled.
+**ClinTox** (second dataset): 1461 molecules after cleaning, two labels —
+`FDA_APPROVED` and `CT_TOX`. Included to compare dataset *sizes* against
+Tox21 (proposal §3.1). Split 1169 / 146 / 146. Tox21 is the primary dataset
+and that is settled.
 
 Measured from the raw file rather than taken from documentation, because
 every figure is a reason for caution:
@@ -162,6 +253,7 @@ every figure is a reason for caution:
 |---|---|
 | Molecules (raw → cleaned) | 1484 → 1461 (4 unparseable, 19 duplicates merged) |
 | Minority class, raw | `FDA_APPROVED = 0`: 94 · `CT_TOX = 1`: 112 (~7%) |
+| `CT_TOX` positives after cleaning | 103 |
 | Positives in a scaffold test split | **10–17** over seeds 0–4 (test part of 146) |
 | Positives at H2's 10% training point | **5** |
 | `CT_TOX` == `NOT FDA_APPROVED` | **98.8%** of molecules |
@@ -172,94 +264,20 @@ So: the seed-to-seed noise on ~13 positives exceeds the GNN-minus-baseline gap
 the study is defined to measure; the two labels are effectively one, which
 leaves the multitask head and masked loss with nothing to do; and 19 structures
 appear both as approved and as failed-for-toxicity, consistent with the dataset
-being assembled from two sources.
+being assembled from two sources. The measured results bear this out — see
+[REPORT.md](REPORT.md) §4.
 
 **Score `CT_TOX` only** — `configs/clintox_*.yaml` set `tasks: [CT_TOX]`.
 `FDA_APPROVED` is positive for 91% of the test part, so its PR-AUC runs at
 ~0.98 where a constant predictor scores ~0.91; averaging it in lifted the
 headline PR-AUC from 0.38 to 0.68 in a measured run and hid the real signal.
-Read a ROC-AUC near 0.98 as suspected provenance leakage, not success.
 
 ```bash
-admet run configs/clintox_rf_scaffold.yaml
-admet run configs/clintox_gnn_scaffold.yaml
+make clintox     # all four ClinTox configs, 5 seeds x 4 training fractions
 ```
 
 Treat the outcome as a comparison of dataset *sizes* against Tox21, not as a
-second test of H1 and H2 — and expect it to be inconclusive.
-
-## Install
-
-Requires Python >= 3.12 (developed on 3.14; RDKit, PyTorch, scikit-learn and
-matplotlib all publish wheels for 3.12–3.14).
-
-```bash
-python -m venv .venv
-source .venv/bin/activate        # .venv\Scripts\activate on Windows
-pip install -e ".[dev]"
-```
-
-A GPU is optional — see *Runtime* below. The first run downloads Tox21
-(~3 MB) and caches it; set `ADMET_DATA_DIR` to move the cache.
-
-## Reproducing each result
-
-Every run is fully specified by **one config file plus one seed**, and writes
-one JSON result file holding the config, the seed, the split sizes, every
-tuning trial, the metrics, the library versions and the git commit.
-
-```bash
-make test        # 133 tests, ~3 s
-
-# Main experiment: both models x both splits, 5 seeds each
-make main
-#   == admet run configs/tox21_rf_random.yaml
-#      admet run configs/tox21_rf_scaffold.yaml
-#      admet run configs/tox21_gnn_random.yaml
-#      admet run configs/tox21_gnn_scaffold.yaml
-
-# Additional experiment: learning curves, 10/25/50/100% of the TRAINING set
-make sweep       # == admet sweep configs/sweep_learning_curve.yaml
-
-make aggregate   # results/*.json -> runs.csv, summary.csv, gap.csv
-make plots       # -> figures/*.png
-```
-
-Both commands skip cells that already have a result file, so an interrupted
-run is resumed by reissuing the same command; pass `--overwrite` to redo them.
-To reproduce a single cell:
-
-```bash
-admet run configs/tox21_gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
-```
-
-### Runtime and hardware
-
-Measured, not estimated: every figure below comes from the `timing_seconds`
-field of the committed result files. CPU-only Windows laptop, no GPU.
-
-| Step | Time |
-|---|---|
-| Test suite | ~3 s |
-| Download + parse (first run only; both datasets are committed anyway) | ~3 s |
-| Baseline, one Tox21 run at 100% (8 tuning trials, 1 seed) | 3.2 min |
-| GNN, one Tox21 run at 100% (8 tuning trials, 1 seed) | 9.4 min |
-| Baseline, one ClinTox run at 100% | 7 s |
-| GNN, one ClinTox run at 100% | 1.4 min |
-| `make main` (4 configs x 5 seeds) | ~2.1 h |
-| `make sweep` (the 36 cells below 100%) | ~1.2 h |
-| `make clintox` (4 configs x 5 seeds x 4 fractions) | ~33 min |
-| **Everything: 136 runs** | **3.83 h** |
-
-The GNN costs about 2.5x the baseline on Tox21 and 12x on ClinTox. Early
-stopping ends a GNN trial at a mean best epoch of 34.9 (Tox21) and 22.8
-(ClinTox) against a 50-epoch ceiling, so the ceiling rarely binds. To shorten
-a pass, lower `tuning.budget` in `configs/base.yaml` — it applies to **both**
-models at once, which is the point (see below).
-
-These are indicative of relative cost rather than a benchmark: the machine was
-in ordinary use, the baseline uses all cores via `n_jobs=-1`, and the GNN runs
-single-threaded on CPU.
+second test of H1 and H2 — it came out inconclusive, as expected.
 
 ## Experimental design
 
@@ -274,8 +292,9 @@ effect of adding training data and not of resampling the test set. The subsets
 are nested (10% ⊂ 25% ⊂ 50% ⊂ 100%).
 
 **Metrics.** ROC-AUC (primary) and PR-AUC (secondary, because of class
-imbalance), macro-averaged over the 12 assays and reported as mean and standard
-deviation over seeds — **target 5 seeds, minimum 3**.
+imbalance), macro-averaged over the scored assays (12 on Tox21, 1 on ClinTox)
+and reported as mean and standard deviation over seeds — **target 5 seeds,
+minimum 3**.
 
 ### Safeguards for a fair comparison
 
@@ -309,13 +328,14 @@ than merely weaken it:
 ```text
 admet-generalization/
 ├── pyproject.toml          # pinned dependencies, `admet` entry point
-├── Makefile                # make test / main / sweep / aggregate / plots
+├── Makefile                # make test / main / sweep / clintox / aggregate / plots
 ├── README.md
 ├── REPORT.md               # the results report: tables, runtimes, validity
 ├── AGENT_LOG.md            # record of the AI-assisted development
 ├── configs/
 │   ├── base.yaml                   # shared defaults incl. the tuning budget
 │   ├── tox21_{rf,gnn}_{random,scaffold}.yaml
+│   ├── clintox_{rf,gnn}_{random,scaffold}.yaml
 │   └── sweep_learning_curve.yaml   # the learning-curve grid
 ├── src/admet/
 │   ├── cli.py              # admet run / sweep / aggregate / plots
@@ -332,19 +352,21 @@ admet-generalization/
 │   │   ├── rf.py           # baseline: one forest per assay
 │   │   └── gnn.py          # GINE message passing, masked multitask head
 │   └── analysis/
-│       ├── aggregate.py    # results/*.json -> summary + gap tables
-│       └── plots.py        # the three figures
+│       ├── aggregate.py    # results/**/*.json -> summary + gap tables
+│       └── plots.py        # the three figures, one set per dataset
 ├── tests/                  # 133 tests
 ├── data/                   # raw datasets, committed so a clone runs offline
-├── results/                # one JSON per run, plus the CSV tables (committed)
-└── figures/                # regenerated from results/ (committed)
+├── results/
+│   ├── tox21/              # 56 run files
+│   ├── clintox/            # 80 run files
+│   └── {runs,summary,gap}.csv
+└── figures/                # 12 PNGs, regenerated from results/
 ```
 
 ## Figures
 
-Regenerated from `results/` by `make plots`; none is drawn by hand.
-
-Named `<figure>_<dataset>_<metric>.png`, one set per dataset:
+Regenerated from `results/` by `make plots`; none is drawn by hand. Named
+`<figure>_<dataset>_<metric>.png`, one set per dataset and metric (12 in all):
 
 - `random_vs_scaffold_*.png` — both models under both splits (H1).
 - `learning_curves_*.png` — test score against training-set size (H2).
@@ -382,7 +404,7 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   gives `.gitignore` the job of keeping raw data and large result files out of
   version control. They are tracked instead so a clone reproduces the report
   offline and every number can be traced to its run file. The whole lot is
-  1.5 MB.
+  2.8 MB.
 - **CPU, not GPU.** §8 assumes a 16 GB GPU and "a few GPU hours". Everything
   ran on a CPU-only laptop in 3.83 h, so the feasibility estimate held without
   the GPU.

@@ -4,7 +4,8 @@ Results report, Group 2 — Biomedical Artificial Intelligence / Drug discovery
 and development.
 
 Every number here is read from `results/summary.csv`, `results/gap.csv` and
-the per-run JSON files in `results/`, all of which are committed. Nothing is
+the per-run JSON files in `results/tox21/` and `results/clintox/`, all of
+which are committed. Nothing is
 typed from memory, and the tables can be regenerated with
 `make aggregate && make plots`.
 
@@ -235,7 +236,7 @@ numbers do not support.
 - **`data/`, `results/` and `figures/` are committed**, where the §5 file
   table gives `.gitignore` the job of excluding them. Tracking them lets a
   clone reproduce this report offline and lets any number be traced to its
-  run file; the whole lot is 1.5 MB.
+  run file; the whole lot is 2.8 MB.
 - **CPU, not GPU.** §8 assumes a 16 GB GPU and "a few GPU hours". Everything
   ran on a CPU-only laptop in 3.83 h, so the feasibility estimate held
   without one.
