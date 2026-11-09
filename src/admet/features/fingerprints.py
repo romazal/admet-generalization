@@ -1,21 +1,20 @@
-"""Morgan (ECFP-style) fingerprints — the baseline's molecular representation.
+"""Molecular fingerprints used by the random-forest baseline.
 
-A Morgan fingerprint describes a molecule by the circular atom environments it
-contains: for every atom, the substructure reachable within ``radius`` bonds is
-hashed into one of ``n_bits`` positions. The result is a fixed-length bit
-vector, which is what lets a random forest consume a molecule at all.
+Morgan fingerprints describe a molecule by its circular atom environments:
+for every atom, the substructure reachable within ``radius`` bonds is hashed
+into one of ``n_bits`` positions. MACCS keys encode a fixed set of predefined
+substructures. Both are fixed-length bit vectors suitable for a random forest.
 
-This is the representation the GNN is being compared *against* (proposal §3.2),
-so the comparison is only fair if the baseline gets a competent version of it.
-The defaults are the ones the ECFP4 literature and MoleculeNet use — radius 2,
-2048 bits — and both are exposed in the configs so the baseline's
+These are the representations the GNN is being compared *against* (proposal
+§3.2), so the comparison is only fair if the baseline gets a competent version
+of them. The Morgan defaults are the ones the ECFP4 literature and MoleculeNet
+use — radius 2, 2048 bits — and are exposed in the configs so the baseline's
 representation is part of its tuning budget rather than a fixed handicap.
 
-What a fingerprint cannot do is the point of the study: the hashing is fixed
-before any label is seen, so unlike the GNN's learned embeddings it cannot
-adapt its notion of similarity to the assay. Counting bits
-(``use_counts=True``) keeps how *often* an environment occurs instead of only
-whether it occurs.
+What a fingerprint cannot do is the point of the study: its representation is
+fixed before any label is seen, so unlike the GNN's learned embeddings it
+cannot adapt to the assay. Morgan counting bits (``use_counts=True``) keeps
+how *often* an environment occurs instead of only whether it occurs.
 """
 
 from __future__ import annotations
@@ -28,7 +27,9 @@ import numpy as np
 __all__ = [
     "DEFAULT_RADIUS",
     "DEFAULT_N_BITS",
+    "MACCS_N_BITS",
     "morgan_fingerprint",
+    "maccs_fingerprint",
     "featurize_smiles",
 ]
 
@@ -37,6 +38,9 @@ DEFAULT_RADIUS = 2
 
 #: Fingerprint length in bits.
 DEFAULT_N_BITS = 2048
+
+#: RDKit reserves bit zero in its 167-bit MACCS key vector.
+MACCS_N_BITS = 167
 
 
 @lru_cache(maxsize=8)
@@ -97,6 +101,22 @@ def morgan_fingerprint(
         return np.asarray(fingerprint, dtype=np.int32)
     fingerprint = generator.GetFingerprintAsNumPy(mol)
     return np.asarray(fingerprint, dtype=np.uint8)
+
+
+def maccs_fingerprint(smiles: str) -> np.ndarray:
+    """Return the 167-bit MACCS key fingerprint of one molecule.
+
+    RDKit reserves bit zero, so the returned vector has 167 entries even
+    though the keys are conventionally numbered 1 through 166.
+    """
+    from rdkit import DataStructs
+    from rdkit.Chem import rdMolDescriptors
+
+    mol = _parse(smiles)
+    fingerprint = rdMolDescriptors.GetMACCSKeysFingerprint(mol)
+    result = np.zeros((MACCS_N_BITS,), dtype=np.uint8)
+    DataStructs.ConvertToNumpyArray(fingerprint, result)
+    return result
 
 
 def featurize_smiles(

@@ -20,6 +20,7 @@ from admet.features.fingerprints import (
     DEFAULT_N_BITS,
     DEFAULT_RADIUS,
     featurize_smiles as fingerprint_matrix,
+    maccs_fingerprint,
     morgan_fingerprint,
 )
 from admet.features.graphs import (
@@ -31,6 +32,7 @@ from admet.features.graphs import (
     featurize_smiles as graph_list,
     mol_to_graph,
 )
+from admet.models.rf import RandomForestModel
 
 ETHANOL = "CCO"
 BENZENE = "c1ccccc1"
@@ -110,6 +112,28 @@ def test_fingerprint_rejects_non_strings_and_bad_sizes() -> None:
         morgan_fingerprint(ETHANOL, n_bits=0)
     with pytest.raises(ValueError, match="empty"):
         fingerprint_matrix([])
+
+
+def test_maccs_fingerprint_has_167_bits_and_distinguishes_aromaticity() -> None:
+    benzene = maccs_fingerprint(BENZENE)
+    cyclohexane = maccs_fingerprint(CYCLOHEXANE)
+    assert benzene.shape == (167,)
+    assert cyclohexane.shape == (167,)
+    assert not np.array_equal(benzene, cyclohexane)
+
+
+def test_random_forest_can_select_maccs_fingerprints() -> None:
+    model = RandomForestModel(n_tasks=1, fp_kind="maccs")
+    features = model.featurize([BENZENE, CYCLOHEXANE])
+    assert features.shape == (2, 167)
+    assert model.featurization_key() != RandomForestModel(
+        n_tasks=1, fp_kind="morgan"
+    ).featurization_key()
+
+
+def test_random_forest_rejects_an_unknown_fingerprint_kind() -> None:
+    with pytest.raises(ValueError, match="fp_kind"):
+        RandomForestModel(n_tasks=1, fp_kind="unknown")
 
 
 # --------------------------------------------------------------------------- #

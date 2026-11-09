@@ -1,11 +1,11 @@
-"""The baseline: Morgan fingerprints into a random forest, one forest per assay.
+"""The baseline: molecular fingerprints into one random forest per assay.
 
 This is the classical model the GNN has to beat (proposal §3.2). It is
 deliberately a *strong* baseline rather than a straw man: it tunes its own
-representation (fingerprint radius and length) alongside the forest, and it
-draws from :func:`admet.models.base.sample_configs` under the same budget as
-the GNN, because a comparison where only the advanced model was tuned would
-answer nothing.
+representation (Morgan or MACCS, including Morgan settings) alongside the
+forest, and it draws from :func:`admet.models.base.sample_configs` under the
+same budget as the GNN, because a comparison where only the advanced model was
+tuned would answer nothing.
 
 Multitask by independent forests
 --------------------------------
@@ -37,8 +37,11 @@ from typing import Any
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
 
-from admet.features.fingerprints import DEFAULT_N_BITS, DEFAULT_RADIUS
-from admet.features.fingerprints import featurize_smiles as morgan_matrix
+from admet.features.fingerprints import DEFAULT_N_BITS, DEFAULT_RADIUS, MACCS_N_BITS
+from admet.features.fingerprints import (
+    maccs_fingerprint,
+    featurize_smiles as morgan_matrix,
+)
 from admet.models.base import Model, register_model
 
 __all__ = ["RandomForestModel"]
@@ -46,7 +49,7 @@ __all__ = ["RandomForestModel"]
 
 @register_model
 class RandomForestModel(Model):
-    """Morgan fingerprints + one :class:`RandomForestClassifier` per assay."""
+    """Morgan or MACCS fingerprints + one forest per assay."""
 
     name = "rf"
 
@@ -63,6 +66,7 @@ class RandomForestModel(Model):
         fp_radius: int = DEFAULT_RADIUS,
         fp_n_bits: int = DEFAULT_N_BITS,
         fp_counts: bool = False,
+        fp_kind: str = "morgan",
         n_jobs: int = -1,
     ) -> None:
         super().__init__(
@@ -76,7 +80,10 @@ class RandomForestModel(Model):
             fp_radius=fp_radius,
             fp_n_bits=fp_n_bits,
             fp_counts=fp_counts,
+            fp_kind=fp_kind,
         )
+        if fp_kind not in {"morgan", "maccs"}:
+            raise ValueError(f"fp_kind must be 'morgan' or 'maccs', got {fp_kind!r}")
         self.seed = seed
         self.n_estimators = n_estimators
         self.max_depth = max_depth
@@ -86,6 +93,7 @@ class RandomForestModel(Model):
         self.fp_radius = fp_radius
         self.fp_n_bits = fp_n_bits
         self.fp_counts = fp_counts
+        self.fp_kind = fp_kind
         self.n_jobs = n_jobs
 
         #: Per-assay fitted forest, or ``None`` where the fallback was used.
@@ -98,17 +106,31 @@ class RandomForestModel(Model):
     # -- representation ---------------------------------------------------- #
 
     def featurize(self, smiles: Sequence[str]) -> np.ndarray:
-        """Morgan fingerprints as an ``(n_molecules, fp_n_bits)`` matrix."""
-        return morgan_matrix(
-            smiles,
-            radius=self.fp_radius,
-            n_bits=self.fp_n_bits,
-            use_counts=self.fp_counts,
-        )
+        """Fingerprint molecules as a matrix using the selected representation."""
+        if self.fp_kind == "morgan":
+            return morgan_matrix(
+                smiles,
+                radius=self.fp_radius,
+                n_bits=self.fp_n_bits,
+                use_counts=self.fp_counts,
+            )
+
+        rows = list(smiles)
+        if not rows:
+            raise ValueError("cannot featurize an empty sequence of molecules")
+        matrix = np.empty((len(rows), MACCS_N_BITS), dtype=np.uint8)
+        for index, smi in enumerate(rows):
+            try:
+                matrix[index] = maccs_fingerprint(smi)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"at dataset index {index}: {exc}") from exc
+        return matrix
 
     def featurization_key(self) -> tuple:
-        """Fingerprints depend on these three settings, all of them tunable."""
-        return ("rf", self.fp_radius, self.fp_n_bits, self.fp_counts)
+        """Identify the selected fingerprint and its representation settings."""
+        if self.fp_kind == "maccs":
+            return ("rf", "maccs")
+        return ("rf", "morgan", self.fp_radius, self.fp_n_bits, self.fp_counts)
 
     # -- training ---------------------------------------------------------- #
 
@@ -217,4 +239,5 @@ class RandomForestModel(Model):
             "fp_radius": (2, 3),
             "fp_n_bits": (1024, 2048),
             "fp_counts": (False, True),
+            "fp_kind": ("morgan", "maccs"),
         }
