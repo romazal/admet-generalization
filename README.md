@@ -28,7 +28,8 @@ pip install -e ".[dev]"
 make test                        # 148 tests, ~3 s
 ```
 
-No GPU is needed, and no download: both raw datasets are committed under
+No download, and a GPU is optional (it makes the GNN ~2.5x faster; see
+*CPU and GPU*): both raw datasets are committed under
 `data/` (123 KB Tox21, 20 KB ClinTox), so a fresh clone runs offline. Set
 `ADMET_DATA_DIR` to move the cache elsewhere.
 
@@ -55,15 +56,16 @@ JSON holding the config, the seed, the split sizes, every tuning trial, the
 metrics, the library versions and the git commit.
 
 ```bash
-make main        # Tox21: both models x both splits, 5 seeds     (~2.1 h)
-make sweep       # Tox21 learning curves: 10/25/50/100% training (~1.2 h)
-make clintox     # ClinTox: the same grid, 5 seeds x 4 fractions (~33 min)
+make main        # Tox21: both models x both splits, 5 seeds     (~1.1 h)
+make sweep       # Tox21 learning curves: 10/25/50/100% training (~40 min)
+make clintox     # ClinTox: the same grid, 5 seeds x 4 fractions (~17 min)
 
 make aggregate   # results/**/*.json -> runs.csv, summary.csv, gap.csv
 make plots       # -> figures/*.png
 ```
 
-`make all` runs the lot in order (~3.8 h on CPU). Every command skips a cell
+`make all` runs the lot in order (~2.0 h on a CUDA GPU, ~3.8 h on CPU).
+Every command skips a cell
 that already has a result file, so an interrupted pass resumes by reissuing
 the same command; pass `--overwrite` to redo them. To reproduce a single cell:
 
@@ -75,37 +77,54 @@ admet run configs/tox21_gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
 
 Measured, not estimated: every figure below comes from the `timing_seconds`
 field of the committed result files. Windows desktop, 16 threads, 31 GB RAM,
-run **on the CPU** — see the note below the table.
+GNN on an **RTX 5070 Ti**; each result file records the device it used in
+`versions.torch_device`.
 
 | Step | Time |
 |---|---|
 | Test suite | ~3 s |
 | Parse a dataset (no download — both are committed) | ~3 s |
-| Baseline, one Tox21 run at 100% (8 tuning trials, 1 seed) | 3.2 min |
-| GNN, one Tox21 run at 100% (8 tuning trials, 1 seed) | 9.4 min |
+| Baseline, one Tox21 run at 100% (8 tuning trials, 1 seed) | 2.7 min |
+| GNN, one Tox21 run at 100% (8 tuning trials, 1 seed) | 3.7 min |
 | Baseline, one ClinTox run at 100% | 7 s |
-| GNN, one ClinTox run at 100% | 1.4 min |
-| `make main` (4 configs x 5 seeds) | ~2.1 h |
-| `make sweep` (the 36 cells below 100%) | ~1.2 h |
-| `make clintox` (4 configs x 5 seeds x 4 fractions) | ~33 min |
-| **Everything: 136 runs** | **3.83 h** |
+| GNN, one ClinTox run at 100% | 38 s |
+| `make main` (4 configs x 5 seeds) | ~1.1 h |
+| `make sweep` (the 36 cells below 100%) | ~40 min |
+| `make clintox` (4 configs x 5 seeds x 4 fractions) | ~17 min |
+| **Everything: 136 runs** | **2.03 h** |
 
-The GNN costs about 2.5x the baseline on Tox21 and 12x on ClinTox. Early
-stopping ends a GNN trial at a mean best epoch of 34.9 (Tox21) and 22.8
+The GNN costs about 1.3x the baseline on Tox21 and 5x on ClinTox. Early
+stopping ends a GNN trial at a mean best epoch of 35.4 (Tox21) and 26.2
 (ClinTox) against a 50-epoch ceiling, so the ceiling rarely binds. To shorten
 a pass, lower `tuning.budget` in `configs/base.yaml` — it applies to **both**
 models at once, which is the point (see *Safeguards*).
 
 These are indicative of relative cost rather than a benchmark: the machine was
-in ordinary use, the baseline uses all cores via `n_jobs=-1`, and the GNN runs
-on the CPU.
+in ordinary use and the baseline uses all cores via `n_jobs=-1`.
 
-### Running the GNN on a GPU
+### CPU and GPU
 
-Nothing in the code needs changing — `GNNModel` already picks CUDA whenever
-`torch.cuda.is_available()` is true. The committed runs did not use one only
-because `pip install torch` installs the CPU-only wheel by default on
-Windows. To get a CUDA build instead:
+Nothing in the code needs changing to switch — `GNNModel` picks CUDA whenever
+`torch.cuda.is_available()` is true, and falls back to CPU otherwise. The
+grid was run both ways; `versions.torch_device` in each result file says
+which. On CPU the same 136 runs take **3.83 h** instead of 2.03 h:
+
+| | CPU | GPU | Speedup |
+|---|---|---|---|
+| Tox21 GNN, mean per run | 302 s | 118 s | **2.6x** |
+| Tox21 GNN at 100% | 555 s | 221 s | **2.5x** |
+| ClinTox GNN, mean per run | 43 s | 19 s | **2.2x** |
+| Baseline (scikit-learn, either way) | 119 s | 106 s | — |
+| **All 136 runs** | **3.83 h** | **2.03 h** | **1.9x** |
+
+Only the GNN is accelerated; the baseline is scikit-learn and never touches
+the card, so its 119 → 106 s is machine noise, not a speedup. The overall
+1.9x is therefore bounded by the baseline's share of the grid, and the 2.5x
+on the heaviest cell is the figure that matters for scaling up — worth having
+before attempting the larger datasets in [TODO.md](TODO.md), where ToxCast
+and HIV are expensive.
+
+To install a CUDA build (the PyPI default on Windows is CPU-only):
 
 ```bash
 pip uninstall torch
@@ -114,11 +133,8 @@ python -c "import torch; print(torch.cuda.is_available())"   # expect True
 ```
 
 Match the `cu…` version to your driver; recent NVIDIA cards need cu128 or
-later. This only speeds up the GNN — the baseline is scikit-learn and stays
-on the CPU either way. Worth doing before attempting the larger datasets in
-[TODO.md](TODO.md), where ToxCast and HIV are expensive on CPU; it is not
-worth re-running the committed results for, since they would change slightly
-and every number in the report is tied to them.
+later. **The device changes the GNN's scores slightly** — see *Reproducibility*
+below for how much, and why the baseline is unaffected.
 
 ---
 
@@ -126,39 +142,40 @@ and every number in the report is tied to them.
 
 136 runs: both models and both splits on Tox21 (five seeds at the full
 training set, three along the learning curve) and the same grid on ClinTox
-(five seeds throughout). 3.83 h of CPU compute. Full tables and threats to
-validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
+(five seeds throughout). 2.03 h of compute, GNN on a GPU. Full tables and
+threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 *[Findings](#findings)* below.
 
 - **The split type is the whole story.** Scaffold splitting costs the baseline
-  0.073 ROC-AUC and the GNN 0.080 — roughly ten times the difference between
+  0.073 ROC-AUC and the GNN 0.078 — roughly ten times the difference between
   the two models in any condition. When the test molecules stop resembling the
   training molecules, both methods degrade far more than either gains from its
   architecture.
-- **H2 (data size): supported.** The fingerprint baseline beats the GNN with
-  little data and the advantage closes as data is added — in PR-AUC the gap
-  runs from −0.086 at 10% of the training set to −0.031 at 100% under a random
-  split, and from −0.057 to −0.026 under a scaffold split, monotonically in
-  both.
+- **H2 (data size): supported, with one caveat.** The fingerprint baseline
+  beats the GNN with little data and the advantage closes as data is added —
+  in PR-AUC the gap runs from −0.047 at 10% of the training set to −0.019 at
+  100% under a scaffold split, monotonically. Under a random split it runs
+  from −0.094 to −0.024 but not monotonically, and that ordering did not
+  survive a rerun on different hardware (see *Reproducibility*).
 - **H1 (generalization): not supported, because its premise fails.** At the
-  full training set there is no GNN advantage to shrink: +0.003 ± 0.015 under
-  the random split, −0.004 ± 0.022 under the scaffold split, both within one
+  full training set there is no GNN advantage to shrink: +0.000 ± 0.018 under
+  the random split, −0.005 ± 0.017 under the scaffold split, both within one
   standard deviation of zero and of each other.
 - **Headline numbers** (Tox21 test ROC-AUC, five seeds): baseline
   **0.834 ± 0.009** random / **0.760 ± 0.013** scaffold; GNN
-  **0.836 ± 0.011** random / **0.756 ± 0.018** scaffold.
+  **0.834 ± 0.015** random / **0.755 ± 0.011** scaffold.
 - **ClinTox is inconclusive, and informative anyway.** Every GNN-minus-baseline
-  gap on it is smaller than its own SD (+0.046 ± 0.090 at best), so it settles
+  gap on it is smaller than its own SD (+0.083 ± 0.085 at best), so it settles
   nothing about H1 or H2. But it scores *higher* than Tox21 on a fifth of the
-  data and loses only 0.021–0.043 ROC-AUC to a scaffold split, where Tox21
-  loses 0.073–0.080. Together with 19 duplicate structures carrying
+  data and the baseline loses only 0.021 ROC-AUC to a scaffold split, where
+  Tox21 loses 0.073–0.078. Together with 19 duplicate structures carrying
   contradictory labels, that points at dataset provenance rather than at model
   quality.
-- **The GNN costs 2.5x the baseline on Tox21 and 12x on ClinTox**, for no
-  measurable gain.
+- **The GNN costs 1.3x the baseline on Tox21 and 5x on ClinTox** with the GPU
+  (2.5x and 12x without one), for no measurable gain.
 - **A methodological result worth the same weight.** An intermediate three-seed
   pass put the scaffold gap at −0.016 ± 0.020, which reads as a real effect;
-  at five seeds it is −0.004 ± 0.022. The proposal's "target 5, minimum 3" is
+  at five seeds it is −0.005 ± 0.017. The proposal's "target 5, minimum 3" is
   doing real work — three-seed numbers are directional only.
 
 The honest one-line answer to the research question: *on this dataset, at this
@@ -194,46 +211,49 @@ grid is 16× larger). 56 Tox21 runs. Every number below comes from
 
 | Metric | Split | Baseline (Morgan + RF) | GNN (GINE) | GNN − baseline |
 |---|---|---|---|---|
-| ROC-AUC | Random | 0.834 ± 0.009 | 0.836 ± 0.011 | **+0.003 ± 0.015** |
-| ROC-AUC | Scaffold | 0.760 ± 0.013 | 0.756 ± 0.018 | **−0.004 ± 0.022** |
-| PR-AUC | Random | 0.473 ± 0.023 | 0.442 ± 0.029 | −0.031 ± 0.037 |
-| PR-AUC | Scaffold | 0.379 ± 0.019 | 0.353 ± 0.019 | −0.026 ± 0.027 |
+| ROC-AUC | Random | 0.834 ± 0.009 | 0.834 ± 0.015 | **+0.000 ± 0.018** |
+| ROC-AUC | Scaffold | 0.760 ± 0.013 | 0.755 ± 0.011 | **−0.005 ± 0.017** |
+| PR-AUC | Random | 0.473 ± 0.023 | 0.449 ± 0.029 | −0.024 ± 0.037 |
+| PR-AUC | Scaffold | 0.379 ± 0.019 | 0.360 ± 0.020 | −0.019 ± 0.028 |
 
 ### Learning curves (3 seeds) — GNN minus baseline
 
 | Training set | ROC-AUC, random | ROC-AUC, scaffold | PR-AUC, random | PR-AUC, scaffold |
 |---|---|---|---|---|
-| 10% | −0.016 ± 0.025 | +0.001 ± 0.014 | **−0.086 ± 0.054** | **−0.057 ± 0.030** |
-| 25% | −0.008 ± 0.019 | −0.013 ± 0.017 | −0.063 ± 0.018 | −0.041 ± 0.019 |
-| 50% | −0.001 ± 0.011 | −0.010 ± 0.018 | −0.028 ± 0.020 | −0.032 ± 0.033 |
-| 100% | +0.003 ± 0.015 | −0.004 ± 0.022 | −0.031 ± 0.037 | −0.026 ± 0.027 |
+| 10% | −0.016 ± 0.020 | −0.018 ± 0.035 | **−0.094 ± 0.033** | **−0.047 ± 0.019** |
+| 25% | +0.005 ± 0.015 | −0.003 ± 0.007 | −0.033 ± 0.018 | −0.039 ± 0.010 |
+| 50% | −0.003 ± 0.013 | −0.001 ± 0.014 | −0.041 ± 0.020 | −0.034 ± 0.020 |
+| 100% | +0.000 ± 0.018 | −0.005 ± 0.017 | −0.024 ± 0.037 | −0.019 ± 0.028 |
 
 Four things follow, in order of how well the data supports them.
 
 **1. The split type dominates everything else.** Moving from a random to a
-scaffold split costs the baseline 0.073 ROC-AUC and the GNN 0.080 — an order of
+scaffold split costs the baseline 0.073 ROC-AUC and the GNN 0.078 — an order of
 magnitude more than the difference between the two models in any condition.
 Whatever is gained by choosing an architecture here is small next to what is
 lost when the test molecules stop resembling the training molecules. This is
 the result the research question was asked to expose, and it is unambiguous.
 
-**2. H2 is supported.** The baseline is clearly better than the GNN with little
-data, and the advantage closes as data is added. The cleanest evidence is
-PR-AUC, where the 10% gap (−0.086 random, −0.057 scaffold) is larger than its
-own SD and shrinks monotonically to roughly −0.03 at 100% in both splits. The
-ROC-AUC curve under the random split shows the same shape and crosses zero near
-50%. This is the proposal's H2 as stated.
+**2. H2 is supported, with a caveat on how cleanly.** The baseline is clearly
+better than the GNN with little data, and the advantage closes as data is
+added. The cleanest evidence is PR-AUC, where the 10% gap (−0.094 random,
+−0.047 scaffold) is larger than its own SD and falls to roughly −0.02 at 100%
+in both splits. Under the scaffold split the decline is monotone; under the
+random split it is not (the 25% point sits above the 50% one), and which of
+the two is monotone changed between the CPU and GPU passes. The *endpoints*
+are robust, the shape in between is not — treat H2 as supported by the 10%
+versus 100% contrast rather than by a smooth curve.
 
 **3. H1 is not supported, because its premise does not hold.** H1 predicts a
 GNN advantage that shrinks under structural shift. At 100% there is no GNN
-advantage to shrink in either split: +0.003 ± 0.015 random, −0.004 ± 0.022
+advantage to shrink in either split: +0.000 ± 0.018 random, −0.005 ± 0.017
 scaffold, both inside one SD of zero and indistinguishable from each other. The
 honest statement is *no GNN advantage was detected under either split*. That
 outcome is compatible with H1 and equally compatible with a GNN that is simply
 undertrained at 8 tuning trials; this design cannot separate those.
 
 **4. Three seeds were not enough, and the data shows it.** At 3 seeds the
-scaffold ROC-AUC gap read −0.016 ± 0.020; at 5 it reads −0.004 ± 0.022. The
+scaffold ROC-AUC gap read −0.016 ± 0.020; at 5 it reads −0.005 ± 0.017. The
 apparent effect was seed noise. Treat every 3-seed row above as directional
 only.
 
@@ -249,6 +269,48 @@ counterparts and the same three under `figures/clintox/`.
 
 ClinTox results and the cross-dataset comparison are in
 [REPORT.md](REPORT.md) §4.
+
+## Reproducibility
+
+`make aggregate && make plots` on a fresh clone regenerates `runs.csv`,
+`summary.csv`, `gap.csv` and all 12 figures with **zero diff** — every table
+and figure is a pure function of the committed result files.
+
+Re-running the *training* is reproducible to the extent the libraries are.
+The whole grid was run twice, once with the GNN on CPU and once on a GPU,
+which measures that directly:
+
+| | Reproduced |
+|---|---|
+| Baseline test metrics, all 68 runs | **bit-identical** |
+| Baseline validation metrics | 67/68 bit-identical; one drifted by 8e-7 |
+| GNN test metrics | changed, within seed noise (see below) |
+
+**The baseline is exactly reproducible and the GNN is not.** The baseline is
+scikit-learn with fixed seeds and never touches the GPU, so it is the control:
+its test metrics came back identical to the last decimal place, which is what
+licenses attributing every GNN change to the GNN rather than to the data, the
+splits or the harness. The one baseline value that moved is a validation
+ROC-AUC, 8e-7, from non-deterministic float summation across threads; it did
+not change which tuning trial won, so no reported number depends on it.
+
+The GNN's scores moved more. Two things differed at once — the device, and
+the torch version (2.15.0+cpu → 2.11.0+cu128, because no cu128 wheel exists
+for 2.15 yet) — so the change cannot be attributed to the GPU alone:
+
+| Tox21 GNN ROC-AUC, 100% | CPU | GPU | Δ | SD |
+|---|---|---|---|---|
+| Random | 0.836 | 0.834 | −0.002 | ± 0.015 |
+| Scaffold | 0.756 | 0.755 | −0.001 | ± 0.011 |
+
+Both shifts are an order of magnitude below the seed-to-seed SD, and **every
+conclusion above survives**: the split type still dominates, both headline
+gaps still sit inside one SD of zero, and the 10%-to-100% narrowing still
+holds. What did *not* survive is the finer structure — the monotone ordering
+of the PR-AUC learning curve swapped splits, and on ClinTox the GNN's random
+split moved +0.037 and its scaffold drop went from 0.043 to 0.082. Those were
+always inside the SDs; the rerun is a reminder that reading them as findings
+would have been wrong.
 
 ## Data
 
@@ -433,13 +495,12 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   version control. They are tracked instead so a clone reproduces the report
   offline and every number can be traced to its run file. The whole lot is
   2.8 MB.
-- **CPU, not GPU.** §8 assumes a 16 GB GPU and "a few GPU hours". Everything
-  ran on the CPU in 3.83 h, so the feasibility estimate held comfortably
-  without one. To be precise about why: the machine *does* have an NVIDIA GPU,
-  but `pip install torch` pulls the CPU-only wheel from PyPI by default on
-  Windows, so `torch.cuda.is_available()` was False for every run. The code
-  selects CUDA automatically when it is available (`models/gnn.py`), so this
-  was an environment default rather than a design decision.
+- **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
+  hours". The committed results use a GPU (RTX 5070 Ti) and take 2.03 h, well
+  inside that. The grid was also run end to end on the CPU alone, in 3.83 h —
+  still inside it — so a teammate without a CUDA card can reproduce
+  everything; see *CPU and GPU* and *Reproducibility* above. The code selects
+  CUDA automatically when available (`models/gnn.py`); no flag to set.
 - **No pandas.** Proposal §5 lists it, but its compiled extensions are blocked
   by the Windows Application Control policy on the development machine. The
   loader and the aggregation use the standard library's `csv` plus NumPy.
