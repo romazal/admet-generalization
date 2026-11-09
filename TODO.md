@@ -1,11 +1,13 @@
 # TODO — things you can contribute
 
-Self-contained additions to the codebase. Each is small enough to finish in
-one sitting with a free AI agent (ChatGPT, Claude, Gemini, Copilot — any free
-tier), and each ends in a commit that stands on its own.
+Self-contained additions to the codebase. Tasks 1–8 are each small enough to
+finish in one sitting with a free AI agent (ChatGPT, Claude, Gemini, Copilot —
+any free tier), and each ends in a commit that stands on its own. After them
+there is **one larger milestone**, for anyone who wants something with more in
+it or wants to work with someone else.
 
-Pick whatever interests you. None of these can break the experiment: the
-results are already committed, and nothing here touches the splitter, the
+Pick whatever interests you. Nothing in tasks 1–8 can break the experiment:
+the results are already committed, and none of them touch the splitter, the
 masking or the metrics.
 
 ---
@@ -349,6 +351,139 @@ fail is worse than none.
 
 ---
 
+## A larger milestone: make the project dataset-agnostic
+
+Everything above is an addition. This one is a change of shape, and it is
+worth doing as a milestone rather than a task — probably by two people, over
+several sittings, on a long-lived branch.
+
+**The problem.** Right now a dataset is only usable if someone edits
+`src/admet/data/loaders.py` and adds a `DatasetSpec` to the `DATASETS` dict
+(this is what task 3 asks you to do once, by hand). That means the project
+supports exactly the datasets we thought of. It also means nobody can point
+the pipeline at a new file — a dataset from a paper, a newer MoleculeNet
+release, an in-house CSV — without changing library code and reinstalling.
+
+The goal is that **any appropriate dataset can be dropped in**, and that the
+project can say for itself whether a given dataset *is* appropriate and how it
+compares to the ones we already ran.
+
+Three parts. They are independently useful, so a half-finished milestone still
+leaves the repo better than it found it.
+
+### Part A — load a dataset without editing the source
+
+Let a config name a file directly instead of a registry key:
+
+```yaml
+dataset:
+  path: data/my_dataset.csv        # or a URL
+  smiles_column: smiles
+  task_columns: [active]
+```
+
+`DatasetSpec` already has every field this needs (`name`, `url`, `filename`,
+`smiles_column`, `task_columns`, `exclude_columns`, `description`) — the
+registry is just a dict of them. So the work is mostly plumbing: let
+`load_dataset()` accept a spec as well as a name, and let the config loader
+build one from a `dataset:` block. Keep the named registry working exactly as
+it does now, because every committed config and every result file depends on
+it.
+
+A good intermediate design: move the two built-in specs into
+`datasets/*.yaml` files and have the registry read that directory at import.
+Then adding a dataset is adding a YAML file, and task 3 becomes a two-minute
+job instead of a code change.
+
+### Part B — a function that inspects a dataset and says whether it will work
+
+Given a raw CSV, before any training, report what it contains and what will go
+wrong. Something like `admet inspect <path>`, printing:
+
+- **Which column is the SMILES column**, guessed by trying to parse each
+  candidate column with RDKit and taking the one with the highest parse rate.
+  This is the single most common thing to get wrong by hand.
+- **What kind of labels each column holds** — binary, continuous, or
+  categorical. This matters because the pipeline does masked multitask
+  *binary* classification, so a continuous column has to be refused with a
+  clear message rather than silently cast to floats and trained on. Right now
+  that constraint lives in a paragraph of this file; it should live in code.
+- **Label density, positives per task, and class balance.** A task with three
+  positives cannot be scored and should be flagged before someone waits for a
+  run to find out.
+- **Duplicates and conflicts** — the same structure appearing twice, and
+  whether the copies disagree. ClinTox has 19 such groups and every one
+  disagrees on both labels; that is the most important single fact about the
+  dataset, and we found it by accident.
+- **Scaffold structure** — how many Bemis-Murcko scaffolds, and **the size of
+  the largest scaffold group as a fraction of the dataset**. This one is not
+  cosmetic: Tox21 has a single group of 1775 acyclic molecules, which is what
+  broke the first scaffold splitter and produced an empty validation set. A
+  dataset whose largest group exceeds the smallest requested part is a dataset
+  that will give you a degenerate split, and the inspector can say so in
+  advance instead of after five seeds.
+
+Most of the pieces exist: `murcko_scaffold()` and `scaffold_groups()` in
+`src/admet/data/splits.py`, `Dataset.summary()`, `label_density` and
+`positives_per_task()` in `loaders.py`. This is mostly assembly plus the
+column-type inference, which is new.
+
+### Part C — compare a dataset against the ones we have
+
+This is the part that turns the inspector into something scientifically
+useful. Given a new dataset, put its profile beside Tox21's and ClinTox's:
+
+| | Tox21 | ClinTox | yours |
+|---|---|---|---|
+| Molecules | 7823 | 1461 | |
+| Tasks | 12 | 1 scored | |
+| Label density | 0.829 | 1.000 | |
+| Positives per task | 186–942 | 103 | |
+| Largest scaffold group | 1775 (23%) | | |
+| Conflicting duplicates | 0 | 19 | |
+
+Two comparisons worth computing on top of the table:
+
+- **Structural overlap with the datasets already run** — how many canonical
+  SMILES, and how many scaffolds, the new dataset shares with Tox21 and
+  ClinTox. A new dataset that overlaps heavily is not independent evidence,
+  and a result from it should not be reported as if it were.
+- **Which existing dataset it resembles.** This is the question that actually
+  matters when someone proposes a dataset: is this another Tox21 — large
+  enough and hard enough to resolve a difference between two models — or
+  another ClinTox, small enough that every gap will be smaller than its own
+  SD? We learned that about ClinTox by running 80 jobs. A profile would have
+  suggested it beforehand.
+
+Keep the output honest: a profile is a prediction, not a result. It should
+say "this dataset is ClinTox-sized, expect wide error bars", not "this
+dataset will not work".
+
+### Scope, and what must not change
+
+- **In scope:** loading, inspecting, comparing, and the CLI around them.
+- **Out of scope:** regression support. Making the pipeline handle continuous
+  labels means a new loss, new metrics and new plots — a bigger change than
+  this one, and a separate conversation. Part B should *detect* regression
+  datasets and refuse them clearly; that is the whole job here.
+- **Must not change:** the cleaning semantics in `loaders.py` —
+  canonicalisation, dropping unparseable SMILES, merging duplicates, and
+  missing labels staying missing. Every committed result was produced under
+  those rules, so altering them silently invalidates the comparison between
+  old and new runs. Refactor around them, not through them.
+
+**Test as you go, not at the end.** Write `tests/test_loaders.py` (task 7)
+first if it does not exist yet — this milestone rewrites the module that file
+is supposed to be guarding, and doing it without tests in place is how the
+cleaning semantics get changed by accident.
+
+**Verify on a dataset we know.** Point the finished inspector at Tox21 and
+ClinTox and check it reports the numbers already in REPORT.md §2. If it
+disagrees with the table we published, one of the two is wrong and that is
+worth finding out.
+
+---
+
 ## What not to touch
 
 These are where the science lives, and a plausible-looking agent edit can
@@ -379,3 +514,8 @@ once without conflicts. The exceptions worth knowing:
 
 Everything else is independent. Branch from an up-to-date `master`, and pull
 before you push.
+
+**The milestone is the exception.** It rewrites `loaders.py`, which tasks
+**3**, **6** and **7** all touch. If someone starts it, land those three
+first — the milestone makes task 3 trivial and needs task 7's tests in place
+before it begins, so the order is the useful one anyway.
