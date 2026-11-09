@@ -7,16 +7,16 @@
   "train_fraction": 1.0,
   "metrics": {
     "test": {
-      "roc_auc": 0.7492969057753093,
-      "pr_auc": 0.3397138949483099,
+      "roc_auc": 0.7560631299693563,
+      "pr_auc": 0.343263934585911,
       "n_tasks_scored": 12,
       "n_tasks_skipped": 0,
       "skipped_tasks": {},
       "per_task": [
         {
           "task": "NR-AR",
-          "roc_auc": 0.7207305502846301,
-          "pr_auc": 0.33880650552145225,
+          "roc_auc": 0.7561669829222011,
+          "pr_auc": 0.3727260379361161,
           "n_labelled": 711,
           "n_positive": 31,
           "positive_rate": 0.04360056258790436,
@@ -24,8 +24,8 @@
         },
         {
           "task": "NR-AR-LBD",
-          "roc_auc": 0.7216730734028922,
-          "pr_auc": 0.35780689033781954,
+          "roc_auc": 0.7344865458539264,
+          "pr_auc": 0.3898847121107079,
           "n_labelled": 625,
           "n_positive": 18,
           "positive_rate": 0.0288,
@@ -33,8 +33,8 @@
         },
         {
           "task": "NR-AhR",
-          "roc_auc": 0.8555469456283095,
-          "pr_auc": 0.5942660502600399,
+          "roc_auc": 0.8454733307503551,
+          "pr_auc": 0.5817750579160528,
           "n_labelled": 611,
           "n_positive": 89,
           "positive_rate": 0.14566284779050737,
@@ -42,8 +42,8 @@
         },
         {
           "task": "NR-Aromatase",
-          "roc_auc": 0.7508537973654252,
-          "pr_auc": 0.3288344722643835,
+          "roc_auc": 0.7285330948121647,
+          "pr_auc": 0.3059740436060827,
           "n_labelled": 525,
           "n_positive": 52,
           "positive_rate": 0.09904761904761905,
@@ -51,8 +51,8 @@
         },
         {
           "task": "NR-ER",
-          "roc_auc": 0.6972273284313726,
-          "pr_auc": 0.35134617171115073,
+          "roc_auc": 0.7274509803921569,
+          "pr_auc": 0.3794224571063669,
           "n_labelled": 548,
           "n_positive": 68,
           "positive_rate": 0.12408759124087591,
@@ -60,8 +60,8 @@
         },
         {
           "task": "NR-ER-LBD",
-          "roc_auc": 0.6899512329143486,
-          "pr_auc": 0.25541807951340684,
+          "roc_auc": 0.7350092726148775,
+          "pr_auc": 0.3062567752316852,
           "n_labelled": 656,
           "n_positive": 23,
           "positive_rate": 0.0350609756097561,
@@ -69,8 +69,8 @@
         },
         {
           "task": "NR-PPAR-gamma",
-          "roc_auc": 0.7475038672479256,
-          "pr_auc": 0.13717297808260553,
+          "roc_auc": 0.776894951483617,
+          "pr_auc": 0.2094487140728385,
           "n_labelled": 573,
           "n_positive": 26,
           "positive_rate": 0.04537521815008726,
@@ -78,8 +78,8 @@
         },
         {
           "task": "SR-ARE",
-          "roc_auc": 0.7633461872812785,
-          "pr_auc": 0.4921600973790325,
+          "roc_auc": 0.7675367229119764,
+          "pr_auc": 0.5176573014030975,
           "n_labelled": 496,
           "n_positive": 119,
           "positive_rate": 0.2399193548387097,
@@ -87,8 +87,8 @@
         },
         {
           "task": "SR-ATAD5",
-          "roc_auc": 0.7620045117628103,
-          "pr_auc": 0.14387436577338897,
+          "roc_auc": 0.780642389085831,
+          "pr_auc": 0.10584671947751524,
           "n_labelled": 671,
           "n_positive": 29,
           "positive_rate": 0.043219076005961254,
@@ -96,8 +96,8 @@
         },
         {
           "task": "SR-HSE",
-          "roc_auc": 0.7381237183868763,
-          "pr_auc": 0.29975363738504807,
+          "roc_auc": 0.697282980177717,
+          "pr_auc": 0.17906371643519428,
           "n_labelled": 576,
           "n_positive": 44,
           "positive_rate": 0.0763888888888889,
@@ -105,8 +105,8 @@
         },
         {
           "task": "SR-MMP",
-          "roc_auc": 0.8293395805443998,
-          "pr_auc": 0.5544562126927203,
+          "roc_auc": 0.8035475234270416,
+          "pr_auc": 0.5208165769738189,
           "n_labelled": 523,
           "n_positive": 108,
           "positive_rate": 0.20650095602294455,
@@ -114,8 +114,8 @@
         },
         {
           "task": "SR-p53",
-          "roc_auc": 0.7152620760534429,
-          "pr_auc": 0.22267127845867074,
+          "roc_auc": 0.7197327852004111,
+          "pr_auc": 0.2502951027614554,
           "n_labelled": 626,
           "n_positive": 70,
           "positive_rate": 0.11182108626198083,
@@ -124,16 +124,16 @@
       ]
     },
     "valid": {
-      "roc_auc": 0.7946463333831968,
-      "pr_auc": 0.37064258821040824,
+      "roc_auc": 0.7969154648347617,
+      "pr_auc": 0.3709044048835968,
       "n_tasks_scored": 12,
       "n_tasks_skipped": 0,
       "skipped_tasks": {},
       "per_task": [
         {
           "task": "NR-AR",
-          "roc_auc": 0.798912140840392,
-          "pr_auc": 0.4175518584289596,
+          "roc_auc": 0.8261501411725627,
+          "pr_auc": 0.38391603563161875,
           "n_labelled": 705,
           "n_positive": 36,
           "positive_rate": 0.05106382978723404,
@@ -141,8 +141,8 @@
         },
         {
           "task": "NR-AR-LBD",
-          "roc_auc": 0.907626751408349,
-          "pr_auc": 0.43993078112506007,
+          "roc_auc": 0.9134768164090712,
+          "pr_auc": 0.4200526848198457,
           "n_labelled": 625,
           "n_positive": 23,
           "positive_rate": 0.0368,
@@ -150,8 +150,8 @@
         },
         {
           "task": "NR-AhR",
-          "roc_auc": 0.82678916827853,
-          "pr_auc": 0.5101061448290838,
+          "roc_auc": 0.8045454545454547,
+          "pr_auc": 0.4656596700715595,
           "n_labelled": 617,
           "n_positive": 100,
           "positive_rate": 0.1620745542949757,
@@ -159,8 +159,8 @@
         },
         {
           "task": "NR-Aromatase",
-          "roc_auc": 0.7650247090706201,
-          "pr_auc": 0.3453898912076764,
+          "roc_auc": 0.7552473563951326,
+          "pr_auc": 0.2511700803376703,
           "n_labelled": 500,
           "n_positive": 41,
           "positive_rate": 0.082,
@@ -168,8 +168,8 @@
         },
         {
           "task": "NR-ER",
-          "roc_auc": 0.7031520562770562,
-          "pr_auc": 0.3775528919135217,
+          "roc_auc": 0.7423971861471862,
+          "pr_auc": 0.426304310190711,
           "n_labelled": 557,
           "n_positive": 77,
           "positive_rate": 0.13824057450628366,
@@ -177,8 +177,8 @@
         },
         {
           "task": "NR-ER-LBD",
-          "roc_auc": 0.7858304297328689,
-          "pr_auc": 0.3398642719533992,
+          "roc_auc": 0.795075493612079,
+          "pr_auc": 0.3044500130820044,
           "n_labelled": 650,
           "n_positive": 35,
           "positive_rate": 0.05384615384615385,
@@ -186,8 +186,8 @@
         },
         {
           "task": "NR-PPAR-gamma",
-          "roc_auc": 0.7775059463132857,
-          "pr_auc": 0.1313303542414626,
+          "roc_auc": 0.7881073734284743,
+          "pr_auc": 0.2797185064221591,
           "n_labelled": 572,
           "n_positive": 27,
           "positive_rate": 0.0472027972027972,
@@ -195,8 +195,8 @@
         },
         {
           "task": "SR-ARE",
-          "roc_auc": 0.7614012124552217,
-          "pr_auc": 0.4804784363776552,
+          "roc_auc": 0.769036465509323,
+          "pr_auc": 0.5154247096515718,
           "n_labelled": 496,
           "n_positive": 114,
           "positive_rate": 0.22983870967741934,
@@ -204,8 +204,8 @@
         },
         {
           "task": "SR-ATAD5",
-          "roc_auc": 0.8024007936507935,
-          "pr_auc": 0.22662669766578875,
+          "roc_auc": 0.797718253968254,
+          "pr_auc": 0.25320595508137417,
           "n_labelled": 670,
           "n_positive": 40,
           "positive_rate": 0.05970149253731343,
@@ -213,8 +213,8 @@
         },
         {
           "task": "SR-HSE",
-          "roc_auc": 0.761712962962963,
-          "pr_auc": 0.2655217207578014,
+          "roc_auc": 0.7146527777777778,
+          "pr_auc": 0.23705118948337878,
           "n_labelled": 580,
           "n_positive": 40,
           "positive_rate": 0.06896551724137931,
@@ -222,8 +222,8 @@
         },
         {
           "task": "SR-MMP",
-          "roc_auc": 0.8565997316321006,
-          "pr_auc": 0.597997651149436,
+          "roc_auc": 0.8551637279596978,
+          "pr_auc": 0.5904857401568991,
           "n_labelled": 504,
           "n_positive": 107,
           "positive_rate": 0.2123015873015873,
@@ -231,8 +231,8 @@
         },
         {
           "task": "SR-p53",
-          "roc_auc": 0.7888000979761796,
-          "pr_auc": 0.31536035887505426,
+          "roc_auc": 0.8014145310921282,
+          "pr_auc": 0.32341396367436887,
           "n_labelled": 630,
           "n_positive": 57,
           "positive_rate": 0.09047619047619047,
@@ -252,11 +252,11 @@
     "patience": 10,
     "weight_decay": 0.0,
     "batch_size": 32,
-    "dropout": 0.3,
-    "hidden_dim": 128,
+    "dropout": 0.0,
+    "hidden_dim": 256,
     "learning_rate": 0.003,
     "n_layers": 3,
-    "pooling": "mean"
+    "pooling": "sum"
   },
   "tuning": {
     "budget": 8,
@@ -273,8 +273,8 @@
           "n_layers": 3,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7944715799362291,
-        "seconds": 47.35
+        "valid_roc_auc": 0.795522440220902,
+        "seconds": 54.64
       },
       {
         "trial": 1,
@@ -286,8 +286,8 @@
           "n_layers": 3,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7646458891092128,
-        "seconds": 56.25
+        "valid_roc_auc": 0.7791360616844966,
+        "seconds": 48.73
       },
       {
         "trial": 2,
@@ -299,8 +299,8 @@
           "n_layers": 3,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.782142080734034,
-        "seconds": 86.95
+        "valid_roc_auc": 0.7969186763231447,
+        "seconds": 44.93
       },
       {
         "trial": 3,
@@ -312,8 +312,8 @@
           "n_layers": 2,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7742490343984859,
-        "seconds": 48.16
+        "valid_roc_auc": 0.7711952625315703,
+        "seconds": 23.98
       },
       {
         "trial": 4,
@@ -325,8 +325,8 @@
           "n_layers": 3,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7524470396555221,
-        "seconds": 14.35
+        "valid_roc_auc": 0.7762095803771912,
+        "seconds": 27.07
       },
       {
         "trial": 5,
@@ -338,8 +338,8 @@
           "n_layers": 3,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.7946463333831968,
-        "seconds": 108.17
+        "valid_roc_auc": 0.7759582439280747,
+        "seconds": 49.43
       },
       {
         "trial": 6,
@@ -351,8 +351,8 @@
           "n_layers": 2,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7779862026849914,
-        "seconds": 45.86
+        "valid_roc_auc": 0.7705037500628976,
+        "seconds": 20.82
       },
       {
         "trial": 7,
@@ -364,8 +364,8 @@
           "n_layers": 3,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.787024107880265,
-        "seconds": 196.27
+        "valid_roc_auc": 0.7836521797834072,
+        "seconds": 45.17
       }
     ]
   },
@@ -457,13 +457,14 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 603.38,
-    "total": 609.92
+    "tuning": 314.78,
+    "total": 319.33
   },
-  "best_epoch": 50
+  "best_epoch": 33
 }

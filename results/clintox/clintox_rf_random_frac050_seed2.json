@@ -78,7 +78,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6828872668288727,
-        "seconds": 0.76
+        "seconds": 0.75
       },
       {
         "trial": 1,
@@ -93,7 +93,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8094079480940795,
-        "seconds": 0.77
+        "seconds": 0.74
       },
       {
         "trial": 2,
@@ -108,7 +108,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7899432278994323,
-        "seconds": 0.98
+        "seconds": 1.0
       },
       {
         "trial": 3,
@@ -123,7 +123,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.7611516626115167,
-        "seconds": 0.52
+        "seconds": 0.5
       },
       {
         "trial": 4,
@@ -153,7 +153,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8369829683698297,
-        "seconds": 0.73
+        "seconds": 0.75
       },
       {
         "trial": 6,
@@ -168,7 +168,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7615571776155718,
-        "seconds": 1.01
+        "seconds": 0.98
       },
       {
         "trial": 7,
@@ -183,7 +183,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8199513381995134,
-        "seconds": 0.96
+        "seconds": 0.92
       }
     ]
   },
@@ -251,12 +251,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 6.12,
-    "total": 6.64
+    "tuning": 6.02,
+    "total": 6.54
   }
 }

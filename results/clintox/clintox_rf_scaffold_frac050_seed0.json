@@ -78,7 +78,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8165422885572139,
-        "seconds": 0.65
+        "seconds": 0.73
       },
       {
         "trial": 1,
@@ -93,7 +93,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8134328358208955,
-        "seconds": 0.66
+        "seconds": 0.74
       },
       {
         "trial": 2,
@@ -108,7 +108,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8022388059701493,
-        "seconds": 0.89
+        "seconds": 1.02
       },
       {
         "trial": 3,
@@ -123,7 +123,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8165422885572139,
-        "seconds": 0.48
+        "seconds": 0.53
       },
       {
         "trial": 4,
@@ -138,7 +138,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8115671641791045,
-        "seconds": 0.62
+        "seconds": 0.71
       },
       {
         "trial": 5,
@@ -153,7 +153,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8152985074626865,
-        "seconds": 0.76
+        "seconds": 0.87
       },
       {
         "trial": 6,
@@ -168,7 +168,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7991293532338308,
-        "seconds": 0.87
+        "seconds": 0.99
       },
       {
         "trial": 7,
@@ -183,7 +183,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7481343283582089,
-        "seconds": 0.5
+        "seconds": 0.59
       }
     ]
   },
@@ -253,12 +253,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 5.41,
-    "total": 6.75
+    "tuning": 6.18,
+    "total": 7.6
   }
 }

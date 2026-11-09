@@ -7,16 +7,16 @@
   "train_fraction": 0.25,
   "metrics": {
     "test": {
-      "roc_auc": 0.8013468013468013,
-      "pr_auc": 0.2801243673584099,
+      "roc_auc": 0.7232323232323232,
+      "pr_auc": 0.18613205133532634,
       "n_tasks_scored": 1,
       "n_tasks_skipped": 0,
       "skipped_tasks": {},
       "per_task": [
         {
           "task": "CT_TOX",
-          "roc_auc": 0.8013468013468013,
-          "pr_auc": 0.2801243673584099,
+          "roc_auc": 0.7232323232323232,
+          "pr_auc": 0.18613205133532634,
           "n_labelled": 146,
           "n_positive": 11,
           "positive_rate": 0.07534246575342465,
@@ -25,16 +25,16 @@
       ]
     },
     "valid": {
-      "roc_auc": 0.9063852813852813,
-      "pr_auc": 0.36476858358769015,
+      "roc_auc": 0.9128787878787878,
+      "pr_auc": 0.5960235244396734,
       "n_tasks_scored": 1,
       "n_tasks_skipped": 0,
       "skipped_tasks": {},
       "per_task": [
         {
           "task": "CT_TOX",
-          "roc_auc": 0.9063852813852813,
-          "pr_auc": 0.36476858358769015,
+          "roc_auc": 0.9128787878787878,
+          "pr_auc": 0.5960235244396734,
           "n_labelled": 146,
           "n_positive": 14,
           "positive_rate": 0.0958904109589041,
@@ -53,12 +53,12 @@
     "epochs": 50,
     "patience": 10,
     "weight_decay": 0.0,
-    "batch_size": 64,
-    "dropout": 0.1,
-    "hidden_dim": 256,
+    "batch_size": 32,
+    "dropout": 0.3,
+    "hidden_dim": 64,
     "learning_rate": 0.001,
     "n_layers": 2,
-    "pooling": "mean"
+    "pooling": "sum"
   },
   "tuning": {
     "budget": 8,
@@ -75,8 +75,8 @@
           "n_layers": 2,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.8706709956709956,
-        "seconds": 1.9
+        "valid_roc_auc": 0.9128787878787878,
+        "seconds": 2.42
       },
       {
         "trial": 1,
@@ -88,8 +88,8 @@
           "n_layers": 2,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.9063852813852813,
-        "seconds": 6.95
+        "valid_roc_auc": 0.8912337662337662,
+        "seconds": 0.98
       },
       {
         "trial": 2,
@@ -101,8 +101,8 @@
           "n_layers": 4,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8733766233766233,
-        "seconds": 1.68
+        "valid_roc_auc": 0.8798701298701299,
+        "seconds": 1.37
       },
       {
         "trial": 3,
@@ -114,8 +114,8 @@
           "n_layers": 2,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8695887445887446,
-        "seconds": 1.3
+        "valid_roc_auc": 0.8760822510822511,
+        "seconds": 0.44
       },
       {
         "trial": 4,
@@ -127,8 +127,8 @@
           "n_layers": 4,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8955627705627704,
-        "seconds": 1.38
+        "valid_roc_auc": 0.8971861471861472,
+        "seconds": 1.43
       },
       {
         "trial": 5,
@@ -140,8 +140,8 @@
           "n_layers": 4,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8528138528138529,
-        "seconds": 2.34
+        "valid_roc_auc": 0.8869047619047619,
+        "seconds": 1.52
       },
       {
         "trial": 6,
@@ -153,8 +153,8 @@
           "n_layers": 4,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8587662337662337,
-        "seconds": 2.72
+        "valid_roc_auc": 0.8668831168831169,
+        "seconds": 0.99
       },
       {
         "trial": 7,
@@ -166,8 +166,8 @@
           "n_layers": 3,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.8982683982683982,
-        "seconds": 3.45
+        "valid_roc_auc": 0.8982683982683983,
+        "seconds": 0.89
       }
     ]
   },
@@ -237,13 +237,14 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "9b8f23793e9cd9c787033255a450b5eaa7283649",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 21.72,
-    "total": 22.26
+    "tuning": 10.05,
+    "total": 10.47
   },
-  "best_epoch": 35
+  "best_epoch": 27
 }

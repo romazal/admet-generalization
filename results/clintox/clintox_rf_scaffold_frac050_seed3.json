@@ -78,7 +78,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6191919191919191,
-        "seconds": 0.46
+        "seconds": 0.52
       },
       {
         "trial": 1,
@@ -93,7 +93,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8074074074074075,
-        "seconds": 0.63
+        "seconds": 0.7
       },
       {
         "trial": 2,
@@ -108,7 +108,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.7919191919191919,
-        "seconds": 0.44
+        "seconds": 0.47
       },
       {
         "trial": 3,
@@ -123,7 +123,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.802020202020202,
-        "seconds": 0.77
+        "seconds": 0.85
       },
       {
         "trial": 4,
@@ -138,7 +138,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8195286195286196,
-        "seconds": 0.61
+        "seconds": 0.7
       },
       {
         "trial": 5,
@@ -153,7 +153,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8417508417508418,
-        "seconds": 0.53
+        "seconds": 0.59
       },
       {
         "trial": 6,
@@ -168,7 +168,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8296296296296296,
-        "seconds": 0.77
+        "seconds": 0.85
       },
       {
         "trial": 7,
@@ -183,7 +183,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8255892255892255,
-        "seconds": 0.61
+        "seconds": 0.68
       }
     ]
   },
@@ -253,12 +253,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 4.83,
-    "total": 6.09
+    "tuning": 5.36,
+    "total": 6.72
   }
 }

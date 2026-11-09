@@ -78,7 +78,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8718572587185727,
-        "seconds": 0.84
+        "seconds": 0.9
       },
       {
         "trial": 1,
@@ -93,7 +93,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9416058394160585,
-        "seconds": 0.84
+        "seconds": 0.89
       },
       {
         "trial": 2,
@@ -108,7 +108,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9367396593673966,
-        "seconds": 1.13
+        "seconds": 1.17
       },
       {
         "trial": 3,
@@ -123,7 +123,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.927007299270073,
-        "seconds": 0.61
+        "seconds": 0.64
       },
       {
         "trial": 4,
@@ -153,7 +153,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9480940794809408,
-        "seconds": 0.84
+        "seconds": 0.89
       },
       {
         "trial": 6,
@@ -168,7 +168,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9140308191403081,
-        "seconds": 1.17
+        "seconds": 1.12
       },
       {
         "trial": 7,
@@ -251,12 +251,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 6.82,
-    "total": 7.29
+    "tuning": 7.01,
+    "total": 7.53
   }
 }

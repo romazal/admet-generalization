@@ -169,6 +169,21 @@ def _library_versions() -> dict[str, str]:
             )
         except ImportError:
             versions[module] = "not installed"
+
+    # The compute device, not just the library version. A torch build string
+    # says what *could* run on a GPU; this says what did. Without it a result
+    # file cannot explain why two runs with the same seed and config differ,
+    # and the CPU and CUDA runs of this project do differ.
+    try:
+        import torch
+
+        if torch.cuda.is_available():
+            versions["torch_device"] = f"cuda:{torch.cuda.get_device_name(0)}"
+        else:
+            versions["torch_device"] = "cpu"
+    except Exception:  # noqa: BLE001 - provenance must never fail a run
+        versions["torch_device"] = "unknown"
+
     return versions
 
 

@@ -78,7 +78,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.7683501683501683,
-        "seconds": 0.85
+        "seconds": 0.79
       },
       {
         "trial": 1,
@@ -93,7 +93,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8121212121212121,
-        "seconds": 0.91
+        "seconds": 0.83
       },
       {
         "trial": 2,
@@ -108,7 +108,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.793939393939394,
-        "seconds": 0.65
+        "seconds": 0.61
       },
       {
         "trial": 3,
@@ -123,7 +123,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8814814814814814,
-        "seconds": 0.95
+        "seconds": 0.9
       },
       {
         "trial": 4,
@@ -138,7 +138,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8498316498316498,
-        "seconds": 0.98
+        "seconds": 0.86
       },
       {
         "trial": 5,
@@ -153,7 +153,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8592592592592593,
-        "seconds": 0.66
+        "seconds": 0.61
       },
       {
         "trial": 6,
@@ -168,7 +168,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8397306397306398,
-        "seconds": 0.93
+        "seconds": 0.9
       },
       {
         "trial": 7,
@@ -183,7 +183,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8868686868686868,
-        "seconds": 0.86
+        "seconds": 0.85
       }
     ]
   },
@@ -253,12 +253,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 6.79,
-    "total": 8.27
+    "tuning": 6.34,
+    "total": 7.67
   }
 }
