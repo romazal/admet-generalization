@@ -48,6 +48,7 @@ import matplotlib
 matplotlib.use("Agg")
 
 import matplotlib.pyplot as plt  # noqa: E402
+import numpy as np  # noqa: E402
 
 from admet.analysis.aggregate import ConditionSummary, GapRow  # noqa: E402
 
@@ -72,6 +73,14 @@ _GRID = "#dcdbd6"
 
 #: Model is the colour channel.
 MODEL_COLORS: dict[str, str] = {"rf": "#2a78d6", "gnn": "#eb6834"}
+
+#: Colour for the gap series, deliberately *not* a model hue.
+#:
+#: The gap is GNN-minus-baseline — a quantity about both models, so painting
+#: it in either one's colour would imply it belongs to that model. This used
+#: to reuse MODEL_COLORS for the two splits, which meant blue read as "random
+#: forest" in two figures and "random split" in a third.
+GAP_COLOR: str = "#3d3c3a"
 
 MODEL_LABELS: dict[str, str] = {
     "rf": "Fingerprint + random forest",
@@ -152,9 +161,49 @@ def _new_figure(size: tuple[float, float] = (7.5, 4.6)) -> tuple[plt.Figure, plt
     return figure, ax
 
 
-def _save(figure: plt.Figure, path: Path) -> Path:
+def _new_panels(
+    n: int, size: tuple[float, float] = (9.5, 4.6)
+) -> tuple[plt.Figure, list[plt.Axes]]:
+    """One panel per split, sharing a y-axis.
+
+    Small multiples rather than more series on one axis. Two models x two
+    splits on a single pair of axes needs colour *and* line style to be read
+    at once, and the four curves cross repeatedly; split out, each panel
+    carries two curves told apart by colour alone.
+
+    The y-axis is shared because the panels are the same measurement under
+    two conditions — the drop from one panel to the next is the largest
+    effect in the study, and an independent axis per panel would hide it.
+    """
+    figure, axes = plt.subplots(1, n, figsize=size, sharey=True)
+    figure.patch.set_facecolor(_SURFACE)
+    return figure, list(np.atleast_1d(axes))
+
+
+def _seed_note(figure: plt.Figure, seeds: Sequence[int]) -> None:
+    """State what the error bars are, where a reader will actually see it.
+
+    The y-axis label says "mean ± SD over seeds", which is easy to miss and
+    does not say how many seeds. An unexplained interval is worse than none:
+    it reads as a drawing artefact rather than as the uncertainty that, in
+    several of these figures, is the entire finding.
+    """
+    counts = sorted({s for s in seeds if s})
+    if not counts:
+        return
+    n = f"{counts[0]}" if len(counts) == 1 else f"{min(counts)}–{max(counts)}"
+    figure.text(
+        0.01,
+        0.015,
+        f"Error bars: ±1 SD over {n} seeds.",
+        fontsize=8,
+        color=_INK_SECONDARY,
+    )
+
+
+def _save(figure: plt.Figure, path: Path, *, bottom: float = 0.0) -> Path:
     path.parent.mkdir(parents=True, exist_ok=True)
-    figure.tight_layout()
+    figure.tight_layout(rect=(0, bottom, 1, 1))
     figure.savefig(path, dpi=200, facecolor=_SURFACE)
     plt.close(figure)
     return path
@@ -195,9 +244,9 @@ def plot_split_comparison(
 
     splits = sorted({s.split for s in rows})
     models = sorted({s.model for s in rows}, key=lambda m: m != "rf")
-    # Thin marks: the group occupies a little over half the slot, leaving the
-    # groups clearly separated rather than filling the axis.
-    width = 0.55 / max(len(models), 1)
+    # Thin marks: the group occupies under half the slot, leaving the groups
+    # clearly separated rather than filling the axis with ink.
+    width = 0.40 / max(len(models), 1)
 
     figure, ax = _new_figure()
     tops: list[float] = []
@@ -229,12 +278,16 @@ def plot_split_comparison(
         )
         # Direct value labels: few enough bars that every one can carry its
         # number without crowding, and they satisfy the relief rule.
-        for bar, height in zip(bars, heights):
+        #
+        # Anchored to the top of the *error bar*, not the top of the bar, or
+        # the two collide: with an SD of 0.009 on a 0.834 bar the cap lands
+        # exactly where the text sits.
+        for bar, height, error in zip(bars, heights, errors):
             ax.annotate(
                 f"{height:.3f}",
-                (bar.get_x() + bar.get_width() / 2, height),
+                (bar.get_x() + bar.get_width() / 2, height + error),
                 textcoords="offset points",
-                xytext=(0, 4),
+                xytext=(0, 5),
                 ha="center",
                 fontsize=9,
                 color=_INK,
@@ -250,7 +303,8 @@ def plot_split_comparison(
         ylabel=f"Test {metric.replace('_', '-').upper()} (mean ± SD over seeds)",
     )
     ax.legend(frameon=False, fontsize=9, labelcolor=_INK_SECONDARY)
-    return _save(figure, Path(path))
+    _seed_note(figure, [s.n_seeds for s in rows])
+    return _save(figure, Path(path), bottom=0.04)
 
 
 # --------------------------------------------------------------------------- #
@@ -279,51 +333,74 @@ def plot_learning_curves(
     if not rows:
         return None
 
-    figure, ax = _new_figure()
+    splits = sorted({s.split for s in rows})
+    models = sorted({s.model for s in rows}, key=lambda m: m != "rf")
+    ticks = sorted({int(round(s.train_fraction * 100)) for s in rows})
+    name = metric.replace("_", "-").upper()
+
+    figure, axes = _new_panels(len(splits))
     drawn = 0
-    for model in sorted({s.model for s in rows}, key=lambda m: m != "rf"):
-        for split in sorted({s.split for s in rows}):
+    for ax, split in zip(axes, splits):
+        for model in models:
             series = sorted(
                 (s for s in rows if s.model == model and s.split == split),
                 key=lambda s: s.train_fraction,
             )
             if len(series) < 2:
                 continue  # a single point is not a curve
-            style = SPLIT_STYLES.get(split, {"linestyle": "-", "marker": "o"})
             ax.errorbar(
                 [s.train_fraction * 100 for s in series],
                 [getattr(s, f"{metric}_mean") for s in series],
                 yerr=[getattr(s, f"{metric}_std") or 0.0 for s in series],
-                label=f"{_label(MODEL_LABELS, model)} — {_label(SPLIT_LABELS, split).lower()}",
+                label=_label(MODEL_LABELS, model),
                 color=_color(model),
+                linestyle="-",
+                marker="o",
                 linewidth=_LINE_WIDTH,
                 markersize=_MARKER_SIZE,
                 capsize=3,
                 elinewidth=1.0,
-                **style,
             )
             drawn += 1
+
+        ax.set_xscale("log")
+        # Ticks come from the fractions actually run, so a partial sweep does
+        # not advertise points that do not exist.
+        ax.set_xticks(ticks)
+        ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+        _style_axes(
+            ax,
+            title=_label(SPLIT_LABELS, split),
+            xlabel="Share of the training set used (%)",
+            ylabel=f"Test {name} (mean ± SD over seeds)" if ax is axes[0] else "",
+        )
 
     if not drawn:
         plt.close(figure)
         return None
 
-    ax.set_xscale("log")
-    # Ticks come from the fractions actually run, so a partial sweep does not
-    # advertise points that do not exist.
-    ax.set_xticks(sorted({int(round(s.train_fraction * 100)) for s in rows}))
-    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    _style_axes(
-        ax,
-        title=(
-            f"Learning curves: test {metric.replace('_', '-').upper()} "
-            f"vs training-set size{_suffix(dataset)}"
-        ),
-        xlabel="Share of the training set used (%)",
-        ylabel=f"Test {metric.replace('_', '-').upper()} (mean ± SD over seeds)",
+    figure.suptitle(
+        f"Learning curves: test {name} vs training-set size{_suffix(dataset)}",
+        color=_INK,
+        fontsize=12,
+        x=0.01,
+        ha="left",
     )
-    ax.legend(frameon=False, fontsize=9, labelcolor=_INK_SECONDARY, loc="lower right")
-    return _save(figure, Path(path))
+    # One legend for the whole figure, below the panels rather than inside
+    # them: in-panel legends sat on top of the ClinTox curves.
+    handles, labels = axes[0].get_legend_handles_labels()
+    figure.legend(
+        handles,
+        labels,
+        frameon=False,
+        fontsize=9,
+        labelcolor=_INK_SECONDARY,
+        loc="lower center",
+        ncol=max(len(labels), 1),
+        bbox_to_anchor=(0.5, 0.0),
+    )
+    _seed_note(figure, [s.n_seeds for s in rows])
+    return _save(figure, Path(path), bottom=0.09)
 
 
 # --------------------------------------------------------------------------- #
@@ -353,44 +430,57 @@ def plot_gap(
     if not rows:
         return None
 
-    figure, ax = _new_figure()
-    # Zero is the claim boundary: above it the GNN wins, below it the baseline
-    # does, so it gets a reference line rather than being left implicit.
-    ax.axhline(0.0, color=_INK_SECONDARY, linewidth=1.2, zorder=1)
+    splits = sorted({g.split for g in rows})
+    ticks = sorted({int(round(g.train_fraction * 100)) for g in rows})
+    name = metric.replace("_", "-").upper()
 
-    # Here the split is the only distinction, so it takes the colour channel
-    # as well as the line style.
-    split_colors = {"random": MODEL_COLORS["rf"], "scaffold": MODEL_COLORS["gnn"]}
-    for split in sorted({g.split for g in rows}):
+    figure, axes = _new_panels(len(splits))
+    for ax, split in zip(axes, splits):
+        # Zero is the claim boundary: above it the GNN wins, below it the
+        # baseline does, so it gets a reference line rather than being left
+        # implicit.
+        ax.axhline(0.0, color=_INK_SECONDARY, linewidth=1.2, zorder=1)
+
         series = sorted(
             (g for g in rows if g.split == split), key=lambda g: g.train_fraction
         )
-        style = SPLIT_STYLES.get(split, {"linestyle": "-", "marker": "o"})
         ax.errorbar(
             [g.train_fraction * 100 for g in series],
             [g.gap for g in series],
             yerr=[g.gap_std or 0.0 for g in series],
-            label=_label(SPLIT_LABELS, split),
-            color=split_colors.get(split, _INK_SECONDARY),
+            color=GAP_COLOR,
+            linestyle="-",
+            marker="o",
             linewidth=_LINE_WIDTH,
             markersize=_MARKER_SIZE,
             capsize=3,
             elinewidth=1.0,
             zorder=2,
-            **style,
         )
 
-    ax.set_xscale("log")
-    ax.set_xticks(sorted({int(round(g.train_fraction * 100)) for g in rows}))
-    ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
-    _style_axes(
-        ax,
-        title=f"GNN minus baseline ({metric.replace('_', '-').upper()}){_suffix(dataset)}",
-        xlabel="Share of the training set used (%)",
-        ylabel="Difference in test score (GNN − baseline)",
+        ax.set_xscale("log")
+        ax.set_xticks(ticks)
+        ax.get_xaxis().set_major_formatter(matplotlib.ticker.ScalarFormatter())
+        _style_axes(
+            ax,
+            title=_label(SPLIT_LABELS, split),
+            xlabel="Share of the training set used (%)",
+            ylabel="Difference in test score (GNN − baseline)"
+            if ax is axes[0]
+            else "",
+        )
+
+    figure.suptitle(
+        f"GNN minus baseline ({name}){_suffix(dataset)}",
+        color=_INK,
+        fontsize=12,
+        x=0.01,
+        ha="left",
     )
-    ax.legend(frameon=False, fontsize=9, labelcolor=_INK_SECONDARY)
-    return _save(figure, Path(path))
+    # One series per panel, so the panel title names it and no legend is
+    # needed (a legend box for a single line is noise).
+    _seed_note(figure, [g.n_seeds for g in rows])
+    return _save(figure, Path(path), bottom=0.05)
 
 
 # --------------------------------------------------------------------------- #

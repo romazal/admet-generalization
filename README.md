@@ -466,8 +466,11 @@ Two datasets never share an axis. Their class balances and test-set sizes
 differ, so a shared y-axis would invite a comparison the numbers do not
 support; the cross-dataset comparison is made in the tables instead.
 
-Model is encoded as colour and split as line style, so identity never depends
-on colour alone.
+Model is encoded as colour, always the same colour, and never anything else.
+Split is encoded as **position**: the learning-curve and gap figures are
+faceted into a random-split panel and a scaffold-split panel sharing one
+y-axis, so each panel carries at most two lines and the drop between panels
+is the split's effect. Every figure states what its error bars are.
 
 ## Literature anchors
 

@@ -300,10 +300,13 @@ drawn by hand.
 - `learning_curves_*` — test score against training-set size (H2).
 - `gnn_minus_rf_gap_*` — the gap itself, with a zero reference line.
 
-Model is encoded as colour and split as line style, so identity never depends
-on colour alone. The two datasets never share an axis: their class balances and
-test-set sizes differ enough that a shared y-axis would invite a comparison the
-numbers do not support.
+Model is encoded as colour, always the same colour. Split is encoded as
+position: the learning-curve and gap figures are faceted into a random-split
+and a scaffold-split panel on a shared y-axis, so no panel carries more than
+two lines and the step between panels is the split's effect. Error bars are
+±1 SD over seeds and every figure says so in a footnote. The two datasets
+never share an axis: their class balances and test-set sizes differ enough
+that a shared y-axis would invite a comparison the numbers do not support.
 
 ## 7. Threats to validity
 

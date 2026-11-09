@@ -124,10 +124,15 @@ figures use: `figures/<dataset>/<name>_<dataset>_<metric>.png`.
 **Follow the conventions already in that file**, which exist for a reason:
 
 - `MODEL_COLORS` — model is colour, always the same colour. Never recolour a
-  model between figures.
-- `SPLIT_STYLES` — split is line style, not colour.
-- `_style_axes()` and `_save()` — use them rather than styling by hand, so
-  the new figure matches the other twelve.
+  model between figures, and never reuse a model's hue to mean something
+  else: the gap plot did exactly that, so blue meant "random forest" in two
+  figures and "random split" in a third.
+- Split is position, not colour — `_new_panels()` facets a figure into a
+  random-split and a scaffold-split panel on a shared y-axis. Prefer that to
+  adding a third and fourth series to one axis.
+- `_style_axes()`, `_seed_note()` and `_save()` — use them rather than
+  styling by hand, so the new figure matches the other twelve and says what
+  its error bars are.
 
 **Test:** add to `tests/test_plots.py`. Read what is there first — the tests
 in it exist because a hardcoded `ax.set_ylim(0.5, 1.0)` once pushed every
