@@ -1,14 +1,15 @@
 # TODO — things you can contribute
 
-Self-contained additions to the codebase. Tasks 1–8 are each small enough to
+Self-contained additions to the codebase. Tasks 1–9 are each small enough to
 finish in one sitting with a free AI agent (ChatGPT, Claude, Gemini, Copilot —
 any free tier), and each ends in a commit that stands on its own. After them
 there is **one larger milestone**, for anyone who wants something with more in
 it or wants to work with someone else.
 
-Pick whatever interests you. Nothing in tasks 1–8 can break the experiment:
-the results are already committed, and none of them touch the splitter, the
-masking or the metrics.
+Pick whatever interests you. Most of these cannot break the experiment: the
+results are already committed, and they do not touch the splitter, the
+masking or the metrics. The two exceptions are task 8 and the milestone, which
+both rewrite how data is read — each says what must not change.
 
 ---
 
@@ -333,7 +334,95 @@ fail is worse than none.
 
 ---
 
-## 8. Smaller things
+## 8. Put pandas back
+
+*Roman plans to take this one.*
+
+Proposal §5 lists pandas as a dependency. We do not use it: the loader and the
+aggregation use the standard library's `csv` plus NumPy, and this is written
+up as a deviation in the README, REPORT §8, `AGENT_LOG.md` and a comment in
+`pyproject.toml`.
+
+**It was never a design decision.** pandas' compiled extensions were being
+blocked by the Windows Application Control policy on the development machine,
+and inconsistently — two successive imports failed on *different* DLLs
+(`offsets`, then `_ujson`). Building the pipeline on a dependency that fails
+nondeterministically was not acceptable, so it was dropped. Restoring it
+closes the only deviation that exists for an environment reason rather than a
+considered one.
+
+**The blocker may already be gone.** pandas 3.1.1 is installed in the current
+`.venv` and imports cleanly, repeatedly. The environment was rebuilt when the
+CUDA build of torch was installed, which is the likely explanation. Check
+before you start, several times rather than once, since the original failure
+was intermittent:
+
+```bash
+python -c "import pandas; print(pandas.__version__)"
+```
+
+If it fails on your machine, say so rather than working around it — that the
+policy still blocks it is itself the thing worth knowing.
+
+### Where it goes
+
+Only two call sites, which is why this is tractable:
+
+- `read_csv()` in `src/admet/data/loaders.py` — currently `csv.DictReader`.
+- `write_csv()` in `src/admet/analysis/aggregate.py` — currently
+  `csv.DictWriter` over dataclass rows.
+
+`plots.py` and `training.py` do not touch CSV at all, so they stay as they
+are.
+
+### The constraint that makes this delicate
+
+`results/runs.csv`, `summary.csv` and `gap.csv` are **committed**, and
+`make aggregate` on a fresh clone currently regenerates all three with zero
+diff. That property is load-bearing — it is what lets anyone verify the
+tables came from the run files — and a rewrite that changes one digit of
+formatting breaks it silently, leaving a dirty working tree for everyone who
+regenerates.
+
+The good news is that this is achievable, and already checked: pandas
+reproduces all three files **byte-identically** with
+
+```python
+df.to_csv(path, index=False, lineterminator="\r\n")
+```
+
+Float formatting matches, because pandas uses the same shortest-repr as
+Python. The line terminator is the only trap — `csv.writer` opened with
+`newline=""` writes `\r\n`, and pandas defaults to `os.linesep`.
+
+On the reading side the risk is the opposite one: `read_csv` infers dtypes,
+and a raw dataset CSV has label columns of `0`/`1`/blank and a SMILES column
+of strings. Blanks becoming `NaN` happens to match our masking semantics, but
+*happens to* is not good enough here — pass `dtype=str, keep_default_na=False`
+and keep the existing `_to_label()` conversion, so the cleaning behaves
+exactly as it does now. Changing how a missing label is parsed would
+invalidate every committed result.
+
+### Decide before you write code
+
+Whether pandas becomes a hard dependency or an optional one. A hard dependency
+matches the proposal, but it locks out anyone whose machine still blocks the
+DLLs. An optional import with the `csv` path as fallback keeps everyone
+running at the cost of two code paths. Either is defensible; pick one and say
+why in the commit.
+
+### Then
+
+- **Test:** assert the three CSVs regenerate byte-identically. Compare
+  `read_bytes()`, not text — reading as text normalises line endings and will
+  tell you the files match when they do not.
+- Remove the deviation from `README.md`, `REPORT.md` §8 and the `pyproject.toml`
+  comment, and add an `AGENT_LOG.md` entry recording that the blocker lifted.
+  Four places claim we do not use pandas; all four have to stop saying it.
+
+---
+
+## 9. Smaller things
 
 - **`admet --version`.** Read `__version__` from `src/admet/__init__.py`. One
   line in `build_parser`.
@@ -511,6 +600,10 @@ once without conflicts. The exceptions worth knowing:
 - Tasks **3** and **6** both touch `loaders.py`, though in different places.
 - Task **5** edits `rf.py`, which task **4** copies from — copy before the
   other person's change lands, or rebase after.
+- Task **8** rewrites the CSV handling in both `loaders.py` and
+  `aggregate.py`, so it collides with tasks **3**, **6** and **7**. It is a
+  small diff in two functions, so landing it early is easier than rebasing
+  around it.
 
 Everything else is independent. Branch from an up-to-date `master`, and pull
 before you push.
