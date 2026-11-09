@@ -389,3 +389,101 @@ earlier three-seed finding arrived at independently.
 Nothing fell outside its stated uncertainty. The rerun did not overturn a
 finding — it confirmed that the quantities reported with SDs larger than their
 means deserved exactly that treatment.
+
+## Contribution notes for the team
+
+*Instruction:* write up small, self-contained tasks the other three group
+members could take on with a free AI agent, so they also appear as
+contributors; later, drop the difficulty ratings and time estimates, and add
+a larger milestone.
+
+Produced `TODO.md`. The first draft was written as lecture-preparation work,
+which was the wrong reading of the request — it was rewritten as small code
+contributions, each naming the file to add, the nearest existing file to copy
+from, and what to test.
+
+A later pass removed the star ratings and hour estimates. They were guesses
+presented as information: they ranked the tasks on behalf of people better
+placed to judge, and a wrong estimate puts someone off a task they would have
+enjoyed. The "suggested split" table, which assigned the three tasks I had
+judged most valuable to three unnamed people, was replaced by a note on which
+tasks share files.
+
+Two errors in the first draft, both caught before it was committed: it cited
+`references/palette.md`, which is a tool file and not part of this repository,
+and it proposed adding assay names to `Dataset.summary()`, which already
+returns them.
+
+The dataset candidates were checked rather than recalled — all five filenames
+resolve on the MoleculeNet mirror, and BBBP's header was fetched
+(`num,name,p_np,smiles`, 2050 rows) so the task states the column names as
+fact.
+
+## Environment: the pandas blocker has lifted
+
+*Instruction:* add restoring pandas to the task list, since the project
+currently does without it.
+
+Checked before writing the task, and the premise of the deviation has
+changed: **pandas 3.1.1 is installed in the current `.venv` and imports
+cleanly on repeated attempts.** The original failure was the Windows
+Application Control policy blocking its compiled extensions intermittently —
+two successive imports failed on *different* DLLs. The environment was
+rebuilt when the CUDA build of torch was installed, which is the likely
+explanation.
+
+Two things were measured rather than assumed, because the committed CSVs must
+keep regenerating byte-identically:
+
+- pandas reproduces all three exactly, with
+  `to_csv(index=False, lineterminator="\r\n")`. Float formatting already
+  matches, since pandas and `csv` use the same shortest-repr. The line
+  terminator is the only trap.
+- My first round-trip check reported all three as failing. The check was
+  wrong, not the files: `read_text()` normalises line endings, so it was
+  comparing `\n` against `\r\n`. The task tells whoever takes it to compare
+  `read_bytes()` for that reason.
+
+The deviation is still recorded in four places and stays there until the work
+is done.
+
+## Figure review
+
+*Instruction:* check all the figures; the learning curves are hard to read,
+and it is unclear what the vertical bars mean.
+
+One bug and three readability failures, all found by looking at the rendered
+figures rather than the code.
+
+- *Bug: colour meant two different things across the set.* `plot_gap` set
+  `split_colors` to the two **model** hues, so blue read as "random forest"
+  in the bar chart and the learning curve but "random split" in the gap plot.
+  Reading the figures in order misleads you about one of them. The gap is
+  GNN-minus-baseline, a quantity about both models, so it now has its own
+  neutral.
+- *Four series on one axis.* The learning curves encoded model as colour and
+  split as line style, so two channels had to be read together while the four
+  curves crossed repeatedly. Both the learning-curve and gap figures are now
+  faceted into a random-split and a scaffold-split panel on a shared y-axis:
+  two lines per panel, distinguished by colour alone, and the step between
+  panels is the split effect — the largest result in the study, previously
+  just one more gap between lines.
+- *The ClinTox legend sat on top of its own curves.* One legend below the
+  figure now.
+- *Bar value labels collided with the error-bar caps.* The label was anchored
+  to the top of the bar, which is where the cap already is: with an SD of
+  0.009 on a 0.834 bar the two overlapped in every committed bar chart.
+
+Also added a footnote to every figure stating that the error bars are ±1 SD
+and over how many seeds. This was the question that prompted the review, and
+it was fair: the only statement of it was in the y-axis label. An unexplained
+interval reads as a drawing artefact rather than as uncertainty — and on
+ClinTox, where it spans −0.20 to +0.37, it is the finding.
+
+**Checked.** Eight tests added, inspecting the real figure (`_save` is patched
+to capture it) rather than redrawing the chart inside the test, which would
+pass while the shipped figure was wrong — the failure mode that let the blank
+PR-AUC charts survive. Each was run against a deliberately broken copy first:
+restoring the model colour, moving the label back to the bar top and deleting
+the footnote each fail exactly one test. 156 tests pass, and all twelve
+figures were regenerated and opened.
