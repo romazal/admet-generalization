@@ -1,9 +1,22 @@
 # AI coding agent log
 
 Record of how the coding agent was used, as the assignment requires
-(proposal §5, §6). The pattern throughout: we specify the module and its
-constraints, the agent drafts it, and we then read, correct and test it before
-it is kept. Bugs the agent introduced are recorded here too.
+(proposal §5, §6).
+
+**How the work was divided.** We set the requirements, choose the design, read
+what comes back and decide what is kept; the agent drafts to that
+specification and carries the volume work — writing out the test suites,
+running the 136-run grids, regenerating the tables and the twelve figures,
+and applying mechanical edits across the documentation. It is a fast pair of
+hands, not a collaborator with judgement about this project: left to itself it
+has asserted things it had not checked, and several of the bugs below are
+ones it introduced.
+
+So the useful question for each entry is not "what did the agent produce" but
+"what did we ask for, what came back, and what did checking it reveal". The
+entries are written that way. Where a problem was caught by one of us reading
+output rather than by the agent, the entry says so, because that is the part
+of the process the assignment is actually asking about.
 
 Entries are in the order the work happened. The *Instruction* line summarises
 what the agent was asked for; it is a paraphrase, not a transcript.
@@ -291,8 +304,9 @@ share an axis.
 
 **Correction made during the review against the proposal PDF.** The README's
 runtime table still held pre-measurement estimates, including "GNN, one epoch
-~1.9 s" from a single one-off measurement, after I had already said it was
-replaced - it had only been fixed in REPORT.md. The table is now derived from
+~1.9 s" from a single one-off measurement, after the agent had reported it
+replaced - it had only been fixed in REPORT.md, which is why the review
+checked both files rather than taking the report at its word. The table is now derived from
 the `timing_seconds` field of the committed result files.
 
 **Three deviations from the proposal were unrecorded** and are now listed in
@@ -316,15 +330,18 @@ provenance rather than model quality.
 *Instruction:* review the whole project thoroughly, including every commit and
 its message, and exclude anything that should not be pushed.
 
-**Two bugs found by checking rather than reading.**
+**Two bugs, one spotted by eye and one by checking.**
 
-- *Every PR-AUC bar chart was blank.* `plot_split_comparison` hardcoded
-  `ax.set_ylim(0.5, 1.0)`, which is right for ROC-AUC and wrong for PR-AUC:
-  Tox21's PR-AUC values are 0.35–0.47, entirely below the floor, so the bars
-  were drawn outside their own axis. Matplotlib does not warn. Two committed
-  figures had been wrong since they were first produced and nobody had opened
-  them. Fixed with a metric-aware limit, and `tests/test_plots.py` was written
-  to assert that every plotted value falls inside the axis limits.
+- *Every PR-AUC bar chart was blank* — noticed by opening a committed figure
+  and asking why it was empty, which no amount of reading the code had done.
+  `plot_split_comparison` hardcoded `ax.set_ylim(0.5, 1.0)`, which is right
+  for ROC-AUC and wrong for PR-AUC: Tox21's PR-AUC values are 0.35–0.47,
+  entirely below the floor, so the bars were drawn outside their own axis.
+  Matplotlib does not warn. Two committed figures had been wrong since they
+  were first produced. The agent had written the limit, had regenerated those
+  figures several times, and had not looked at them. Fixed with a
+  metric-aware limit, and the agent was set to write `tests/test_plots.py`
+  asserting that every plotted value falls inside the axis limits.
 - *`results/runs.csv` leaked absolute paths* from the machine that produced it,
   so the committed file could not regenerate identically anywhere else. Found
   by cloning the repository fresh and regenerating all three tables:
@@ -337,11 +354,12 @@ scores are macro-averaged over 12 assays when it scores one) and three values
 rounded wrong by rounding the operands before subtracting them. Results and
 figures were moved into per-dataset subdirectories so the layout matches.
 
-**A claim I had made and not checked.** The README stated the runs were CPU-only
-because the machine had no GPU. The machine has an RTX 5070 Ti. The runs were
-genuinely CPU-only, but because `pip install torch` takes the CPU-only wheel by
-default on Windows — an environment default I had written up as a deliberate
-choice.
+**A claim the agent had made and not checked**, caught by asking it why the
+runs were on the CPU at all. The README stated it was because the machine had
+no GPU. The machine has an RTX 5070 Ti. The runs were genuinely CPU-only, but
+because `pip install torch` takes the CPU-only wheel by default on Windows —
+an environment default the agent had inferred from the runs being slow and
+written up as a deliberate decision.
 
 **Commit history.** Squashed an added-then-rewritten pair, rewrote three commit
 messages that used invented type prefixes, and corrected a size claim in a
@@ -352,10 +370,14 @@ fourth.
 *Instruction:* rerun the experiment on the GPU, record how much faster it is,
 and use the rerun to check the results; keep the work on a separate branch.
 
-A CUDA build of PyTorch was installed and the whole 136-run grid was rerun,
-then merged to `master` as the primary results. `versions.torch_device` was
-added to every result file first, so a run now records the device it used and
-not only the library versions.
+We installed a CUDA build of PyTorch and confirmed the card was visible; the
+agent then reran the whole 136-run grid, which is the kind of long mechanical
+job it is good for. `versions.torch_device` was added to every result file
+first, so a run records the device it used and not only the library versions.
+Making the GPU pass the primary results, rather than keeping the CPU pass as
+the submitted numbers, was our call — the agent had argued for it but the
+trade-off (a newer torch on the CPU pass against an independently verified
+GPU pass) was a judgement about what to submit.
 
 **Speed.** 2.03 h against 3.83 h. The GNN is 2.6x faster per Tox21 run and
 2.5x at the full training set; the overall figure is lower only because the
@@ -397,22 +419,24 @@ members could take on with a free AI agent, so they also appear as
 contributors; later, drop the difficulty ratings and time estimates, and add
 a larger milestone.
 
-Produced `TODO.md`. The first draft was written as lecture-preparation work,
-which was the wrong reading of the request — it was rewritten as small code
-contributions, each naming the file to add, the nearest existing file to copy
-from, and what to test.
+`TODO.md`. The first draft came back as lecture-preparation work rather than
+code contributions, which is not what had been asked for; redirected, it was
+rewritten as small tasks each naming the file to add, the nearest existing
+file to copy from, and what to test.
 
-A later pass removed the star ratings and hour estimates. They were guesses
-presented as information: they ranked the tasks on behalf of people better
-placed to judge, and a wrong estimate puts someone off a task they would have
-enjoyed. The "suggested split" table, which assigned the three tasks I had
-judged most valuable to three unnamed people, was replaced by a note on which
-tasks share files.
+The star ratings and hour estimates in that draft were removed on review.
+They were guesses presented as information: they ranked the tasks on behalf
+of teammates better placed to judge, and a wrong estimate puts someone off a
+task they would have enjoyed. The "suggested split" table, which assigned the
+three tasks the agent rated highest to three unnamed people, went with them —
+replaced by a note on which tasks share files, which is the part that is
+actually verifiable.
 
-Two errors in the first draft, both caught before it was committed: it cited
-`references/palette.md`, which is a tool file and not part of this repository,
-and it proposed adding assay names to `Dataset.summary()`, which already
-returns them.
+Two errors in the first draft, both caught in review before it was committed:
+it cited `references/palette.md`, which is a tool file and not part of this
+repository, and it proposed adding assay names to `Dataset.summary()`, which
+already returns them. Both are the same failure — describing the repository
+from memory instead of reading it.
 
 The dataset candidates were checked rather than recalled — all five filenames
 resolve on the MoleculeNet mirror, and BBBP's header was fetched
@@ -439,9 +463,9 @@ keep regenerating byte-identically:
   `to_csv(index=False, lineterminator="\r\n")`. Float formatting already
   matches, since pandas and `csv` use the same shortest-repr. The line
   terminator is the only trap.
-- My first round-trip check reported all three as failing. The check was
-  wrong, not the files: `read_text()` normalises line endings, so it was
-  comparing `\n` against `\r\n`. The task tells whoever takes it to compare
+- The agent's first round-trip check reported all three as failing. The
+  check was wrong, not the files: `read_text()` normalises line endings, so
+  it compared `\n` against `\r\n`. The task tells whoever takes it to compare
   `read_bytes()` for that reason.
 
 The deviation is still recorded in four places and stays there until the work
@@ -449,11 +473,13 @@ is done.
 
 ## Figure review
 
-*Instruction:* check all the figures; the learning curves are hard to read,
-and it is unclear what the vertical bars mean.
+*Instruction:* check all twelve figures — the learning curves are hard to
+read with four overlapping lines in two colours, and it is not clear what the
+vertical bars are.
 
-One bug and three readability failures, all found by looking at the rendered
-figures rather than the code.
+The complaint was the finding. Reviewing the figures against it turned up one
+bug and three readability failures, none of which the agent had raised in the
+several sessions it spent generating and regenerating these files.
 
 - *Bug: colour meant two different things across the set.* `plot_gap` set
   `split_colors` to the two **model** hues, so blue read as "random forest"
@@ -480,10 +506,15 @@ it was fair: the only statement of it was in the y-axis label. An unexplained
 interval reads as a drawing artefact rather than as uncertainty — and on
 ClinTox, where it spans −0.20 to +0.37, it is the finding.
 
-**Checked.** Eight tests added, inspecting the real figure (`_save` is patched
-to capture it) rather than redrawing the chart inside the test, which would
-pass while the shipped figure was wrong — the failure mode that let the blank
-PR-AUC charts survive. Each was run against a deliberately broken copy first:
-restoring the model colour, moving the label back to the bar top and deleting
-the footnote each fail exactly one test. 156 tests pass, and all twelve
-figures were regenerated and opened.
+**Checked.** The agent wrote the eight new tests and regenerated the twelve
+figures; the requirement it was held to was that a test must inspect the real
+figure — `_save` is patched to capture it — rather than redrawing the chart
+inside the test, because a test that redraws passes while the shipped figure
+is wrong. That is precisely the failure mode that let the blank PR-AUC charts
+survive a 143-test suite.
+
+Each test was then run against a deliberately broken copy, since a figure
+test that cannot fail is worth nothing: restoring the model colour, moving
+the label back to the bar top and deleting the footnote each fail exactly one
+test and nothing else. 156 tests pass. The twelve figures were opened and
+looked at, which is the step that started this entry.
