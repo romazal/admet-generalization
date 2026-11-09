@@ -5,18 +5,23 @@ Record of how the coding agent was used, as the assignment requires
 constraints, the agent drafts it, and we then read, correct and test it before
 it is kept. Bugs the agent introduced are recorded here too.
 
-## 2026-11-07 — project scaffold
+Entries are in the order the work happened. The *Instruction* line summarises
+what the agent was asked for; it is a paraphrase, not a transcript.
 
-*Prompt:* check the repository layout against §4 of the proposal.
+## Project scaffold
+
+*Instruction:* check the repository layout against §4 of the proposal and
+report any gaps.
 
 The agent compared the directory tree with the PDF and reported the gaps; the
 structure was then written into the README. No implementation at this stage —
 every `.py` and `.yaml` file was still empty.
 
-## 2026-11-07 — data splits
+## Data splits
 
-*Prompt:* "Read HANDOFF.md, then implement src/admet/data/splits.py and
-tests/test_splits.py per the proposal in pdf_pages/."
+*Instruction:* implement `src/admet/data/splits.py` and
+`tests/test_splits.py` to the specification in the proposal, working from the
+PDF pages in `pdf_pages/` and the handover notes.
 
 **Added**
 
@@ -64,14 +69,15 @@ tests/test_splits.py per the proposal in pdf_pages/."
 
 All 72 tests pass.
 
-## 2026-11-07 — environment check
+## Environment check
 
-*Prompt:* whether to lower `requires-python` from 3.14 to 3.13.
+*Instruction:* assess whether `requires-python` should be lowered from 3.14 to
+3.13.
 
 Wheel availability was checked on real 3.12, 3.13 and 3.14 interpreters: RDKit,
 PyTorch and scikit-learn publish wheels for all three, so 3.14 is not short of
 wheels and the downgrade was unnecessary. We kept `requires-python = ">=3.14"`
-and corrected README line 66, which still claimed 3.12 — that clears the
+and corrected the README, which still claimed 3.12 — that clears the
 README/`pyproject.toml` contradiction.
 
 Two notes for the team: RDKit does not import under 3.13 on this machine (a
@@ -80,9 +86,10 @@ the project `.venv` is empty and has no `pip`, so it must be recreated before
 the suite can be run locally. Still open: `dependencies = []` and the missing
 `[build-system]` table.
 
-## 2026-11-08 — basic end-to-end implementation
+## Basic end-to-end implementation
 
-*Prompt:* "can u implement a basic version of the project?"
+*Instruction:* implement a working version of every module §5 specifies, so
+the project runs end to end.
 
 Everything in §5 that was still a 0-byte file, built in the order §6 asks for:
 loaders and evaluation, fingerprints and graphs, the two models, the trainer
@@ -157,12 +164,12 @@ and configs, aggregation and plots, then the two remaining test files.
 **Environment findings**
 
 - `requires-python` was `>=3.14`; lowered to `>=3.12` as a **floor**, not a
-  pin. The 2026-11-07 entry verified wheels exist for 3.14 and that remains
-  true — this only stops teammates on 3.12/3.13 from being locked out. Revert
-  if the team wants 3.14 enforced.
+  pin. The environment-check entry above verified wheels exist for 3.14 and
+  that remains true — this only stops teammates on 3.12/3.13 from being locked
+  out. Revert if the team wants 3.14 enforced.
 - RDKit, PyTorch 2.15, scikit-learn, matplotlib and PyYAML all install and
-  import on 3.14 on this machine. The 3.13 RDKit DLL problem noted on
-  2026-11-07 did not recur.
+  import on 3.14 on this machine. The 3.13 RDKit DLL problem noted earlier did
+  not recur.
 - **pandas does not work here.** Its compiled extensions are blocked by the
   Windows Application Control policy, and inconsistently so — two successive
   imports failed on *different* DLLs (`offsets`, then `_ujson`). Rather than
@@ -184,20 +191,20 @@ and configs, aggregation and plots, then the two remaining test files.
   cluster-based splitter, the pretrained-model stretch, and BBBP as a second
   dataset (registered in the loader, never run).
 
-## 2026-11-08 — ClinTox replaces BBBP as the optional second dataset
+## ClinTox replaces BBBP as the optional second dataset
 
-*Prompt:* "instead of BBBP can u hace ClinTox as the smaller dataset? also
-download it"
+*Instruction:* replace BBBP with ClinTox as the smaller second dataset, and
+download the raw file.
 
 The loader registry listed BBBP, following the "for example BBBP" wording of
 proposal §3.1; the team had already settled on ClinTox as the optional second
-dataset on 2026-11-07. Swapped, downloaded, and — since we had the raw file in
-hand — used to **verify the ClinTox figures that HANDOFF.md listed as
-unverified** ("come from loader docs, never checked against the raw CSV").
+dataset. Swapped, downloaded, and — since we had the raw file in hand — used
+to **verify the ClinTox figures the handover notes listed as unverified**
+("come from loader docs, never checked against the raw CSV").
 
 **Verified against the raw CSV.** Both predicted counts were right:
 
-| Claim (2026-11-07, unverified) | Measured |
+| Claim, previously unverified | Measured |
 |---|---|
 | ~94 for `FDA_APPROVED = 0` | **94** ✓ |
 | ~110–112 for `CT_TOX = 1` | **112** ✓ |
@@ -213,8 +220,8 @@ on estimates. 1484 raw rows → 1461 molecules (4 unparseable, 19 duplicates).
 - *19 duplicate structures carry contradictory labels.* Merging produced 38
   conflicts across 19 groups — every group disagreed on **both** labels, i.e.
   the same structure appears as approved and as failed-for-toxicity. This is
-  the provenance artefact the 2026-11-07 note suspected, now visible in the
-  data rather than hypothesised.
+  the provenance artefact the team had suspected, now visible in the data
+  rather than hypothesised.
 - *A reporting trap that would have inflated the headline number.* The
   standing advice was "lead with PR-AUC given ~7% positives". That is right
   for `CT_TOX` and **wrong for `FDA_APPROVED`**, whose positive class is the
@@ -236,23 +243,23 @@ on estimates. 1484 raw rows → 1461 molecules (4 unparseable, 19 duplicates).
 - 133 tests still pass; no BBBP references remain outside the generated
   egg-info.
 
-## 2026-11-08 — Main experiment and learning curves executed
+## Main experiment and learning curves executed
 
-**Prompt:** "i need the rpoject to give some basic results at least"
+*Instruction:* run enough of the grid to produce real results.
 
 Ran the full grid rather than a pilot: `tox21_{rf,gnn}_{random,scaffold}` at
 the configured tuning budget of 8, seeds 0-4 (main experiment, the proposal's
 target of 5 seeds), plus `sweep_learning_curve.yaml` at fractions
-0.1/0.25/0.5/1.0 over seeds 0-2. 56 result files, 0 failures. Wall clock
-roughly 5 h on CPU; GNN runs dominate (~8-11 min each at 100%).
+0.1/0.25/0.5/1.0 over seeds 0-2. 56 result files, 0 failures. 3.3 h of wall
+clock on CPU; GNN runs dominate (~9 min each at 100%).
 
 Aggregated with `admet aggregate` and redrew all six figures; the three ROC-AUC
 figures were opened and inspected, not just written.
 
 **Outcome.** H2 is supported (the baseline's advantage at 10% of the training
-set is larger than its SD in PR-AUC and closes monotonically with data). H1 is
-not supported, because no GNN advantage exists at 100% to shrink. Written into
-the README's Findings section.
+set is larger than its SD in PR-AUC and closes with data). H1 is not supported,
+because no GNN advantage exists at 100% to shrink. Written into the README's
+Findings section.
 
 **Worth recording:** an intermediate 3-seed pass put the scaffold ROC-AUC gap at
 -0.016 +/- 0.020; extending to 5 seeds moved it to -0.004 +/- 0.022. The
@@ -262,11 +269,11 @@ headline comparison.
 
 ## ClinTox grid, the report, and committing the artefacts
 
-**Prompts:** "now also do the clintox and compare with tox21" / "add and make
-appropriate commits of figures and [the CSVs] and also add data so teammates
-can load them upon cloning the repo" / "also u need to include a report file
-in which the results (also time the models where running) and stuff like
-that" / "check the pdf, commits and the whole project"
+*Instruction:* run the ClinTox grid and compare it with Tox21; commit the
+figures, the result tables and the raw data so teammates get them on clone;
+add a report file covering the results and how long the models took to run;
+then review the project against the proposal PDF, including the commit
+history.
 
 Ran the full ClinTox grid: 4 configs x 5 seeds x 4 training fractions, 80
 runs, 0 failures. Added `configs/clintox_{rf,gnn}_random.yaml`, which were
@@ -300,6 +307,85 @@ excluding them; and CPU-only rather than §8's assumed 16 GB GPU - the full
 **Outcome.** ClinTox is reported as inconclusive - every GNN-minus-baseline
 gap on it is smaller than its own SD. The informative part is that it scores
 higher than Tox21 on a fifth of the data (0.90 vs 0.84) and loses only
-0.022-0.043 ROC-AUC to a scaffold split where Tox21 loses 0.074-0.080, which
+0.021-0.043 ROC-AUC to a scaffold split where Tox21 loses 0.073-0.080, which
 together with its 19 contradictory duplicate structures points at dataset
 provenance rather than model quality.
+
+## Project-wide review before pushing
+
+*Instruction:* review the whole project thoroughly, including every commit and
+its message, and exclude anything that should not be pushed.
+
+**Two bugs found by checking rather than reading.**
+
+- *Every PR-AUC bar chart was blank.* `plot_split_comparison` hardcoded
+  `ax.set_ylim(0.5, 1.0)`, which is right for ROC-AUC and wrong for PR-AUC:
+  Tox21's PR-AUC values are 0.35–0.47, entirely below the floor, so the bars
+  were drawn outside their own axis. Matplotlib does not warn. Two committed
+  figures had been wrong since they were first produced and nobody had opened
+  them. Fixed with a metric-aware limit, and `tests/test_plots.py` was written
+  to assert that every plotted value falls inside the axis limits.
+- *`results/runs.csv` leaked absolute paths* from the machine that produced it,
+  so the committed file could not regenerate identically anywhere else. Found
+  by cloning the repository fresh and regenerating all three tables:
+  `summary.csv` and `gap.csv` matched byte for byte, `runs.csv` did not. Paths
+  are now stored relative to the results directory, POSIX-style.
+
+**Corrections to the documentation.** Four false statements in the README (a
+download size, an artefact size, stale result paths, and a claim that ClinTox
+scores are macro-averaged over 12 assays when it scores one) and three values
+rounded wrong by rounding the operands before subtracting them. Results and
+figures were moved into per-dataset subdirectories so the layout matches.
+
+**A claim I had made and not checked.** The README stated the runs were CPU-only
+because the machine had no GPU. The machine has an RTX 5070 Ti. The runs were
+genuinely CPU-only, but because `pip install torch` takes the CPU-only wheel by
+default on Windows — an environment default I had written up as a deliberate
+choice.
+
+**Commit history.** Squashed an added-then-rewritten pair, rewrote three commit
+messages that used invented type prefixes, and corrected a size claim in a
+fourth.
+
+## GPU rerun of the full grid
+
+*Instruction:* rerun the experiment on the GPU, record how much faster it is,
+and use the rerun to check the results; keep the work on a separate branch.
+
+A CUDA build of PyTorch was installed and the whole 136-run grid was rerun,
+then merged to `master` as the primary results. `versions.torch_device` was
+added to every result file first, so a run now records the device it used and
+not only the library versions.
+
+**Speed.** 2.03 h against 3.83 h. The GNN is 2.6x faster per Tox21 run and
+2.5x at the full training set; the overall figure is lower only because the
+baseline is 45% of the grid's wall clock and never touches the card. The
+speedup is modest for a GPU because these graphs are small — under 20 heavy
+atoms on average — so the card is never saturated.
+
+**The rerun as a check, which is the more useful half.** The baseline is
+scikit-learn with fixed seeds and is unaffected by the change, so it serves as
+the control: its test metrics came back **bit-identical across all 68 runs**,
+which is what licenses attributing the GNN's movement to the GNN rather than
+to the data, the splits or the harness. One baseline *validation* ROC-AUC
+drifted by 8.3e-7 from non-deterministic float summation across threads; it
+did not change which tuning trial won.
+
+The GNN's scores moved, by up to 0.002 on Tox21 and 0.037 on ClinTox, always
+inside the seed SD. Device and torch version changed together (2.15.0+cpu →
+2.11.0+cu128, as no cu128 wheel exists for 2.15), so the difference is not
+attributable to the GPU alone.
+
+**Every conclusion survived; three smaller claims were weakened and now say
+so.** The split type still dominates and both headline gaps still sit inside
+one SD of zero. But the monotone ordering of the PR-AUC learning curve swapped
+splits between the two passes, so H2 now rests on the 10%-versus-100% contrast
+rather than on a smooth curve; ClinTox's small scaffold drop is cited for the
+baseline only, since the GNN's read 0.043 then 0.082; and the threats section
+gained an entry noting that a single GNN run quoted to three decimals is
+over-precise. Two 3-seed learning-curve gaps also changed sign, which is the
+earlier three-seed finding arrived at independently.
+
+Nothing fell outside its stated uncertainty. The rerun did not overturn a
+finding — it confirmed that the quantities reported with SDs larger than their
+means deserved exactly that treatment.
