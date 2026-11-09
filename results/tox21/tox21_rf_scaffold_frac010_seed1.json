@@ -276,7 +276,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6796945207301324,
-        "seconds": 7.51
+        "seconds": 7.19
       },
       {
         "trial": 1,
@@ -291,7 +291,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6923898982721384,
-        "seconds": 4.46
+        "seconds": 4.25
       },
       {
         "trial": 2,
@@ -306,7 +306,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.7244116472598985,
-        "seconds": 7.25
+        "seconds": 6.9
       },
       {
         "trial": 3,
@@ -321,7 +321,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6399559703588058,
-        "seconds": 4.75
+        "seconds": 4.67
       },
       {
         "trial": 4,
@@ -336,7 +336,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6928143496530064,
-        "seconds": 7.06
+        "seconds": 6.9
       },
       {
         "trial": 5,
@@ -351,7 +351,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6712177005632664,
-        "seconds": 6.6
+        "seconds": 6.49
       },
       {
         "trial": 6,
@@ -366,7 +366,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6820698762440816,
-        "seconds": 7.73
+        "seconds": 7.64
       },
       {
         "trial": 7,
@@ -381,7 +381,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6774139884940432,
-        "seconds": 10.78
+        "seconds": 10.42
       }
     ]
   },
@@ -471,12 +471,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 56.17,
-    "total": 62.6
+    "tuning": 54.49,
+    "total": 60.04
   }
 }

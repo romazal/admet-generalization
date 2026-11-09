@@ -78,7 +78,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6878109452736318,
-        "seconds": 0.74
+        "seconds": 0.62
       },
       {
         "trial": 1,
@@ -93,7 +93,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7468905472636816,
-        "seconds": 1.27
+        "seconds": 1.07
       },
       {
         "trial": 2,
@@ -108,7 +108,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7624378109452735,
-        "seconds": 0.89
+        "seconds": 0.86
       },
       {
         "trial": 3,
@@ -123,7 +123,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8053482587064676,
-        "seconds": 0.65
+        "seconds": 0.64
       },
       {
         "trial": 4,
@@ -138,7 +138,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7388059701492538,
-        "seconds": 0.65
+        "seconds": 0.62
       },
       {
         "trial": 5,
@@ -153,7 +153,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6480099502487562,
-        "seconds": 0.45
+        "seconds": 0.43
       },
       {
         "trial": 6,
@@ -168,7 +168,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8109452736318408,
-        "seconds": 0.97
+        "seconds": 0.9
       },
       {
         "trial": 7,
@@ -183,7 +183,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.822139303482587,
-        "seconds": 0.96
+        "seconds": 0.86
       }
     ]
   },
@@ -253,12 +253,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 6.61,
-    "total": 8.14
+    "tuning": 6.01,
+    "total": 7.36
   }
 }

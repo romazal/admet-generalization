@@ -276,7 +276,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7758781255381676,
-        "seconds": 15.13
+        "seconds": 12.82
       },
       {
         "trial": 1,
@@ -291,7 +291,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7846822863770004,
-        "seconds": 11.09
+        "seconds": 9.8
       },
       {
         "trial": 2,
@@ -306,7 +306,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8118772383912304,
-        "seconds": 14.77
+        "seconds": 13.89
       },
       {
         "trial": 3,
@@ -321,7 +321,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8136561916400006,
-        "seconds": 6.89
+        "seconds": 6.28
       },
       {
         "trial": 4,
@@ -336,7 +336,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.7858215288853282,
-        "seconds": 6.95
+        "seconds": 6.21
       },
       {
         "trial": 5,
@@ -351,7 +351,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7841215398228499,
-        "seconds": 9.74
+        "seconds": 9.21
       },
       {
         "trial": 6,
@@ -366,7 +366,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8004835913273314,
-        "seconds": 13.64
+        "seconds": 12.85
       },
       {
         "trial": 7,
@@ -381,7 +381,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8124293283740643,
-        "seconds": 21.56
+        "seconds": 17.5
       }
     ]
   },
@@ -469,12 +469,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 99.84,
-    "total": 102.91
+    "tuning": 88.61,
+    "total": 91.5
   }
 }

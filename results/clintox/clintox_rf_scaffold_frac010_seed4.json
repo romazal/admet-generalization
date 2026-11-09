@@ -78,7 +78,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6281094527363182,
-        "seconds": 0.33
+        "seconds": 0.37
       },
       {
         "trial": 1,
@@ -93,7 +93,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.5988805970149254,
-        "seconds": 0.48
+        "seconds": 0.54
       },
       {
         "trial": 2,
@@ -108,7 +108,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6486318407960199,
-        "seconds": 0.5
+        "seconds": 0.55
       },
       {
         "trial": 3,
@@ -123,7 +123,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6722636815920399,
-        "seconds": 0.45
+        "seconds": 0.5
       },
       {
         "trial": 4,
@@ -138,7 +138,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6467661691542289,
-        "seconds": 0.44
+        "seconds": 0.52
       },
       {
         "trial": 5,
@@ -153,7 +153,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6349502487562189,
-        "seconds": 0.27
+        "seconds": 0.3
       },
       {
         "trial": 6,
@@ -168,7 +168,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.644278606965174,
-        "seconds": 0.51
+        "seconds": 0.56
       },
       {
         "trial": 7,
@@ -183,7 +183,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6623134328358209,
-        "seconds": 0.5
+        "seconds": 0.54
       }
     ]
   },
@@ -253,12 +253,13 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "08b159940836ab868396cbd32c147566a387410b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 3.46,
-    "total": 4.7
+    "tuning": 3.89,
+    "total": 5.2
   }
 }

@@ -7,16 +7,16 @@
   "train_fraction": 0.5,
   "metrics": {
     "test": {
-      "roc_auc": 0.8519083969465648,
-      "pr_auc": 0.29801481660478535,
+      "roc_auc": 0.8300254452926209,
+      "pr_auc": 0.28043835771838643,
       "n_tasks_scored": 1,
       "n_tasks_skipped": 0,
       "skipped_tasks": {},
       "per_task": [
         {
           "task": "CT_TOX",
-          "roc_auc": 0.8519083969465648,
-          "pr_auc": 0.29801481660478535,
+          "roc_auc": 0.8300254452926209,
+          "pr_auc": 0.28043835771838643,
           "n_labelled": 146,
           "n_positive": 15,
           "positive_rate": 0.10273972602739725,
@@ -25,16 +25,16 @@
       ]
     },
     "valid": {
-      "roc_auc": 0.8201923076923077,
-      "pr_auc": 0.2992850104852647,
+      "roc_auc": 0.8201923076923078,
+      "pr_auc": 0.3103280083214893,
       "n_tasks_scored": 1,
       "n_tasks_skipped": 0,
       "skipped_tasks": {},
       "per_task": [
         {
           "task": "CT_TOX",
-          "roc_auc": 0.8201923076923077,
-          "pr_auc": 0.2992850104852647,
+          "roc_auc": 0.8201923076923078,
+          "pr_auc": 0.3103280083214893,
           "n_labelled": 146,
           "n_positive": 16,
           "positive_rate": 0.1095890410958904,
@@ -75,8 +75,8 @@
           "n_layers": 2,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7629807692307693,
-        "seconds": 4.28
+        "valid_roc_auc": 0.7899038461538461,
+        "seconds": 3.22
       },
       {
         "trial": 1,
@@ -88,8 +88,8 @@
           "n_layers": 2,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8201923076923077,
-        "seconds": 3.06
+        "valid_roc_auc": 0.8201923076923078,
+        "seconds": 2.62
       },
       {
         "trial": 2,
@@ -101,8 +101,8 @@
           "n_layers": 4,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7749999999999999,
-        "seconds": 11.27
+        "valid_roc_auc": 0.7610576923076923,
+        "seconds": 3.39
       },
       {
         "trial": 3,
@@ -114,8 +114,8 @@
           "n_layers": 2,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8129807692307692,
-        "seconds": 8.53
+        "valid_roc_auc": 0.8057692307692308,
+        "seconds": 1.14
       },
       {
         "trial": 4,
@@ -127,8 +127,8 @@
           "n_layers": 3,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8139423076923077,
-        "seconds": 8.81
+        "valid_roc_auc": 0.7971153846153847,
+        "seconds": 3.14
       },
       {
         "trial": 5,
@@ -141,7 +141,7 @@
           "pooling": "mean"
         },
         "valid_roc_auc": 0.5903846153846154,
-        "seconds": 0.55
+        "seconds": 0.44
       },
       {
         "trial": 6,
@@ -153,8 +153,8 @@
           "n_layers": 4,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7264423076923077,
-        "seconds": 2.37
+        "valid_roc_auc": 0.7971153846153846,
+        "seconds": 3.29
       },
       {
         "trial": 7,
@@ -166,8 +166,8 @@
           "n_layers": 3,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.7432692307692308,
-        "seconds": 21.35
+        "valid_roc_auc": 0.7177884615384615,
+        "seconds": 1.28
       }
     ]
   },
@@ -239,13 +239,14 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c7a5b524e191c92ee30e4236e383467098d51b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 60.23,
-    "total": 61.78
+    "tuning": 18.54,
+    "total": 19.69
   },
-  "best_epoch": 24
+  "best_epoch": 31
 }

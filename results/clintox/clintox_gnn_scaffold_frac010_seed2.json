@@ -75,8 +75,8 @@
           "n_layers": 2,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.45769230769230773,
-        "seconds": 0.79
+        "valid_roc_auc": 0.454326923076923,
+        "seconds": 1.0
       },
       {
         "trial": 1,
@@ -88,8 +88,8 @@
           "n_layers": 2,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.5312500000000001,
-        "seconds": 0.27
+        "valid_roc_auc": 0.5961538461538461,
+        "seconds": 0.67
       },
       {
         "trial": 2,
@@ -101,8 +101,8 @@
           "n_layers": 4,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.5375,
-        "seconds": 2.15
+        "valid_roc_auc": 0.5427884615384615,
+        "seconds": 0.87
       },
       {
         "trial": 3,
@@ -114,8 +114,8 @@
           "n_layers": 2,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.5586538461538462,
-        "seconds": 2.98
+        "valid_roc_auc": 0.5716346153846155,
+        "seconds": 0.48
       },
       {
         "trial": 4,
@@ -127,8 +127,8 @@
           "n_layers": 3,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.5115384615384615,
-        "seconds": 1.85
+        "valid_roc_auc": 0.5576923076923077,
+        "seconds": 1.25
       },
       {
         "trial": 5,
@@ -141,7 +141,7 @@
           "pooling": "mean"
         },
         "valid_roc_auc": 0.6182692307692308,
-        "seconds": 0.17
+        "seconds": 0.14
       },
       {
         "trial": 6,
@@ -153,8 +153,8 @@
           "n_layers": 4,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.4129807692307692,
-        "seconds": 0.74
+        "valid_roc_auc": 0.42019230769230775,
+        "seconds": 0.71
       },
       {
         "trial": 7,
@@ -166,8 +166,8 @@
           "n_layers": 3,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.3293269230769231,
-        "seconds": 2.38
+        "valid_roc_auc": 0.31875000000000003,
+        "seconds": 0.16
       }
     ]
   },
@@ -239,13 +239,14 @@
     "numpy": "2.5.4",
     "sklearn": "1.9.1",
     "rdkit": "2026.09.1",
-    "torch": "2.15.0+cpu",
-    "yaml": "6.0.3"
+    "torch": "2.11.0+cu128",
+    "yaml": "6.0.3",
+    "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c7a5b524e191c92ee30e4236e383467098d51b",
+  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
   "timing_seconds": {
-    "tuning": 11.33,
-    "total": 12.87
+    "tuning": 5.29,
+    "total": 6.46
   },
   "best_epoch": 1
 }
