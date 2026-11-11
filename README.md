@@ -25,7 +25,7 @@ matplotlib all publish wheels for 3.12–3.14).
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # 175 tests, ~3 s
+make test                        # 192 tests, ~4 s
 ```
 
 No download, and a GPU is optional (it makes the GNN ~2.5x faster; see
@@ -275,6 +275,13 @@ Figures: `figures/tox21/random_vs_scaffold_tox21_roc_auc.png` (H1),
 `figures/tox21/gnn_minus_rf_gap_tox21_roc_auc.png` (H2), plus the PR-AUC
 counterparts and the same three under `figures/clintox/`.
 
+`figures/tox21/train_test_similarity_tox21.png` shows the mechanism behind
+all of it: the Tanimoto similarity of each test molecule to its nearest
+training molecule, under each split. The median falls from 0.583 to 0.419,
+and the share of test molecules that have a *fingerprint-identical* training
+molecule falls from 7.8% to 0.6% — which is what the scaffold split is for,
+and a reminder of how much a random split flatters a model on this data.
+
 ClinTox results and the cross-dataset comparison are in
 [REPORT.md](REPORT.md) §4.
 
@@ -456,7 +463,7 @@ admet-generalization/
 │   └── analysis/
 │       ├── aggregate.py    # results/**/*.json -> summary + gap tables
 │       └── plots.py        # the three figures, one set per dataset
-├── tests/                  # 175 tests
+├── tests/                  # 192 tests
 ├── data/                   # raw datasets, committed so a clone runs offline
 ├── results/
 │   ├── tox21/              # 66 run files (56 main grid + 10 dummy)

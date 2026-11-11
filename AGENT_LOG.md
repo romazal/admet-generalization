@@ -755,3 +755,73 @@ tests pass.
 Worth recording for whoever reads this next: a byte-comparison test is not
 automatically a strong test. This one was only as strong as the platform it
 ran on, and nothing but mutating it would have shown that.
+
+## A batch of self-contained tasks, before touching the GNN
+
+*Instruction:* do the TODO tasks that a GNN rerun could not invalidate, one
+commit each, then move on to the GNN.
+
+Five pieces, chosen because none of them touches a model result: a GNN rerun
+would change the 68 GNN result files, the four tables and the twelve figures,
+but no code, CLI, loader or test. Each is recorded below with what checking it
+turned up, which in three cases was more than the task asked for.
+
+**`admet datasets` and `--version` (tasks 6 and 9).** The command loads each
+dataset rather than printing its registry entry: the registry says what a
+dataset should contain, the loader says what survived unreadable SMILES and
+duplicate merging, and the second number is the one every result rests on.
+With it came `tests/test_cli.py` — `cli.py` was the last module with no test
+file of its own, the same gap task 7 closed for `loaders.py`. The tests check
+wiring, not the pipeline beneath it. Verified against broken copies: an
+unwired handler, a hardcoded count and a wrong version string each fail.
+
+**`CITATION.cff` (task 9).** All four contributors to master. Two fields were
+left as explicit TODOs rather than filled in: commit authorship gives an email
+and a GitHub handle, not always a legal name, and a guessed surname in a
+citation file is worse than a blank one. No `license:` field either, because
+the repository has no LICENSE — those two belong together.
+
+**Warn on conflicting duplicates (task 9).** The count was already in every
+result file, where nobody looks. The task says "19 on ClinTox"; that is the
+*row* count. The conflict count is per assay and is 38, because every one of
+those 19 merged rows disagrees on both assays. The warning gives both numbers,
+since quoting one as the other understates it by half.
+
+**`make figures-clean` (task 9), and a neighbour it exposed.** `clean-results`
+globbed `results/*.json` and `figures/*.png`, but run files live in
+`results/<dataset>/` and figures in `figures/<dataset>/`. The only thing it
+ever deleted was the four aggregated tables — it reported success and left all
+146 run files and all 12 figures in place, so anyone using it to reset was
+working from stale results. Both targets now glob one level down, verified on
+a copy of the tree rather than on the real one.
+
+**The train/test similarity figure (task 1a).** For every test molecule, its
+Tanimoto similarity to the nearest training molecule, drawn once per split.
+This is the mechanism the report asserts in prose and then evidences with a
+0.073 ROC-AUC drop; the figure measures the claim itself. On Tox21 the median
+falls 0.583 → 0.419, and the share of test molecules with a
+fingerprint-identical training molecule falls from 7.8% to 0.6% — a number
+worth having, because it says how much a random split flatters a model here.
+
+Two things about that figure are worth recording. It is the only one whose
+subject is the split rather than the model, so split has to become the colour
+channel — and the two model hues were therefore unavailable, since blue and
+orange already mean "random forest" and "GNN" elsewhere and reusing them is
+the exact confusion `plot_gap` had to have undone. The pair was chosen by
+running the colour checks rather than by eye: of the reference palette's
+remaining slots, violet and green are the best-separating pair in which
+*both* colours also clear 3:1 contrast on the surface (CVD ΔE 28.8,
+normal-vision ΔE 35.5, contrast 5.6 and 4.8, against thresholds of 8, 15 and
+3). The yellow and aqua pairings separate slightly better and fail contrast.
+Line style carries the split as well, so identity never rests on colour alone.
+
+The second is that the first version of its test fixture was wrong in a way
+that looked right: five scaffolds of eight molecules each. The randomized
+splitter packs whole groups into whichever part is furthest below its target,
+so those five groups filled train and validation and left the **test set
+empty** — there was nothing to measure, and two tests failed with an empty
+array rather than a wrong number. Twelve scaffolds of uneven size fixed it.
+Worth knowing when writing any fixture for this splitter: equal-sized groups
+are the pathological case, not the clean one.
+
+192 tests pass.

@@ -22,7 +22,7 @@ git clone <repo-url> && cd admet-generalization
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # must print 175 passed
+make test                        # must print 192 passed
 ```
 
 **Three rules for working with a free agent:**
@@ -60,7 +60,12 @@ here, and figures are what the audience actually remembers.
 
 Pick one of the ideas below — or your own. Each is a standalone figure.
 
-### a. How similar are the test molecules to the training molecules?
+### a. How similar are the test molecules to the training molecules? — done
+
+*Done 2026-11-11. `plot_train_test_similarity` in `plots.py`, drawn by
+`make plots` into `figures/<dataset>/train_test_similarity_<dataset>.png`.
+Tox21 median similarity falls 0.583 → 0.419 from random to scaffold. Ideas b
+and c below are still open.*
 
 This is the mechanism behind the headline result, and we assert it in prose
 without ever showing it. For every test molecule, compute its **maximum
@@ -316,7 +321,11 @@ benzene and cyclohexane give different vectors.
 
 ---
 
-## 6. `admet datasets` — list what is available
+## 6. `admet datasets` — list what is available — done
+
+*Done 2026-11-11. `command_datasets` in `cli.py`, plus `tests/test_cli.py` —
+cli.py had been the last module with no test file of its own. The original
+task text is kept below as the record.*
 
 There is no way to ask the tool which datasets exist without reading the
 source. Add a command that prints the registry with the molecule count, the
@@ -461,6 +470,12 @@ why in the commit.
 ---
 
 ## 9. Smaller things
+
+*Four of the five are done (2026-11-11): `admet --version`, `CITATION.cff`
+(two names still need filling in by a human), the duplicate-conflict warning,
+and `make figures-clean` — which turned out to also need `clean-results`
+fixed, since its globs missed the per-dataset subdirectories and it had never
+deleted anything. `n_valid` in the result tables is the one left.*
 
 - **`admet --version`.** Read `__version__` from `src/admet/__init__.py`. One
   line in `build_parser`.
