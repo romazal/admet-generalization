@@ -25,7 +25,7 @@ matplotlib all publish wheels for 3.12–3.14).
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # 168 tests, ~3 s
+make test                        # 172 tests, ~3 s
 ```
 
 No download, and a GPU is optional (it makes the GNN ~2.5x faster; see
@@ -210,12 +210,16 @@ grid is 16× larger). 56 Tox21 runs. Every number below comes from
 
 ### Main experiment (100% of the training set, 5 seeds)
 
-| Metric | Split | Baseline (Morgan + RF) | GNN (GINE) | GNN − baseline |
-|---|---|---|---|---|
-| ROC-AUC | Random | 0.834 ± 0.009 | 0.834 ± 0.015 | **+0.000 ± 0.018** |
-| ROC-AUC | Scaffold | 0.760 ± 0.013 | 0.755 ± 0.011 | **−0.005 ± 0.017** |
-| PR-AUC | Random | 0.473 ± 0.023 | 0.449 ± 0.029 | −0.024 ± 0.037 |
-| PR-AUC | Scaffold | 0.379 ± 0.019 | 0.360 ± 0.020 | −0.019 ± 0.028 |
+| Metric | Split | Dummy (floor) | Baseline (Morgan + RF) | GNN (GINE) | GNN − baseline |
+|---|---|---|---|---|---|
+| ROC-AUC | Random | 0.500 ± 0.000 | 0.834 ± 0.009 | 0.834 ± 0.015 | **+0.000 ± 0.018** |
+| ROC-AUC | Scaffold | 0.500 ± 0.000 | 0.760 ± 0.013 | 0.755 ± 0.011 | **−0.005 ± 0.017** |
+| PR-AUC | Random | 0.077 ± 0.002 | 0.473 ± 0.023 | 0.449 ± 0.029 | −0.024 ± 0.037 |
+| PR-AUC | Scaffold | 0.100 ± 0.007 | 0.379 ± 0.019 | 0.360 ± 0.020 | −0.019 ± 0.028 |
+
+The dummy ignores the molecule and predicts each assay's training-set
+positive rate. It is there to make the PR-AUC column readable: 0.473 looks
+weak in isolation and is about six times chance on a dataset this imbalanced.
 
 ### Learning curves (3 seeds) — GNN minus baseline
 
@@ -258,10 +262,13 @@ scaffold ROC-AUC gap read −0.016 ± 0.020; at 5 it reads −0.005 ± 0.017. Th
 apparent effect was seed noise. Treat every 3-seed row above as directional
 only.
 
-Two sanity checks passed: the baseline's 0.834 under a random split sits in the
-range published for fingerprint models on Tox21, and the scaffold-disjointness
+Three sanity checks passed: the baseline's 0.834 under a random split sits in
+the range published for fingerprint models on Tox21; the scaffold-disjointness
 check is recorded `true` in all 68 scaffold result files and `false` in all 68
-random ones.
+random ones; and the dummy's PR-AUC reproduces the measured test-set positive
+rate to three decimals (0.077 vs 0.0768 random, 0.100 vs 0.0997 scaffold),
+which is what a class-prior model must score if the metric is masking missing
+labels correctly.
 
 Figures: `figures/tox21/random_vs_scaffold_tox21_roc_auc.png` (H1),
 `figures/tox21/learning_curves_tox21_roc_auc.png` and
@@ -446,10 +453,10 @@ admet-generalization/
 │   └── analysis/
 │       ├── aggregate.py    # results/**/*.json -> summary + gap tables
 │       └── plots.py        # the three figures, one set per dataset
-├── tests/                  # 168 tests
+├── tests/                  # 172 tests
 ├── data/                   # raw datasets, committed so a clone runs offline
 ├── results/
-│   ├── tox21/              # 56 run files
+│   ├── tox21/              # 66 run files (56 main grid + 10 dummy)
 │   ├── clintox/            # 80 run files
 │   └── {runs,summary,gap}.csv
 └── figures/

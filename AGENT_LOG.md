@@ -651,3 +651,56 @@ the other demonstrates why, by sampling both spaces and asserting the two sets
 of eight configurations are disjoint. The second is the useful one — the
 failure it guards against is a one-line edit that looks like an improvement
 and silently detaches every committed baseline number from the code.
+
+## Running the dummy baseline, and a figure it broke
+
+*Instruction:* run the dummy baseline so the floor reaches the report — on
+the GPU.
+
+**The GPU does not apply here, and saying so was the useful part.** The GPU is
+real and in use for the GNN (RTX 5070 Ti, torch 2.11.0+cu128), but `dummy.py`
+imports no torch: it is `sklearn.dummy.DummyClassifier` emitting one constant
+per assay. There is nothing to accelerate. Both configs, five seeds each, took
+26 seconds of CPU. The `torch_device` field still records
+`cuda:NVIDIA GeForce RTX 5070 Ti`, as it does in all 136 committed runs
+including the scikit-learn baseline — it reports what torch can see, not what
+the model used.
+
+**Results.** ROC-AUC exactly 0.500 ± 0.000 under both splits, which is what a
+constant predictor must score. PR-AUC 0.077 ± 0.002 random, 0.100 ± 0.007
+scaffold. Those PR-AUC values reproduce the measured test-set positive rates
+(0.0768 and 0.0997, computed independently from the splits) to three decimals,
+which is a check on the masking as well as a floor: a class-prior model can
+only score its own prevalence if missing labels are being excluded correctly.
+This is now a third sanity check in the README. It is also the answer to the
+question task 4 was really asking — a PR-AUC of 0.473 reads as weak until the
+0.077 beside it shows what knowing nothing scores.
+
+**A figure broke, and the tests did not catch it.** Adding a third model to
+`summary.csv` put a dummy bar into the random-vs-scaffold charts. The PR-AUC
+chart came out well. The ROC-AUC chart did not: its y-axis starts at 0.5
+because 0.5 is chance, and the dummy scores exactly 0.5, so the bar had zero
+height. The figure rendered as two coloured bars, an unexplained gap, and a
+floating "0.500" label over nothing.
+
+This is the same failure as the one in the figure-review entry above —
+a chart written with its data outside the visible axis — at the other end of
+the scale, and the test added for that one did not catch it. It asserted each
+value lies *within* the limits, and 0.5 does lie within [0.5, 1.0]. A bar
+exactly on the floor passes that check and still draws nothing.
+
+Fixed in `plots.py`: `_bar_ylim` now takes the bar heights as well as their
+tops and drops the ROC-AUC floor just below the shortest bar when one would
+otherwise vanish, keeping 0.5 when nothing sits on it. The dummy also gained a
+label (`Dummy (class prior)`) and a deliberately neutral grey, and bars are
+ordered floor, baseline, GNN via `MODEL_ORDER` — sorting by name had put
+`dummy` between the two models, where it reads as a third competing approach
+rather than as the floor they are measured against.
+
+Four tests added. The useful one inspects the drawn figure and asserts every
+bar has height above the axis floor, which is the check that was missing
+rather than a restatement of the one that passed. One existing test needed
+amending: it compared the curve colours against every registered model colour,
+which was the same thing as "both models" until a third model was registered.
+172 tests pass, and `make aggregate && make plots` is idempotent — a second
+run changes no byte of the four tables or the twelve figures.

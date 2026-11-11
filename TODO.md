@@ -22,7 +22,7 @@ git clone <repo-url> && cd admet-generalization
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # must print 168 passed
+make test                        # must print 172 passed
 ```
 
 **Three rules for working with a free agent:**
@@ -246,12 +246,13 @@ model success.
 
 ---
 
-## 4. A `dummy` baseline — the floor every score should beat — done
+## 4. A `dummy` baseline — the floor every score should beat — done and run
 
 *Done by Jollly23 (`Jollly23`, merged 2026-11-11). `src/admet/models/dummy.py`
 plus `configs/tox21_dummy_random.yaml` and `configs/tox21_dummy_scaffold.yaml`.
-The model exists but **has not been run** — no dummy result files, so the floor
-is not in the report yet. The original task text is kept below as the record.*
+Run on 2026-11-11, 5 seeds x 2 splits: ROC-AUC 0.500 both splits, PR-AUC 0.077
+random and 0.100 scaffold. The floor is in README and REPORT §3. The original
+task text is kept below as the record.*
 
 Right now we compare a GNN against a random forest. Neither is compared
 against *nothing*. A dummy model that ignores the molecule and predicts the

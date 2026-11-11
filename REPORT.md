@@ -43,6 +43,11 @@ Both models, both splits, four training fractions. Tox21: 5 seeds at 100% and
 3 along the learning curve (56 runs). ClinTox: 5 seeds throughout (80 runs).
 **136 runs in total.**
 
+A dummy class-prior model was run separately on Tox21, both splits, 5 seeds at
+100% (10 runs), to establish the floor in §3. It is not part of the 136 and
+not part of the timing or CPU/GPU figures in §5 and §5b, which describe the
+main grid.
+
 `CT_TOX` is scored alone because ClinTox's second label is the same label
 inverted — `CT_TOX == NOT FDA_APPROVED` for 98.8% of molecules — and
 `FDA_APPROVED`'s positive class is the 91% *majority*, so its PR-AUC runs near
@@ -75,19 +80,33 @@ artefact.
 
 ## 3. Results — Tox21
 
-Test ROC-AUC, mean ± SD over 5 seeds, full training set:
+Test ROC-AUC, mean ± SD over 5 seeds, full training set. The dummy is a
+class-prior model that ignores the molecule entirely — the floor both real
+models have to clear:
 
-| Split | Baseline (Morgan + RF) | GNN (GINE) | GNN − baseline |
-|---|---|---|---|
-| Random | 0.834 ± 0.009 | 0.834 ± 0.015 | **+0.000 ± 0.018** |
-| Scaffold | 0.760 ± 0.013 | 0.755 ± 0.011 | **−0.005 ± 0.017** |
+| Split | Dummy (floor) | Baseline (Morgan + RF) | GNN (GINE) | GNN − baseline |
+|---|---|---|---|---|
+| Random | 0.500 ± 0.000 | 0.834 ± 0.009 | 0.834 ± 0.015 | **+0.000 ± 0.018** |
+| Scaffold | 0.500 ± 0.000 | 0.760 ± 0.013 | 0.755 ± 0.011 | **−0.005 ± 0.017** |
 
 Test PR-AUC, same runs:
 
-| Split | Baseline | GNN | GNN − baseline |
-|---|---|---|---|
-| Random | 0.473 ± 0.023 | 0.449 ± 0.029 | −0.024 ± 0.037 |
-| Scaffold | 0.379 ± 0.019 | 0.360 ± 0.020 | −0.019 ± 0.028 |
+| Split | Dummy (floor) | Baseline | GNN | GNN − baseline |
+|---|---|---|---|---|
+| Random | 0.077 ± 0.002 | 0.473 ± 0.023 | 0.449 ± 0.029 | −0.024 ± 0.037 |
+| Scaffold | 0.100 ± 0.007 | 0.379 ± 0.019 | 0.360 ± 0.020 | −0.019 ± 0.028 |
+
+**Both models clear the floor by a wide margin.** The dummy scores exactly
+0.500 ROC-AUC, as it must — it emits one constant per assay, so every
+threshold ranks the molecules identically. The informative column is PR-AUC,
+where the floor is the positive rate rather than a fixed 0.5: at 0.077 under
+the random split, the baseline's 0.473 is about six times chance. Tox21 is
+heavily imbalanced, and a PR-AUC of 0.47 is easy to read as weak until the
+0.077 next to it shows what "knowing nothing" scores. The floor is higher
+under the scaffold split (0.100 vs 0.077) because scaffold-disjoint test sets
+happen to be slightly more positive, which is worth keeping in mind when
+reading the scaffold PR-AUC drop: a little of it is absorbed by a higher
+baseline rate.
 
 Learning curves (3 seeds), GNN − baseline:
 
