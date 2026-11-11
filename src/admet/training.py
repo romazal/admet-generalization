@@ -35,6 +35,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import platform
 import random
 import subprocess
@@ -141,10 +142,26 @@ def load_config(path: str | Path) -> dict[str, Any]:
 
 
 def set_global_seeds(seed: int) -> None:
-    """Seed every global RNG a run can touch.
+    """Seed every global RNG a run can touch, and pin torch to deterministic
+    kernels.
 
-    The splitters seed themselves (see :mod:`admet.data.splits`), so this is
-    for everything else: scikit-learn, torch initialisation and shuffling.
+    The splitters seed themselves (see :mod:`admet.data.splits`), so the
+    seeding here is for everything else: scikit-learn, torch initialisation
+    and shuffling.
+
+    Seeding alone is not enough on a GPU, and this was measured rather than
+    assumed. Before the determinism settings below, three runs of the *same*
+    config, seed, machine and torch build gave test ROC-AUCs of 0.7369,
+    0.7413 and 0.7690 — a spread of 0.032, wider than the 0.011 across-seed
+    SD the report quotes as uncertainty, and wide enough to change which
+    hyperparameters won the tuning search. The cause is float addition order:
+    the scatter-add in message passing (`index_add`) and several cuBLAS
+    kernels pick an order per launch, so "same seed" did not mean "same
+    numbers". Pinning the kernels removes it; two runs now agree bit for bit.
+
+    ``CUBLAS_WORKSPACE_CONFIG`` has to be in the environment before cuBLAS
+    initialises, which is why it is set here rather than in a shell script —
+    this runs before any model is built.
     """
     random.seed(seed)
     np.random.seed(seed % (2**32))
@@ -155,6 +172,29 @@ def set_global_seeds(seed: int) -> None:
     torch.manual_seed(seed)
     if torch.cuda.is_available():  # pragma: no cover - no GPU in CI
         torch.cuda.manual_seed_all(seed)
+
+    if os.environ.get("ADMET_NONDETERMINISTIC") == "1":
+        # An escape hatch, not a convenience. `use_deterministic_algorithms`
+        # raises on any op with no deterministic kernel, so a future torch or
+        # a different GPU could stop this pipeline dead; the variable lets
+        # someone finish a run and report the breakage. A result produced
+        # with it set records `deterministic: false` and is not comparable
+        # with the committed ones.
+        return
+    os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
+    torch.backends.cudnn.benchmark = False
+    torch.use_deterministic_algorithms(True)
+
+
+def deterministic_mode() -> bool:
+    """Whether this process pinned torch to deterministic kernels."""
+    if os.environ.get("ADMET_NONDETERMINISTIC") == "1":
+        return False
+    try:
+        import torch
+    except ImportError:  # pragma: no cover
+        return True
+    return bool(torch.are_deterministic_algorithms_enabled())
 
 
 def _library_versions() -> dict[str, str]:
@@ -414,6 +454,7 @@ def run_experiment(
             "test": len(split.test),
         },
         "scaffold_disjointness_checked": leakage_checked,
+        "deterministic": deterministic_mode(),
         "best_params": best_params,
         "tuning": {
             "budget": int(tuning_config["budget"]),

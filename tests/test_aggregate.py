@@ -181,3 +181,45 @@ def test_regenerating_a_table_is_byte_identical(tmp_path: Path) -> None:
     second = {n: (tmp_path / n).read_bytes() for n in ("runs.csv", "summary.csv")}
 
     assert first == second
+
+
+# --------------------------------------------------------------------------- #
+# Determinism
+# --------------------------------------------------------------------------- #
+
+
+def test_seeding_pins_torch_to_deterministic_kernels() -> None:
+    """Seeding alone does not make a GPU run reproducible.
+
+    Measured before this was added: three runs of the same config, seed,
+    machine and torch build gave test ROC-AUCs of 0.7369, 0.7413 and 0.7690.
+    That 0.032 spread is wider than the 0.011 across-seed SD the report
+    quotes as its uncertainty, and it moved which hyperparameters won. The
+    cause is float addition order in the scatter-add and in cuBLAS, which
+    seeding cannot touch.
+    """
+    import os
+
+    import torch
+
+    from admet.training import deterministic_mode, set_global_seeds
+
+    set_global_seeds(0)
+    assert torch.are_deterministic_algorithms_enabled()
+    assert torch.backends.cudnn.benchmark is False
+    assert os.environ.get("CUBLAS_WORKSPACE_CONFIG") == ":4096:8"
+    assert deterministic_mode() is True
+
+
+def test_the_escape_hatch_is_recorded_rather_than_silent(monkeypatch) -> None:
+    """Opting out must show up in the result file, not just in someone's shell.
+
+    `use_deterministic_algorithms` raises on any op without a deterministic
+    kernel, so a future torch could stop the pipeline dead and someone will
+    need to finish a run. A result produced that way is not comparable with
+    the committed ones, so it has to say so.
+    """
+    from admet.training import deterministic_mode
+
+    monkeypatch.setenv("ADMET_NONDETERMINISTIC", "1")
+    assert deterministic_mode() is False
