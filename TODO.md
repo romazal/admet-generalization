@@ -314,7 +314,7 @@ and that both dataset names appear in the output (use pytest's `capsys`).
 
 ---
 
-## 7. A `tests/test_loaders.py`
+## 7. A `tests/test_loaders.py` — claimed by Chunky153
 
 `loaders.py` is the only core module with no test file of its own, and it does
 the cleaning every result depends on — canonicalisation, dropping unparseable
