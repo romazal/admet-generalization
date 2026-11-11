@@ -72,7 +72,14 @@ _INK_SECONDARY = "#52514e"
 _GRID = "#dcdbd6"
 
 #: Model is the colour channel.
-MODEL_COLORS: dict[str, str] = {"rf": "#2a78d6", "gnn": "#eb6834"}
+#:
+#: The dummy is deliberately a neutral grey rather than a third hue: it is
+#: the floor the two approaches are measured against, not a third approach.
+MODEL_COLORS: dict[str, str] = {
+    "rf": "#2a78d6",
+    "gnn": "#eb6834",
+    "dummy": "#8a8784",
+}
 
 #: Colour for the gap series, deliberately *not* a model hue.
 #:
@@ -83,9 +90,14 @@ MODEL_COLORS: dict[str, str] = {"rf": "#2a78d6", "gnn": "#eb6834"}
 GAP_COLOR: str = "#3d3c3a"
 
 MODEL_LABELS: dict[str, str] = {
+    "dummy": "Dummy (class prior)",
     "rf": "Fingerprint + random forest",
     "gnn": "Graph neural network",
 }
+
+#: Left-to-right bar order: the floor, then the baseline, then the advanced
+#: model, so a group reads in increasing order of what it is claiming.
+MODEL_ORDER: tuple[str, ...] = ("dummy", "rf", "gnn")
 
 #: Split is the line-style / marker channel — the secondary encoding.
 SPLIT_STYLES: dict[str, dict[str, object]] = {
@@ -103,13 +115,31 @@ SPLIT_LABELS: dict[str, str] = {
 _LINE_WIDTH = 2.0
 _MARKER_SIZE = 7.0
 
+#: Smallest bar height, in axis units, that still reads as a bar rather than
+#: as a gap between its neighbours. Used to keep a bar sitting on the ROC-AUC
+#: chance floor visible.
+_MIN_VISIBLE_BAR = 0.02
+
 
 def _label(mapping: dict[str, str], key: str) -> str:
     """Human-readable name, falling back to the raw key for a new model."""
     return mapping.get(key, key)
 
 
-def _bar_ylim(metric: str, tops: Sequence[float]) -> tuple[float, float]:
+def _model_sort_key(model: str) -> tuple[int, str]:
+    """Order models by :data:`MODEL_ORDER`; unregistered ones sort last.
+
+    Sorting by name is what put ``dummy`` between the baseline and the GNN,
+    which reads as a third competing approach rather than as the floor.
+    """
+    if model in MODEL_ORDER:
+        return MODEL_ORDER.index(model), model
+    return len(MODEL_ORDER), model
+
+
+def _bar_ylim(
+    metric: str, tops: Sequence[float], heights: Sequence[float] = ()
+) -> tuple[float, float]:
     """Y-limits for the bar chart, by metric.
 
     A bar chart's baseline has to be a value the reader can treat as "none of
@@ -123,9 +153,19 @@ def _bar_ylim(metric: str, tops: Sequence[float]) -> tuple[float, float]:
     This used to be a hardcoded ``(0.5, 1.0)``, which silently clipped every
     PR-AUC figure: Tox21's PR-AUC is about 0.35-0.47, entirely below the
     floor, so the chart rendered with no bars at all.
+
+    ``heights`` is the bar heights without their error bars, and exists for
+    the other end of the same failure. A bar *at* the baseline has zero
+    height and disappears, leaving only a floating value label and an
+    unexplained gap between its neighbours. The dummy model sits at exactly
+    0.5 ROC-AUC by construction, so this is not a corner case: the floor
+    drops just below the shortest bar whenever one would otherwise vanish.
     """
     if metric == "roc_auc":
-        return 0.5, 1.0
+        shortest = min(heights, default=1.0)
+        if shortest > 0.5 + _MIN_VISIBLE_BAR:
+            return 0.5, 1.0
+        return max(0.0, shortest - _MIN_VISIBLE_BAR), 1.0
     headroom = max(tops, default=1.0) * 1.18
     return 0.0, min(1.0, max(headroom, 0.1))
 
@@ -243,13 +283,14 @@ def plot_split_comparison(
         return None
 
     splits = sorted({s.split for s in rows})
-    models = sorted({s.model for s in rows}, key=lambda m: m != "rf")
+    models = sorted({s.model for s in rows}, key=_model_sort_key)
     # Thin marks: the group occupies under half the slot, leaving the groups
     # clearly separated rather than filling the axis with ink.
     width = 0.40 / max(len(models), 1)
 
     figure, ax = _new_figure()
     tops: list[float] = []
+    all_heights: list[float] = []
     for index, model in enumerate(models):
         positions, heights, errors = [], [], []
         for group, split in enumerate(splits):
@@ -263,6 +304,7 @@ def plot_split_comparison(
             heights.append(getattr(match, f"{metric}_mean"))
             errors.append(getattr(match, f"{metric}_std") or 0.0)
             tops.append(heights[-1] + errors[-1])
+            all_heights.append(heights[-1])
 
         bars = ax.bar(
             positions,
@@ -295,7 +337,7 @@ def plot_split_comparison(
 
     ax.set_xticks(range(len(splits)))
     ax.set_xticklabels([_label(SPLIT_LABELS, s) for s in splits])
-    ax.set_ylim(*_bar_ylim(metric, tops))
+    ax.set_ylim(*_bar_ylim(metric, tops, all_heights))
     _style_axes(
         ax,
         title=f"Test {metric.replace('_', '-').upper()} by model and split{_suffix(dataset)}",
@@ -334,7 +376,7 @@ def plot_learning_curves(
         return None
 
     splits = sorted({s.split for s in rows})
-    models = sorted({s.model for s in rows}, key=lambda m: m != "rf")
+    models = sorted({s.model for s in rows}, key=_model_sort_key)
     ticks = sorted({int(round(s.train_fraction * 100)) for s in rows})
     name = metric.replace("_", "-").upper()
 

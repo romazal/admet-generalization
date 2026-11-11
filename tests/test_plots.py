@@ -231,9 +231,11 @@ def test_each_learning_curve_panel_holds_both_models(capture, tmp_path: Path) ->
     plot_learning_curves(_curve(), tmp_path / "c.png", dataset="tox21")
     for ax in capture["figure"].get_axes():
         # errorbar() puts the label on the container, not the Line2D, so the
-        # colours are the identity to check here.
+        # colours are the identity to check here. Named explicitly rather than
+        # compared against every registered colour: the dummy is registered
+        # too but has only the 100% point, so it draws no curve.
         colors = {line.get_color() for line in ax.get_lines()}
-        assert colors == set(MODEL_COLORS.values())
+        assert colors == {MODEL_COLORS["rf"], MODEL_COLORS["gnn"]}
 
 
 def test_every_learning_curve_point_is_inside_its_panel(
@@ -300,3 +302,70 @@ def test_figures_state_what_the_error_bars_are(capture, tmp_path: Path) -> None:
     plot_learning_curves(_curve(), tmp_path / "c.png", dataset="tox21")
     note = " ".join(t.get_text() for t in capture["figure"].texts)
     assert "±1 SD" in note and "seeds" in note
+
+
+# --------------------------------------------------------------------------- #
+# The dummy floor: a bar sitting exactly on the baseline
+# --------------------------------------------------------------------------- #
+
+
+def _grid_with_dummy(dataset: str = "tox21"):
+    """The real Tox21 shape: a dummy at exactly 0.5 ROC-AUC, beside two models."""
+    rows = _grid(dataset)
+    rows += [
+        _summary(dataset=dataset, model="dummy", split="random", roc=0.5, pr=0.077),
+        _summary(dataset=dataset, model="dummy", split="scaffold", roc=0.5, pr=0.100),
+    ]
+    return rows
+
+
+def test_a_bar_on_the_chance_floor_is_still_visible() -> None:
+    """The dummy scores exactly 0.5, which is the ROC-AUC baseline.
+
+    With the floor pinned at 0.5 the bar has zero height: the PNG is written,
+    nothing raises, and the reader sees a floating "0.500" label over an
+    unexplained gap between the other two bars. The same silent-blank failure
+    as the PR-AUC one above, at the other end of the axis.
+    """
+    low, high = _bar_ylim("roc_auc", [0.85, 0.5], [0.83, 0.5])
+    assert low < 0.5, "a bar at 0.5 would render with zero height"
+    assert high == 1.0
+
+
+def test_the_chance_floor_is_kept_when_nothing_sits_on_it() -> None:
+    """Without a dummy the axis must not drift off 0.5 — chance is the baseline."""
+    assert _bar_ylim("roc_auc", [0.85, 0.78], [0.83, 0.76]) == (0.5, 1.0)
+
+
+def test_every_dummy_bar_has_height_in_the_real_figure(capture, tmp_path: Path) -> None:
+    """Checks the drawn figure, not the helper: every bar must be visible."""
+    for metric in ("roc_auc", "pr_auc"):
+        plot_split_comparison(
+            _grid_with_dummy(), tmp_path / f"{metric}.png",
+            metric=metric, dataset="tox21",
+        )
+        ax = capture["figure"].get_axes()[0]
+        floor, _ = ax.get_ylim()
+        drawn = [p for p in ax.patches if p.get_width() > 0]
+        assert drawn, f"{metric}: no bars drawn at all"
+        for patch in drawn:
+            visible = patch.get_y() + patch.get_height() - floor
+            assert visible > 0, (
+                f"{metric}: a bar of height {patch.get_height()} sits on the "
+                f"axis floor {floor} and renders as nothing"
+            )
+
+
+def test_the_dummy_is_not_painted_in_a_model_colour(capture, tmp_path: Path) -> None:
+    """The floor is not a third competing approach, so it gets a neutral."""
+    plot_split_comparison(
+        _grid_with_dummy(), tmp_path / "c.png", metric="pr_auc", dataset="tox21"
+    )
+    assert MODEL_COLORS["dummy"] not in (MODEL_COLORS["rf"], MODEL_COLORS["gnn"])
+    ax = capture["figure"].get_axes()[0]
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert labels == [
+        "Dummy (class prior)",
+        "Fingerprint + random forest",
+        "Graph neural network",
+    ], "the floor should read first, before the two approaches it bounds"
