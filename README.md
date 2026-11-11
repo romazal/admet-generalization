@@ -264,7 +264,7 @@ only.
 
 Three sanity checks passed: the baseline's 0.834 under a random split sits in
 the range published for fingerprint models on Tox21; the scaffold-disjointness
-check is recorded `true` in all 68 scaffold result files and `false` in all 68
+check is recorded `true` in all 73 scaffold result files and `false` in all 73
 random ones; and the dummy's PR-AUC reproduces the measured test-set positive
 rate to three decimals (0.077 vs 0.0768 random, 0.100 vs 0.0997 scaffold),
 which is what a class-prior model must score if the metric is masking missing
@@ -435,6 +435,8 @@ admet-generalization/
 │   ├── base.yaml                   # shared defaults incl. the tuning budget
 │   ├── tox21_{rf,gnn}_{random,scaffold}.yaml
 │   ├── clintox_{rf,gnn}_{random,scaffold}.yaml
+│   ├── tox21_dummy_{random,scaffold}.yaml      # the class-prior floor
+│   ├── tox21_rf_maccs_{random,scaffold}.yaml   # MACCS side comparison
 │   └── sweep_learning_curve.yaml   # the learning-curve grid
 ├── src/admet/
 │   ├── cli.py              # admet run / sweep / aggregate / plots
@@ -449,7 +451,8 @@ admet-generalization/
 │   ├── models/
 │   │   ├── base.py         # shared interface + equal-budget sampler
 │   │   ├── rf.py           # baseline: one forest per assay
-│   │   └── gnn.py          # GINE message passing, masked multitask head
+│   │   ├── gnn.py          # GINE message passing, masked multitask head
+│   │   └── dummy.py        # class-prior floor, ignores the molecule
 │   └── analysis/
 │       ├── aggregate.py    # results/**/*.json -> summary + gap tables
 │       └── plots.py        # the three figures, one set per dataset
@@ -458,7 +461,7 @@ admet-generalization/
 ├── results/
 │   ├── tox21/              # 66 run files (56 main grid + 10 dummy)
 │   ├── clintox/            # 80 run files
-│   └── {runs,summary,gap}.csv
+│   └── {runs,summary,gap,per_task}.csv
 └── figures/
     ├── tox21/              # 6 PNGs
     └── clintox/            # 6 PNGs

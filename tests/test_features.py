@@ -18,7 +18,6 @@ import pytest
 
 from admet.features.fingerprints import (
     DEFAULT_N_BITS,
-    DEFAULT_RADIUS,
     featurize_smiles as fingerprint_matrix,
     maccs_fingerprint,
     morgan_fingerprint,

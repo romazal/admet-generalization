@@ -69,7 +69,7 @@ artefact.
   of the same split type as the test set.
 - **No scaffold spans two parts.** Enforced by the splitter and re-checked at
   run time on the actual split of every scaffold run; `scaffold_disjointness_checked`
-  is `true` in all 68 scaffold result files. A positive control asserts that a
+  is `true` in all 73 scaffold result files. A positive control asserts that a
   *random* split does share scaffolds, so the check cannot pass trivially.
 - **Masking.** A missing label excludes a molecule from that assay only — never
   read as a negative, never dropped wholesale — from the moment the CSV cell is
