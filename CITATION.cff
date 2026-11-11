@@ -1,0 +1,49 @@
+# Citation metadata. GitHub renders this as a "Cite this repository" button.
+#
+# TWO FIELDS STILL NEED A HUMAN, and are marked TODO below. Names were taken
+# from commit authorship, which gives an email and a GitHub handle but not
+# always a legal name — and guessing one into a citation file is worse than
+# leaving it blank. Fill in the two TODOs and delete this note.
+#
+# There is also no LICENSE file in the repository, so no `license:` field is
+# declared here. Add one to both places together.
+
+cff-version: 1.2.0
+title: >-
+  ADMET generalization: when does a graph neural network outperform a
+  fingerprint-based model?
+message: If you use this software or its results, please cite it as below.
+type: software
+version: 0.1.0
+date-released: "2026-11-11"
+repository-code: "https://github.com/romazal/admet-generalization"
+abstract: >-
+  A reproducible pipeline comparing a Morgan-fingerprint random forest against
+  a message-passing graph neural network on ADMET property prediction (Tox21,
+  with ClinTox as a smaller second dataset). It tests two hypotheses: whether
+  any GNN advantage survives a Bemis-Murcko scaffold split, and whether it
+  depends on the amount of training data. Both models receive an equal
+  hyperparameter budget, scaffold-disjointness is enforced and re-checked at
+  run time, and every reported number regenerates from committed per-run
+  result files.
+keywords:
+  - ADMET
+  - molecular property prediction
+  - graph neural network
+  - molecular fingerprints
+  - scaffold split
+  - out-of-distribution generalization
+  - Tox21
+  - cheminformatics
+authors:
+  - given-names: Roman
+    family-names: "TODO: surname"
+    alias: romazal
+  - given-names: Cas
+    family-names: Guldentops
+    alias: Chunky153
+  - given-names: Lukas
+    family-names: Depauw
+    alias: FireArrow910
+  - name: "TODO: name"
+    alias: Jollly23
