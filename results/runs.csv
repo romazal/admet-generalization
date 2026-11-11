@@ -79,6 +79,16 @@ clintox_rf_scaffold_frac100_seed1,clintox,rf,scaffold,1,1.0,0.8169117647058823,0
 clintox_rf_scaffold_frac100_seed2,clintox,rf,scaffold,2,1.0,0.76793893129771,0.3443309877702197,1169,146,clintox/clintox_rf_scaffold_frac100_seed2.json
 clintox_rf_scaffold_frac100_seed3,clintox,rf,scaffold,3,1.0,0.8508891928864568,0.5463356754408444,1169,146,clintox/clintox_rf_scaffold_frac100_seed3.json
 clintox_rf_scaffold_frac100_seed4,clintox,rf,scaffold,4,1.0,0.8902356902356902,0.451320323366983,1169,146,clintox/clintox_rf_scaffold_frac100_seed4.json
+tox21_dummy_random_frac100_seed0,tox21,dummy,random,0,1.0,0.5,0.0726353024648613,6258,783,tox21/tox21_dummy_random_frac100_seed0.json
+tox21_dummy_random_frac100_seed1,tox21,dummy,random,1,1.0,0.5,0.07724905247305493,6258,783,tox21/tox21_dummy_random_frac100_seed1.json
+tox21_dummy_random_frac100_seed2,tox21,dummy,random,2,1.0,0.5,0.07823747046877695,6258,783,tox21/tox21_dummy_random_frac100_seed2.json
+tox21_dummy_random_frac100_seed3,tox21,dummy,random,3,1.0,0.5,0.07761010253827198,6258,783,tox21/tox21_dummy_random_frac100_seed3.json
+tox21_dummy_random_frac100_seed4,tox21,dummy,random,4,1.0,0.5,0.07849351818037302,6258,783,tox21/tox21_dummy_random_frac100_seed4.json
+tox21_dummy_scaffold_frac100_seed0,tox21,dummy,scaffold,0,1.0,0.5,0.10008055421556772,6259,782,tox21/tox21_dummy_scaffold_frac100_seed0.json
+tox21_dummy_scaffold_frac100_seed1,tox21,dummy,scaffold,1,1.0,0.5,0.10978244935822433,6259,782,tox21/tox21_dummy_scaffold_frac100_seed1.json
+tox21_dummy_scaffold_frac100_seed2,tox21,dummy,scaffold,2,1.0,0.5,0.09646010559254377,6259,782,tox21/tox21_dummy_scaffold_frac100_seed2.json
+tox21_dummy_scaffold_frac100_seed3,tox21,dummy,scaffold,3,1.0,0.5,0.09216767353430456,6259,782,tox21/tox21_dummy_scaffold_frac100_seed3.json
+tox21_dummy_scaffold_frac100_seed4,tox21,dummy,scaffold,4,1.0,0.5,0.0999570147037696,6259,782,tox21/tox21_dummy_scaffold_frac100_seed4.json
 tox21_gnn_random_frac010_seed0,tox21,gnn,random,0,0.1,0.7523061887463843,0.21873615626258938,626,783,tox21/tox21_gnn_random_frac010_seed0.json
 tox21_gnn_random_frac010_seed1,tox21,gnn,random,1,0.1,0.7215469573621961,0.19981762751036616,626,783,tox21/tox21_gnn_random_frac010_seed1.json
 tox21_gnn_random_frac010_seed2,tox21,gnn,random,2,0.1,0.7220549246281037,0.2591953322554043,626,783,tox21/tox21_gnn_random_frac010_seed2.json
