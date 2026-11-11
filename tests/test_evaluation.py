@@ -16,11 +16,14 @@ code that ignores the mask on data where it makes no difference.
 
 from __future__ import annotations
 
+import csv
+import json
 import math
 
 import numpy as np
 import pytest
 
+from admet.analysis.aggregate import aggregate, per_task_table
 from admet.evaluation import METRICS, PRIMARY_METRIC, EvaluationResult, evaluate
 
 
@@ -184,6 +187,50 @@ def test_macro_average_weights_assays_equally_not_by_size() -> None:
 
     result = evaluate(y, scores, tasks=["big", "small"])
     assert result.roc_auc == pytest.approx((1.0 + 0.0) / 2)
+
+
+def test_per_task_table_keeps_each_assay_separate_from_the_macro_average(
+    tmp_path,
+) -> None:
+    """One perfect assay and one chance assay must stay distinguishable."""
+    dataset_dir = tmp_path / "toy"
+    dataset_dir.mkdir()
+    labels = np.array([[0.0, 0.0], [0.0, 0.0], [1.0, 1.0], [1.0, 1.0]])
+    scores = np.array([[0.1, 0.5], [0.2, 0.5], [0.8, 0.5], [0.9, 0.5]])
+    test_metrics = evaluate(labels, scores, tasks=["easy", "hard"]).as_dict()
+
+    for seed in (0, 1):
+        payload = {
+            "run": f"toy_rf_random_frac100_seed{seed}",
+            "dataset": "toy",
+            "model": "rf",
+            "split": "random",
+            "seed": seed,
+            "train_fraction": 1.0,
+            "metrics": {"test": test_metrics},
+            "split_sizes": {"train": 4, "valid": 2, "test": 2},
+        }
+        (dataset_dir / f"toy_rf_random_frac100_seed{seed}.json").write_text(
+            json.dumps(payload), encoding="utf-8"
+        )
+
+    rows = per_task_table(tmp_path)
+    by_task = {row.task: row for row in rows}
+    assert by_task["easy"].roc_auc_mean == pytest.approx(1.0)
+    assert by_task["hard"].roc_auc_mean == pytest.approx(0.5)
+    assert by_task["easy"].n_seeds == 2
+
+    records, summaries, _ = aggregate(tmp_path, write=True)
+    assert records
+    with (tmp_path / "per_task.csv").open(encoding="utf-8", newline="") as handle:
+        csv_rows = list(csv.DictReader(handle))
+    assert [(row["task"], int(row["n_seeds"])) for row in csv_rows] == [
+        ("easy", 2),
+        ("hard", 2),
+    ]
+    summary = summaries[0]
+    assert summary.roc_auc_mean == pytest.approx(0.75)
+    assert by_task["easy"].roc_auc_mean != summary.roc_auc_mean
 
 
 # --------------------------------------------------------------------------- #

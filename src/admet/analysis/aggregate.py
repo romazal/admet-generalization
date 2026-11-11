@@ -38,9 +38,11 @@ __all__ = [
     "RunRecord",
     "ConditionSummary",
     "GapRow",
+    "PerTaskRow",
     "load_results",
     "summarize",
     "gap_table",
+    "per_task_table",
     "write_csv",
     "aggregate",
 ]
@@ -112,6 +114,22 @@ class GapRow:
     gap: float | None
     gap_std: float | None
     n_seeds: int
+
+
+@dataclass(frozen=True)
+class PerTaskRow:
+    """Mean and standard deviation for one assay under one condition."""
+
+    dataset: str
+    model: str
+    split: str
+    train_fraction: float
+    task: str
+    n_seeds: int
+    roc_auc_mean: float | None
+    roc_auc_std: float | None
+    pr_auc_mean: float | None
+    pr_auc_std: float | None
 
 
 # --------------------------------------------------------------------------- #
@@ -286,6 +304,76 @@ def gap_table(
     return rows
 
 
+def per_task_table(results_dir: str | Path) -> list[PerTaskRow]:
+    """Collapse assay-level metrics across seeds to a per-condition table.
+
+    Each run already contains a ``metrics.test.per_task`` list, so this is a
+    thin aggregation over those values rather than a recomputation from raw
+    predictions.
+    """
+    directory = Path(results_dir)
+    if not directory.is_dir():
+        raise FileNotFoundError(f"results directory not found: {directory}")
+
+    grouped: dict[
+        tuple[str, str, str, float, str], list[tuple[float | None, float | None]]
+    ] = {}
+    for path in sorted(directory.rglob("*.json")):
+        try:
+            payload = json.loads(path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            raise ValueError(f"{path} is not valid JSON: {exc}") from exc
+        if not isinstance(payload, dict) or "metrics" not in payload:
+            continue
+
+        test = (payload.get("metrics") or {}).get("test") or {}
+        per_task = test.get("per_task") or []
+        if not isinstance(per_task, list):
+            continue
+
+        dataset = payload.get("dataset")
+        model = payload.get("model")
+        split = payload.get("split")
+        train_fraction = payload.get("train_fraction")
+        if not all(isinstance(value, str) for value in (dataset, model, split)):
+            continue
+        try:
+            fraction = float(train_fraction)
+        except (TypeError, ValueError):
+            continue
+
+        for entry in per_task:
+            if not isinstance(entry, dict):
+                continue
+            task = entry.get("task")
+            if not isinstance(task, str):
+                continue
+            key = (dataset, model, split, fraction, task)
+            grouped.setdefault(key, []).append(
+                (entry.get("roc_auc"), entry.get("pr_auc"))
+            )
+
+    rows: list[PerTaskRow] = []
+    for (dataset, model, split, fraction, task), values in sorted(grouped.items()):
+        rocs = [v for v, _ in values if isinstance(v, (int, float))]
+        prs = [v for _, v in values if isinstance(v, (int, float))]
+        rows.append(
+            PerTaskRow(
+                dataset=dataset,
+                model=model,
+                split=split,
+                train_fraction=fraction,
+                task=task,
+                n_seeds=len(values),
+                roc_auc_mean=_mean(rocs),
+                roc_auc_std=_std(rocs),
+                pr_auc_mean=_mean(prs),
+                pr_auc_std=_std(prs),
+            )
+        )
+    return rows
+
+
 # --------------------------------------------------------------------------- #
 # Output
 # --------------------------------------------------------------------------- #
@@ -328,5 +416,6 @@ def aggregate(
         write_csv(records, directory / "runs.csv")
         write_csv(summaries, directory / "summary.csv")
         write_csv(gaps, directory / "gap.csv")
+        write_csv(per_task_table(directory), directory / "per_task.csv")
 
     return records, summaries, gaps

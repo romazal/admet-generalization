@@ -1,0 +1,13 @@
+# Dummy prior baseline on Tox21, random split.
+#
+# A trivial null model used as the floor for ROC-AUC and PR-AUC. It predicts
+# the training-set positive rate and ignores the molecule entirely.
+
+extends: base.yaml
+
+split:
+  kind: random
+
+model:
+  name: dummy
+  params: {}

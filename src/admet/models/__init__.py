@@ -7,6 +7,7 @@ Importing this package registers both models in
 from __future__ import annotations
 
 from admet.models.base import MODELS, Model, build_model, sample_configs
+from admet.models.dummy import DummyModel
 from admet.models.gnn import GNNModel
 from admet.models.rf import RandomForestModel
 
@@ -15,6 +16,7 @@ __all__ = [
     "Model",
     "build_model",
     "sample_configs",
+    "DummyModel",
     "GNNModel",
     "RandomForestModel",
 ]

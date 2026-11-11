@@ -165,6 +165,7 @@ def build_model(name: str, n_tasks: int, **hyperparameters: Any) -> Model:
     """
     # Importing the implementations here keeps the registry populated without
     # making this module import torch at module scope.
+    from admet.models import dummy as _dummy  # noqa: F401
     from admet.models import gnn as _gnn  # noqa: F401
     from admet.models import rf as _rf  # noqa: F401
 

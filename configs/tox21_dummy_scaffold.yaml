@@ -1,0 +1,15 @@
+# Dummy prior baseline on Tox21, scaffold split.
+#
+# Same null model as tox21_dummy_random.yaml, but evaluated under a scaffold
+# split so the floor is visible in the structural-shift regime.
+
+extends: base.yaml
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: dummy
+  params: {}
