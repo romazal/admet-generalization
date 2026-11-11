@@ -22,7 +22,7 @@ git clone <repo-url> && cd admet-generalization
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # must print 148 passed
+make test                        # must print 160 passed
 ```
 
 **Three rules for working with a free agent:**
@@ -314,9 +314,13 @@ and that both dataset names appear in the output (use pytest's `capsys`).
 
 ---
 
-## 7. A `tests/test_loaders.py` — claimed by Chunky153
+## 7. A `tests/test_loaders.py` — done
 
-`loaders.py` is the only core module with no test file of its own, and it does
+*Done by Cas (`Chunky153/task-7-offline-loader-tests`, merged 2026-11-11).
+Four offline tests in `tests/test_loaders.py`; `loaders.py` is no longer the
+module without one. The original task text is kept below as the record.*
+
+`loaders.py` was the only core module with no test file of its own, and it does
 the cleaning every result depends on — canonicalisation, dropping unparseable
 SMILES, merging duplicates.
 

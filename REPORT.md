@@ -63,10 +63,11 @@ artefact.
   is `true` in all 68 scaffold result files. A positive control asserts that a
   *random* split does share scaffolds, so the check cannot pass trivially.
 - **Masking.** A missing label excludes a molecule from that assay only — never
-  read as a negative, never dropped wholesale — in the metrics and in the GNN
-  loss alike, both with positive-control tests.
+  read as a negative, never dropped wholesale — from the moment the CSV cell is
+  parsed, through the metrics and the GNN loss alike, each with positive-control
+  tests.
 - **Duplicates merged before splitting**, so one structure cannot sit in both
-  train and test.
+  train and test; covered by a loader test.
 
 ## 3. Results — Tox21
 

@@ -518,3 +518,41 @@ test that cannot fail is worth nothing: restoring the model colour, moving
 the label back to the bar top and deleting the footnote each fail exactly one
 test and nothing else. 156 tests pass. The twelve figures were opened and
 looked at, which is the step that started this entry.
+
+## Loader tests, contributed by Cas
+
+*Instruction (Cas's, with his own agent):* task 7 of `TODO.md` — write
+`tests/test_loaders.py`, offline, covering the cleaning that `loaders.py`
+does.
+
+The first contribution from someone outside the two of us who had been
+driving the agent so far, and the first chance to see whether the task notes
+in `TODO.md` are specific enough for a teammate to work from without reading
+the whole codebase. They were: the branch arrived with the four cases the
+task asked for and nothing else.
+
+Four tests, all offline — a toy `DatasetSpec` is registered through
+`monkeypatch.setitem(DATASETS, ...)` and a tiny CSV written to `tmp_path`, so
+nothing downloads: an unparseable SMILES is dropped and counted in both
+`n_unparseable` and `summary()["n_unparseable_dropped"]`; `CCO` and `OCC`
+merge to one row; a blank cell stays `NaN` rather than becoming a zero; and
+`label_density` matches a hand-computed 4/6.
+
+**Checked.** Reviewed on a branch before merging: it touches no protected
+file, adds no runs, and fast-forwards onto master with Cas's authorship
+intact. 160 tests pass.
+
+The task text asks the contributor to prove the tests are not vacuous, and
+that claim is not visible in a diff, so it was re-done here against five
+deliberately broken copies of `loaders.py`. All five are caught: reading a
+blank cell as `0.0` instead of `NaN` fails two tests, disabling duplicate
+merging fails all four, dropping unparseable rows without counting them fails
+one, keeping them instead of dropping them fails one, and making
+`label_density` ignore the mask fails one.
+
+The blank-cell mutation is the one that matters. A missing Tox21 label
+silently read as a negative would turn "not screened" into "screened,
+inactive" across the whole matrix, inflate every baseline, and leave the
+masking argument in §3.4 resting on nothing — and it would not fail any other
+test in the suite. That gap is now closed, and it was the one module where it
+was still open.

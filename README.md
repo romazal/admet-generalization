@@ -25,7 +25,7 @@ matplotlib all publish wheels for 3.12–3.14).
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # 148 tests, ~3 s
+make test                        # 160 tests, ~3 s
 ```
 
 No download, and a GPU is optional (it makes the GNN ~2.5x faster; see
@@ -439,7 +439,7 @@ admet-generalization/
 │   └── analysis/
 │       ├── aggregate.py    # results/**/*.json -> summary + gap tables
 │       └── plots.py        # the three figures, one set per dataset
-├── tests/                  # 148 tests
+├── tests/                  # 160 tests
 ├── data/                   # raw datasets, committed so a clone runs offline
 ├── results/
 │   ├── tox21/              # 56 run files
