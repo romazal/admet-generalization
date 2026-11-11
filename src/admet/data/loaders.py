@@ -75,6 +75,7 @@ from __future__ import annotations
 import os
 import urllib.error
 import urllib.request
+import warnings
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable
@@ -452,6 +453,22 @@ def load_dataset(
     kept_smiles, labels, n_duplicates, n_conflicts = _merge_duplicates(
         kept_smiles, labels
     )
+
+    if n_conflicts:
+        # The count has always been recorded in the result files, where nobody
+        # looks. On ClinTox every one of the 19 merged duplicates disagreed
+        # with its copy on at least one assay — the single most suspicious
+        # fact about that dataset, and it was invisible unless you opened a
+        # JSON. Merging keeps the first observed label, so a conflict means a
+        # label was silently discarded.
+        warnings.warn(
+            f"{name}: {n_conflicts} assay label(s) disagreed between duplicate "
+            f"structures that were merged ({n_duplicates} duplicate row(s) in "
+            f"total). The first observed label was kept and the other "
+            f"discarded. Treat any result on this dataset with that in mind.",
+            RuntimeWarning,
+            stacklevel=2,
+        )
 
     return Dataset(
         name=name,
