@@ -370,9 +370,6 @@ that a shared y-axis would invite a comparison the numbers do not support.
   inside it, so the study does not require a GPU to reproduce. `models/gnn.py`
   selects CUDA automatically when it is available, so neither pass needed a
   code change — only a different torch wheel. See §5b.
-- **No pandas** (§5 lists it). Its compiled extensions are blocked by the
-  Windows Application Control policy on the development machine. The loader
-  and the aggregation use the standard library's `csv` plus NumPy.
 - **No PyTorch Geometric** (§3.2 allows it). The same GINE model is written
   directly in PyTorch, using `index_add_` for the neighbour sum, to avoid a
   dependency that does not install cleanly here. Covered by tests.

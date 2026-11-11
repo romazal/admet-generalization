@@ -25,7 +25,7 @@ matplotlib all publish wheels for 3.12–3.14).
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # 172 tests, ~3 s
+make test                        # 175 tests, ~3 s
 ```
 
 No download, and a GPU is optional (it makes the GNN ~2.5x faster; see
@@ -456,7 +456,7 @@ admet-generalization/
 │   └── analysis/
 │       ├── aggregate.py    # results/**/*.json -> summary + gap tables
 │       └── plots.py        # the three figures, one set per dataset
-├── tests/                  # 172 tests
+├── tests/                  # 175 tests
 ├── data/                   # raw datasets, committed so a clone runs offline
 ├── results/
 │   ├── tox21/              # 66 run files (56 main grid + 10 dummy)
@@ -521,9 +521,6 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   still inside it — so a teammate without a CUDA card can reproduce
   everything; see *CPU and GPU* and *Reproducibility* above. The code selects
   CUDA automatically when available (`models/gnn.py`); no flag to set.
-- **No pandas.** Proposal §5 lists it, but its compiled extensions are blocked
-  by the Windows Application Control policy on the development machine. The
-  loader and the aggregation use the standard library's `csv` plus NumPy.
 - **No PyTorch Geometric.** Proposal §3.2 allows "a GIN in PyTorch Geometric";
   the same model is implemented directly in PyTorch (`index_add_` for the
   neighbour sum, ~10 lines) to avoid a dependency that does not install

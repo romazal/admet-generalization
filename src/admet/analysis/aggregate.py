@@ -24,13 +24,14 @@ standard deviation is combined in quadrature from the two arms.
 
 from __future__ import annotations
 
-import csv
 import json
 import math
 from collections.abc import Iterable, Sequence
 from dataclasses import asdict, dataclass, fields
 from pathlib import Path
 from typing import Any
+
+import pandas as pd
 
 from admet.evaluation import METRICS
 
@@ -391,11 +392,14 @@ def write_csv(rows: Sequence[Any], path: str | Path) -> Path:
         return target
     target.parent.mkdir(parents=True, exist_ok=True)
     header = [f.name for f in fields(rows[0])]
-    with target.open("w", newline="", encoding="utf-8") as handle:
-        writer = csv.DictWriter(handle, fieldnames=header)
-        writer.writeheader()
-        for row in rows:
-            writer.writerow(asdict(row))
+    frame = pd.DataFrame([asdict(row) for row in rows], columns=header)
+    # `lineterminator` is the one thing that has to be said out loud. The
+    # committed tables were written by `csv.writer` through a handle opened
+    # with newline="", which emits CRLF on every platform; pandas defaults to
+    # os.linesep instead. Leaving it to the default would rewrite all four
+    # files on a POSIX machine with no visible change, breaking the
+    # regenerates-with-zero-diff property that makes the tables checkable.
+    frame.to_csv(target, index=False, lineterminator="\r\n")
     return target
 
 

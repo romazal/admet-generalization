@@ -22,7 +22,7 @@ git clone <repo-url> && cd admet-generalization
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # must print 172 passed
+make test                        # must print 175 passed
 ```
 
 **Three rules for working with a free agent:**
@@ -368,9 +368,13 @@ fail is worse than none.
 
 ---
 
-## 8. Put pandas back
+## 8. Put pandas back — done
 
-*Roman plans to take this one.*
+*Done 2026-11-11. The blocker had lifted: pandas 3.1.1 imports and round-trips
+cleanly, checked over ten separate processes. `read_csv()` in `loaders.py` and
+`write_csv()` in `aggregate.py` now use pandas; it is a **hard** dependency. All
+four committed tables still regenerate byte-identically. The original task text
+is kept below as the record.*
 
 Proposal §5 lists pandas as a dependency. We do not use it: the loader and the
 aggregation use the standard library's `csv` plus NumPy, and this is written

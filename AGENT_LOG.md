@@ -704,3 +704,54 @@ amending: it compared the curve colours against every registered model colour,
 which was the same thing as "both models" until a third model was registered.
 172 tests pass, and `make aggregate && make plots` is idempotent — a second
 run changes no byte of the four tables or the twelve figures.
+
+## pandas restored — the blocker had lifted
+
+*Instruction:* task 8 of `TODO.md` — put pandas back.
+
+**The blocker was checked before anything was written, and repeatedly.** The
+original failure was intermittent: two successive imports died on different
+compiled extensions, which is why pandas was dropped in the first place. Ten
+separate processes now import pandas 3.1.1 and complete a real
+`read_csv`/`to_csv` round trip, ten times out of ten. The environment was
+rebuilt when the CUDA torch wheel went in, which is the likely explanation.
+This closes the only deviation from proposal §5 that existed for an
+environment reason rather than a considered one.
+
+**Hard dependency, not optional.** An optional import with the `csv` path as
+a fallback would mean two writers for the committed tables, and the property
+that matters is that those tables regenerate byte-for-byte. Two paths can
+diverge by a digit and nobody would see it until a teammate's regeneration
+came back dirty. One path cannot. The project already depends on RDKit,
+PyTorch and scikit-learn, all with compiled extensions, so pandas adds no new
+class of risk — and if the Application Control policy does block it on
+someone's machine, task 8 is right that this should surface loudly rather
+than be silently worked around.
+
+**Two call sites, both with a trap the task had already identified.**
+
+- Reading: `dtype=str, keep_default_na=False`. Left to infer, pandas turns
+  blank cells into NaN, which happens to coincide with our masking — but only
+  coincidentally, and it would also rewrite a 0/1 label column as floats.
+  Reading everything as text leaves `_to_label` doing the conversion exactly
+  as every committed result was produced. Verified after the change: 7823 and
+  1461 molecules, 8 and 4 unparseable, 0 and 19 duplicates, density 0.8294 and
+  1.0000, and the label matrix still holds nothing but 0.0, 1.0 and NaN.
+- Writing: `index=False, lineterminator="\r\n"`. All four tables regenerate
+  byte-identically — compared with `read_bytes`, since reading as text
+  normalises line endings and would have reported success either way.
+
+**A test that could not fail on this machine, found by mutating it.** Three
+tests were added and then run against deliberately broken copies, as usual.
+Dropping `index=False` was caught. Dropping `lineterminator="\r\n"` was
+**not**: `to_csv` falls back to `os.linesep`, which on Windows *is* CRLF, so
+the bytes are identical here and every byte-level assertion still passed. The
+bug would appear on the first POSIX machine to run `make aggregate`, rewriting
+all four committed tables with nothing visible in a text diff. A fourth test
+now spies on the `to_csv` call and asserts the terminator is pinned — the only
+check in the suite that fails on the machine the project is developed on. 175
+tests pass.
+
+Worth recording for whoever reads this next: a byte-comparison test is not
+automatically a strong test. This one was only as strong as the platform it
+ran on, and nothing but mutating it would have shown that.

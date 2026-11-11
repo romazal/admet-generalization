@@ -16,15 +16,10 @@ dependencies = [
     "torch>=2.2",             # the GNN; CPU wheels are enough for Tox21
     "scikit-learn>=1.4",      # the random forest baseline, ROC-AUC and PR-AUC
     "numpy>=1.26",
+    "pandas>=2.2",            # dataset CSVs in, result tables out
     "matplotlib>=3.8",        # figures
     "pyyaml>=6.0",            # configs
 ]
-
-# NOTE: proposal §5 also lists pandas. It is deliberately not a dependency:
-# its compiled extensions are blocked by the Windows Application Control
-# policy on the development machine, and the only things the pipeline needed
-# it for — reading a CSV and grouping rows — are a dozen lines of `csv` and
-# numpy. See AGENT_LOG.md (2026-11-08).
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0"]

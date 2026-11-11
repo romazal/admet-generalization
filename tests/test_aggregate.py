@@ -11,6 +11,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pandas as pd
+
 from admet.analysis.aggregate import aggregate, load_results
 
 
@@ -102,3 +104,80 @@ def test_a_flat_file_is_still_picked_up(tmp_path: Path) -> None:
         encoding="utf-8",
     )
     assert len(load_results(tmp_path)) == 2
+
+
+# --------------------------------------------------------------------------- #
+# CSV byte-for-byte stability
+# --------------------------------------------------------------------------- #
+
+
+def test_tables_are_written_with_crlf_and_no_index_column(tmp_path: Path) -> None:
+    """The two ways the pandas writer could silently rewrite every table.
+
+    `csv.writer` through a handle opened with newline="" emits CRLF on every
+    platform; `DataFrame.to_csv` defaults to os.linesep and, left alone, also
+    prepends an unnamed index column. Either would rewrite all four committed
+    tables with no visible change in a text diff, so this reads bytes.
+    """
+    _write_run(tmp_path, seed=0)
+    _write_run(tmp_path, seed=1)
+    aggregate(tmp_path, write=True)
+
+    for name in ("runs.csv", "summary.csv"):
+        raw = (tmp_path / name).read_bytes()
+        assert raw.count(b"\r\n") > 0, f"{name}: no CRLF line endings"
+        assert raw.count(b"\n") == raw.count(b"\r\n"), f"{name}: a bare LF slipped in"
+        first = raw.split(b"\r\n", 1)[0].decode("utf-8")
+        assert not first.startswith(","), f"{name}: an index column was written"
+        assert first.split(",")[0] in {"dataset", "run"}, f"{name}: unexpected header"
+
+
+def test_the_line_terminator_is_pinned_rather_than_left_to_the_platform(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """Checks the argument, because on Windows the bytes cannot tell you.
+
+    `to_csv` defaults to os.linesep, which *is* CRLF on Windows — so dropping
+    `lineterminator="\\r\\n"` changes nothing here and every byte-level test
+    above still passes. It would break on the first POSIX machine to run
+    `make aggregate`, rewriting all four committed tables with no visible
+    difference in a text diff. This is the only check that fails on the
+    machine the project is developed on.
+    """
+    seen: dict[str, object] = {}
+    original = pd.DataFrame.to_csv
+
+    def spy(self, *args, **kwargs):
+        seen.update(kwargs)
+        return original(self, *args, **kwargs)
+
+    monkeypatch.setattr(pd.DataFrame, "to_csv", spy)
+    _write_run(tmp_path, seed=0)
+    aggregate(tmp_path, write=True)
+
+    assert seen.get("lineterminator") == "\r\n", (
+        "write_csv must pin the line terminator; the platform default would "
+        "emit LF on POSIX and rewrite every committed table"
+    )
+    assert seen.get("index") is False
+
+
+def test_regenerating_a_table_is_byte_identical(tmp_path: Path) -> None:
+    """Regeneration must not change a single byte.
+
+    The committed tables are the checkable record of the runs: if `aggregate`
+    is not a pure function of the result files down to the byte, every
+    teammate who regenerates gets a dirty working tree and the tables stop
+    being verifiable by reproduction. Compared as bytes rather than text,
+    because reading as text normalises line endings and would pass while the
+    files differ.
+    """
+    _write_run(tmp_path, seed=0)
+    _write_run(tmp_path, seed=1)
+
+    aggregate(tmp_path, write=True)
+    first = {n: (tmp_path / n).read_bytes() for n in ("runs.csv", "summary.csv")}
+    aggregate(tmp_path, write=True)
+    second = {n: (tmp_path / n).read_bytes() for n in ("runs.csv", "summary.csv")}
+
+    assert first == second

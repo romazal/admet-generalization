@@ -72,8 +72,6 @@ Tox21 remains the primary dataset and that is settled.
 
 from __future__ import annotations
 
-import csv
-import gzip
 import os
 import urllib.error
 import urllib.request
@@ -82,6 +80,7 @@ from pathlib import Path
 from typing import Callable, Iterable
 
 import numpy as np
+import pandas as pd
 
 __all__ = [
     "Dataset",
@@ -259,12 +258,19 @@ def read_csv(path: str | Path) -> tuple[list[str], list[dict[str, str]]]:
         ``(header, rows)``. Empty files yield ``([], [])``.
     """
     path = Path(path)
-    opener = gzip.open if path.suffix == ".gz" else open
-    with opener(path, "rt", newline="", encoding="utf-8") as handle:
-        reader = csv.DictReader(handle)
-        header = list(reader.fieldnames or [])
-        rows = [dict(row) for row in reader]
-    return header, rows
+    # `dtype=str, keep_default_na=False` is not a detail. Left to itself
+    # pandas infers dtypes and turns blank cells into NaN, which happens to
+    # coincide with our masking semantics — but only by coincidence, and it
+    # would also rewrite a label column of 0/1 into floats and a SMILES
+    # column into something type-inferred. Reading everything as text keeps
+    # the cells exactly as the file has them and leaves the conversion to
+    # `_to_label`, which is what every committed result was produced with.
+    try:
+        frame = pd.read_csv(path, dtype=str, keep_default_na=False)
+    except pd.errors.EmptyDataError:
+        return [], []
+    header = [str(column) for column in frame.columns]
+    return header, frame.to_dict(orient="records")
 
 
 def _download(spec: DatasetSpec, cache_dir: Path) -> Path:
