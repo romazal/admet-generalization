@@ -22,7 +22,7 @@ git clone <repo-url> && cd admet-generalization
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # must print 163 passed
+make test                        # must print 168 passed
 ```
 
 **Three rules for working with a free agent:**
@@ -280,7 +280,22 @@ set is ≈0.5 and that it is registered in `MODELS`.
 
 ---
 
-## 5. MACCS keys as a second fingerprint
+## 5. MACCS keys as a second fingerprint — done, with one change
+
+*Done by Lukas (`feature/maccs-fingerprints`, merged 2026-11-11).
+`maccs_fingerprint()` in `fingerprints.py`, `fp_kind` on `RandomForestModel`,
+and the length-167 and benzene-vs-cyclohexane tests, all as written below.*
+
+***One instruction here was wrong and was not followed.** This task said to put
+`fp_kind` in `search_space()`. Doing so changes all eight sampled
+configurations — `sample_configs` sorts parameter names, so inserting one
+shifts every later parameter in the draw — and the 68 committed baseline runs
+would stop reproducing, taking the control argument in REPORT §5b with them.
+It would also spend part of the baseline's budget on a second representation
+while the GNN keeps all of its own on one. `fp_kind` is therefore selected
+per-run through `model.params` instead, with the two
+`configs/tox21_rf_maccs_*.yaml` configs; two tests pin this. The original task
+text is kept below as the record.*
 
 The baseline only knows Morgan/ECFP fingerprints. MACCS keys are 166
 predefined substructure patterns — chemically interpretable in a way Morgan

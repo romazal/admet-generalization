@@ -55,7 +55,11 @@ artefact.
 - **Equal tuning budget.** Both models draw 8 hyperparameter settings from
   their own search space. The baseline tunes its representation (fingerprint
   radius, length, counts) alongside the forest, so it is not handicapped by a
-  fixed featurization.
+  fixed featurization. A second fingerprint (MACCS) is implemented and can be
+  selected per-run, but is kept out of the tuned space on purpose: letting the
+  baseline spend part of its 8 on a second representation while the GNN spends
+  all 8 on one would thin the baseline's search and widen the gap below for a
+  reason unrelated to the models.
 - **Validation matches test.** Hyperparameters are selected on a validation set
   of the same split type as the test set.
 - **No scaffold spans two parts.** Enforced by the splitter and re-checked at

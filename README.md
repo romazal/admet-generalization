@@ -25,7 +25,7 @@ matplotlib all publish wheels for 3.12–3.14).
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # 163 tests, ~3 s
+make test                        # 168 tests, ~3 s
 ```
 
 No download, and a GPU is optional (it makes the GNN ~2.5x faster; see
@@ -390,7 +390,12 @@ than merely weaken it:
 - **Equal tuning budget.** Both models draw the same number of hyperparameter
   settings from `sample_configs()`, set once in `configs/base.yaml`. The
   baseline tunes its own representation (fingerprint radius, length, counts)
-  alongside the forest, so it is not handicapped by a fixed featurization.
+  alongside the forest, so it is not handicapped by a fixed featurization. A
+  second fingerprint, MACCS, is implemented and selectable per-run
+  (`configs/tox21_rf_maccs_*.yaml`) but deliberately **not** in the tuned
+  space: spending part of the baseline's budget on a second representation
+  while the GNN spends all of its own on one would quietly unbalance the
+  comparison in the GNN's favour.
 - **Validation matches test.** Hyperparameters are selected on a validation set
   of the *same split type* as the test set, so they are never chosen under an
   easier regime than the one they are judged in.
@@ -432,7 +437,7 @@ admet-generalization/
 │   │   ├── loaders.py      # dataset registry, cleaning, download cache
 │   │   └── splits.py       # random + randomized scaffold split, leakage check
 │   ├── features/
-│   │   ├── fingerprints.py # Morgan / ECFP bit vectors
+│   │   ├── fingerprints.py # Morgan / ECFP bit vectors, MACCS keys
 │   │   └── graphs.py       # SMILES -> atom/bond graphs
 │   ├── models/
 │   │   ├── base.py         # shared interface + equal-budget sampler
@@ -441,7 +446,7 @@ admet-generalization/
 │   └── analysis/
 │       ├── aggregate.py    # results/**/*.json -> summary + gap tables
 │       └── plots.py        # the three figures, one set per dataset
-├── tests/                  # 163 tests
+├── tests/                  # 168 tests
 ├── data/                   # raw datasets, committed so a clone runs offline
 ├── results/
 │   ├── tox21/              # 56 run files

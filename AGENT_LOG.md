@@ -597,3 +597,57 @@ to produce a tree identical to a real merge of all four, and force-pushed over
 the branch; the duplicate `feature/per-assay-results`, which pointed at the
 same commit, was deleted. Worth watching for on other branches: an agent left
 to manage git will happily sign work with whatever identity it finds.
+
+## MACCS keys, contributed by Lukas — and a task instruction that was wrong
+
+*Instruction (Lukas's, with his own agent):* task 5 of `TODO.md` — add MACCS
+keys as a second fingerprint for the baseline, and let the random forest
+choose between them.
+
+The code came back correct and complete: `maccs_fingerprint()` using RDKit's
+`GetMACCSKeysFingerprint`, an `fp_kind` option on `RandomForestModel` with
+validation, the 167-bit length test and the benzene-vs-cyclohexane test, and
+— the part the task flagged as the trap — `featurization_key()` returning
+`("rf", "maccs")` so the two representations cannot share a feature cache. He
+did what was asked.
+
+**The task was wrong, and reviewing the branch is what surfaced it.** Task 5
+told the contributor to add `fp_kind` to `search_space()`. That instruction
+was ours, written without thinking the consequence through:
+
+- `sample_configs` sorts parameter names before drawing, so inserting
+  `fp_kind` shifts the position of every later parameter in the draw. With a
+  budget of 8 that leaves **none** of the eight sampled configurations
+  unchanged — Morgan-only ones included. Measured, not assumed: 1296 → 2592
+  grid points, 0 of 8 configurations shared, 3 of the 8 slots taken by MACCS.
+- So the baseline in all 68 committed runs would stop being the baseline the
+  code produces. REPORT §5b leans on exactly that reproducing: the baseline's
+  bit-identical test metrics across the CPU and GPU passes are the control
+  that licenses attributing the GNN's movement to the GNN.
+- It also unbalances §3.4 while appearing not to. The budget stays 8 for
+  both, but the baseline would spread it over two representations while the
+  GNN keeps all 8 on one. If MACCS is the weaker representation that inflates
+  the GNN-minus-baseline gap — the quantity H1 is measured on — for a reason
+  that has nothing to do with graph neural networks, and in the direction
+  that favours our own hypothesis.
+
+**What was changed.** `fp_kind` is out of `search_space()` and selected
+per-run instead, through `model.params` in a config; `configs/tox21_rf_maccs_
+random.yaml` and `..._scaffold.yaml` differ from the plain baseline configs in
+that one setting, so the comparison is a deliberate side experiment rather
+than a hidden degree of freedom. Lukas's commit is kept as his, with the
+change made on top rather than folded into it.
+
+**Checked.** The point of the exercise was that master stays authoritative, so
+that was verified rather than argued: `tox21_rf_random` seed 0 was re-run on
+the modified code and compared against its committed result file. The eight
+tuning trials are the same eight with the same scores, and the test metrics
+are bit-identical to the last decimal (ROC-AUC 0.838364862412147, PR-AUC
+0.5036566674371696). Only `git_commit` and per-trial wall-clock seconds
+differ. 168 tests pass.
+
+Two tests now pin this. One asserts `fp_kind` is absent from the search space;
+the other demonstrates why, by sampling both spaces and asserting the two sets
+of eight configurations are disjoint. The second is the useful one — the
+failure it guards against is a one-line edit that looks like an improvement
+and silently detaches every committed baseline number from the code.
