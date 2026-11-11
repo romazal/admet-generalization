@@ -32,6 +32,7 @@ from admet.features.graphs import (
     featurize_smiles as graph_list,
     mol_to_graph,
 )
+from admet.models.base import sample_configs
 from admet.models.rf import RandomForestModel
 
 ETHANOL = "CCO"
@@ -134,6 +135,37 @@ def test_random_forest_can_select_maccs_fingerprints() -> None:
 def test_random_forest_rejects_an_unknown_fingerprint_kind() -> None:
     with pytest.raises(ValueError, match="fp_kind"):
         RandomForestModel(n_tasks=1, fp_kind="unknown")
+
+
+def test_fp_kind_stays_out_of_the_tuned_search_space() -> None:
+    """Guards the committed results against a plausible-looking one-line edit.
+
+    `sample_configs` sorts parameter names before drawing, so adding `fp_kind`
+    shifts every later parameter in the draw and changes *all* eight sampled
+    configurations, Morgan-only ones included. The baseline in the 68 committed
+    runs would stop reproducing, and with it the control argument in REPORT
+    §5b. It would also spend part of the baseline's budget on a second
+    representation while the GNN keeps all of its own on one, which biases the
+    GNN-minus-baseline gap that H1 is measured on.
+
+    MACCS is reachable through `model.params.fp_kind` in a config instead.
+    """
+    assert "fp_kind" not in RandomForestModel.search_space()
+
+
+def test_adding_fp_kind_to_the_space_would_change_every_sampled_config() -> None:
+    """The reason the test above exists, demonstrated rather than asserted."""
+    space = dict(RandomForestModel.search_space())
+    widened = {**space, "fp_kind": ("morgan", "maccs")}
+
+    drop_kind = lambda config: tuple(  # noqa: E731
+        sorted((k, v) for k, v in config.items() if k != "fp_kind")
+    )
+    current = {drop_kind(c) for c in sample_configs(space, 8, seed=0)}
+    after = {drop_kind(c) for c in sample_configs(widened, 8, seed=0)}
+
+    assert len(current) == len(after) == 8
+    assert current.isdisjoint(after)
 
 
 # --------------------------------------------------------------------------- #

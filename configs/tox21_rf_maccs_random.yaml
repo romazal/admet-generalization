@@ -1,0 +1,17 @@
+# Baseline with MACCS keys instead of Morgan, on Tox21, random split.
+#
+# The random-split half of the MACCS side comparison; see
+# configs/tox21_rf_maccs_scaffold.yaml for why `fp_kind` is set here rather
+# than tuned. Run it against configs/tox21_rf_random.yaml, which differs only
+# in this one setting.
+
+extends: base.yaml
+
+split:
+  kind: random
+
+model:
+  name: rf
+  params:
+    n_jobs: -1
+    fp_kind: maccs

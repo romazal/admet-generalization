@@ -1,0 +1,28 @@
+# Baseline with MACCS keys instead of Morgan, on Tox21, scaffold split.
+#
+# A side comparison, not part of the main grid. MACCS is 166 predefined
+# substructure patterns — chemically interpretable in a way Morgan bits are
+# not, which is what makes it worth showing — against Morgan's 1024-2048
+# hashed circular environments, whose radius and length the baseline tunes.
+#
+# `fp_kind` is set here rather than left to the tuner on purpose. It is not in
+# RandomForestModel.search_space(), because putting it there would change all
+# eight sampled configurations and stop the 68 committed baseline runs from
+# reproducing; see that method's docstring. Selecting it per-run keeps the
+# comparison deliberate and leaves the main results untouched.
+#
+# Run it against configs/tox21_rf_scaffold.yaml, which differs only in this
+# one setting.
+
+extends: base.yaml
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: rf
+  params:
+    n_jobs: -1
+    fp_kind: maccs

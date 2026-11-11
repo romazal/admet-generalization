@@ -2,10 +2,14 @@
 
 This is the classical model the GNN has to beat (proposal §3.2). It is
 deliberately a *strong* baseline rather than a straw man: it tunes its own
-representation (Morgan or MACCS, including Morgan settings) alongside the
-forest, and it draws from :func:`admet.models.base.sample_configs` under the
-same budget as the GNN, because a comparison where only the advanced model was
-tuned would answer nothing.
+Morgan representation (radius, length, counts) alongside the forest, and it
+draws from :func:`admet.models.base.sample_configs` under the same budget as
+the GNN, because a comparison where only the advanced model was tuned would
+answer nothing.
+
+Two fingerprints are available. Morgan is the tuned default; MACCS is selected
+per-run with ``fp_kind="maccs"`` and is kept out of the search space on
+purpose — see :meth:`RandomForestModel.search_space` for why.
 
 Multitask by independent forests
 --------------------------------
@@ -229,7 +233,33 @@ class RandomForestModel(Model):
 
     @classmethod
     def search_space(cls) -> dict[str, Sequence[Any]]:
-        """Forest settings and the fingerprint settings that feed them."""
+        """Forest settings and the Morgan settings that feed them.
+
+        ``fp_kind`` is deliberately **absent**, although the model accepts it.
+        Two reasons, and `tests/test_features.py` guards both:
+
+        1. *It would silently invalidate the committed results.*
+           :func:`~admet.models.base.sample_configs` sorts parameter names
+           before drawing, so inserting ``fp_kind`` shifts every later
+           parameter's position in the draw. With the budget of 8 that leaves
+           **none** of the sampled configurations unchanged — not even the
+           Morgan-only ones — so the baseline in all 68 committed runs would
+           no longer be the baseline this code produces. The report leans on
+           those runs reproducing exactly: the baseline's bit-identical test
+           metrics are the control that licenses attributing the GNN's
+           movement to the GNN (REPORT §5b).
+        2. *It would quietly unbalance the tuning budget.* Both models draw 8
+           configurations (proposal §3.4). Spending some of the baseline's 8
+           on a second representation, while the GNN still spends all 8 on
+           one, thins the baseline's search. If MACCS is the weaker
+           representation that inflates the GNN-minus-baseline gap — which is
+           the very quantity H1 is about — for a reason that has nothing to
+           do with graph neural networks.
+
+        Select MACCS per-run instead, via ``model.params.fp_kind`` in a config
+        (see ``configs/tox21_rf_maccs_scaffold.yaml``). That keeps it a
+        deliberate comparison rather than a hidden degree of freedom.
+        """
         return {
             "n_estimators": (300, 500),
             "max_depth": (None, 12, 24),
@@ -239,5 +269,4 @@ class RandomForestModel(Model):
             "fp_radius": (2, 3),
             "fp_n_bits": (1024, 2048),
             "fp_counts": (False, True),
-            "fp_kind": ("morgan", "maccs"),
         }
