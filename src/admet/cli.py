@@ -27,6 +27,7 @@ import traceback
 from pathlib import Path
 from typing import Any, Sequence
 
+from admet import __version__
 from admet.training import load_config, run_experiment, run_name
 
 __all__ = ["main", "build_parser"]
@@ -214,6 +215,37 @@ def command_sweep(args: argparse.Namespace) -> int:
     return 1 if failures else 0
 
 
+def command_datasets(args: argparse.Namespace) -> int:
+    """Print the dataset registry: what exists, how big it is, how labelled.
+
+    Loading each dataset rather than printing the registry entry alone is
+    deliberate. The registry records what a dataset is *expected* to contain;
+    the loader reports what actually parsed after unreadable SMILES are
+    dropped and duplicate structures merged, which is the number any result
+    is actually based on. The two have differed before.
+    """
+    from admet.data.loaders import DATASETS, load_dataset
+
+    print(f"{'name':<10} {'molecules':>9}  {'assays':>6}  {'labelled':>8}  tasks")
+    print("-" * 74)
+    failed = 0
+    for name in sorted(DATASETS):
+        try:
+            dataset = load_dataset(name)
+        except Exception as exc:  # the cache may be cold and the network down
+            print(f"{name:<10} {'unavailable':>9}  ({type(exc).__name__}: {exc})")
+            failed += 1
+            continue
+        tasks = ", ".join(dataset.tasks)
+        if len(tasks) > 34:
+            tasks = tasks[:31] + "..."
+        print(
+            f"{name:<10} {len(dataset):>9}  {dataset.n_tasks:>6}  "
+            f"{dataset.label_density:>7.0%}  {tasks}"
+        )
+    return 1 if failed else 0
+
+
 def command_aggregate(args: argparse.Namespace) -> int:
     """Build ``runs.csv``, ``summary.csv`` and ``gap.csv`` from ``results/``."""
     from admet.analysis.aggregate import aggregate
@@ -298,6 +330,11 @@ def build_parser() -> argparse.ArgumentParser:
             "model, and does the benefit survive a structural shift?"
         ),
     )
+    parser.add_argument(
+        "--version",
+        action="version",
+        version=f"admet {__version__}",
+    )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     def add_common(sub: argparse.ArgumentParser) -> None:
@@ -339,6 +376,11 @@ def build_parser() -> argparse.ArgumentParser:
     aggregate_cmd.add_argument("--config", default="base.yaml")
     add_common(aggregate_cmd)
     aggregate_cmd.set_defaults(handler=command_aggregate)
+
+    datasets_cmd = subparsers.add_parser(
+        "datasets", help="list the datasets the tool knows about"
+    )
+    datasets_cmd.set_defaults(handler=command_datasets)
 
     plots = subparsers.add_parser("plots", help="redraw the figures")
     plots.add_argument("--config", default="base.yaml")
