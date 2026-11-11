@@ -308,6 +308,28 @@ def command_plots(args: argparse.Namespace) -> int:
     for metric in args.metrics:
         written.extend(make_all_figures(summaries, gaps, figures_dir, metric=metric))
 
+    # The similarity figure is drawn once per dataset, not once per metric:
+    # it plots the chemistry of the split, so it is the same picture whichever
+    # score is being discussed. It needs the molecules rather than the
+    # aggregated tables, which is why it is here and not in make_all_figures.
+    if not args.no_similarity:
+        from admet.analysis.plots import plot_train_test_similarity
+        from admet.data.loaders import load_dataset
+
+        for dataset in sorted({s.dataset for s in summaries}):
+            try:
+                molecules = load_dataset(dataset).smiles
+            except Exception as exc:
+                print(f"skipping the similarity figure for {dataset}: {exc}")
+                continue
+            path = plot_train_test_similarity(
+                molecules,
+                Path(figures_dir) / dataset / f"train_test_similarity_{dataset}.png",
+                dataset=dataset,
+            )
+            if path is not None:
+                written.append(path)
+
     if not written:
         print("Nothing to plot yet - no condition had a scoreable result.")
         return 1
@@ -386,6 +408,11 @@ def build_parser() -> argparse.ArgumentParser:
     plots.add_argument("--config", default="base.yaml")
     plots.add_argument(
         "--figures-dir", default=None, help="override output.figures_dir"
+    )
+    plots.add_argument(
+        "--no-similarity",
+        action="store_true",
+        help="skip the train/test similarity figure (it loads the datasets)",
     )
     plots.add_argument(
         "--metrics",

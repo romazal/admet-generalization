@@ -369,3 +369,93 @@ def test_the_dummy_is_not_painted_in_a_model_colour(capture, tmp_path: Path) -> 
         "Fingerprint + random forest",
         "Graph neural network",
     ], "the floor should read first, before the two approaches it bounds"
+
+
+# --------------------------------------------------------------------------- #
+# Train/test similarity — the one figure that plots data, not scores
+# --------------------------------------------------------------------------- #
+
+# Twelve scaffolds of uneven size (1 to 10 molecules). Equal-sized groups are
+# no good here: the randomized splitter packs whole groups into whichever part
+# is furthest below its target, so five groups of eight fill train and
+# validation and leave the test set empty, and there is nothing to measure.
+_SIMILARITY_CORES = (
+    "c1ccccc1", "c1ccncc1", "C1CCCCC1", "c1ccc2ccccc2c1", "c1ccsc1", "c1ccoc1",
+    "C1CCNCC1", "c1cncnc1", "c1ccc2[nH]ccc2c1", "C1CCCC1", "c1cc[nH]c1", "C1COCCN1",
+)
+_SIMILARITY_SUBS = ("C", "CC", "CCC", "OC", "NC", "CCO", "CCCC", "CCN", "OCC", "C(C)C")
+_SIMILARITY_SMILES = [
+    _SIMILARITY_SUBS[j] + core
+    for i, core in enumerate(_SIMILARITY_CORES)
+    for j in range(1 + (i * 7) % 10)
+]
+
+
+def test_similarity_matches_an_independent_tanimoto_computation() -> None:
+    """Recomputed naively from the same fingerprints and the same split.
+
+    The matrix form (one product, union from popcounts) is the kind of
+    rewrite that is easy to get subtly wrong and still produce a plausible
+    distribution, so it is checked against the definition.
+    """
+    import numpy as np
+
+    from admet.analysis.plots import max_tanimoto_to_train
+    from admet.data.splits import make_split
+    from admet.features.fingerprints import featurize_smiles
+
+    got = max_tanimoto_to_train(_SIMILARITY_SMILES, kind="scaffold", seed=0)
+
+    split = make_split("scaffold", _SIMILARITY_SMILES, seed=0)
+    fps = featurize_smiles(_SIMILARITY_SMILES).astype(bool)
+    expected = []
+    for i in split.test:
+        best = 0.0
+        for j in split.train:
+            inter = int((fps[i] & fps[j]).sum())
+            union = int((fps[i] | fps[j]).sum())
+            best = max(best, inter / union if union else 0.0)
+        expected.append(best)
+
+    assert np.allclose(got, expected)
+    assert got.size == len(split.test)
+    assert ((got >= 0.0) & (got <= 1.0)).all()
+
+
+def test_scaffold_test_molecules_are_less_like_the_training_set() -> None:
+    """The claim the whole figure exists to show, asserted as a number."""
+    import numpy as np
+
+    from admet.analysis.plots import max_tanimoto_to_train
+
+    random_sim = max_tanimoto_to_train(_SIMILARITY_SMILES, kind="random", seed=0)
+    scaffold_sim = max_tanimoto_to_train(_SIMILARITY_SMILES, kind="scaffold", seed=0)
+    assert np.median(scaffold_sim) < np.median(random_sim)
+
+
+def test_similarity_figure_draws_both_splits_in_neither_model_colour(
+    capture, tmp_path: Path
+) -> None:
+    """Split is the colour channel here, so it must not borrow a model's hue.
+
+    Blue means "random forest" and orange means "GNN" in every other figure;
+    reusing either for a split is the confusion `plot_gap` already had to have
+    undone once.
+    """
+    from admet.analysis.plots import SPLIT_COLORS, plot_train_test_similarity
+
+    plot_train_test_similarity(_SIMILARITY_SMILES, tmp_path / "s.png", dataset="tox21")
+    ax = capture["figure"].get_axes()[0]
+
+    labels = [t.get_text() for t in ax.get_legend().get_texts()]
+    assert len(labels) == 2
+    assert any("Random" in t for t in labels) and any("Scaffold" in t for t in labels)
+    assert set(SPLIT_COLORS.values()).isdisjoint(set(MODEL_COLORS.values()))
+    assert ax.get_xlim() == (0.0, 1.0)
+
+
+def test_similarity_figure_returns_none_when_a_split_has_no_test_set() -> None:
+    """One molecule cannot be split, and must not leave a misleading file."""
+    from admet.analysis.plots import plot_train_test_similarity
+
+    assert plot_train_test_similarity(["CCO"], Path("unused.png")) is None

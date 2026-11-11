@@ -57,6 +57,9 @@ __all__ = [
     "MODEL_LABELS",
     "DATASET_LABELS",
     "SPLIT_STYLES",
+    "SPLIT_COLORS",
+    "max_tanimoto_to_train",
+    "plot_train_test_similarity",
     "plot_split_comparison",
     "plot_learning_curves",
     "plot_gap",
@@ -98,6 +101,20 @@ MODEL_LABELS: dict[str, str] = {
 #: Left-to-right bar order: the floor, then the baseline, then the advanced
 #: model, so a group reads in increasing order of what it is claiming.
 MODEL_ORDER: tuple[str, ...] = ("dummy", "rf", "gnn")
+
+#: Colours for the one figure whose *subject* is the split rather than the
+#: model, so split has to become the colour channel there.
+#:
+#: Deliberately neither model hue. Blue and orange mean "random forest" and
+#: "GNN" in every other figure, and reusing them for the two splits is the
+#: exact confusion that had to be undone in `plot_gap`. These are slots 7 and
+#: 6 of the same reference palette: the highest-separating pair available in
+#: which *both* colours also clear 3:1 contrast on the surface (violet 5.6,
+#: green 4.8), at CVD ΔE 28.8 and normal-vision ΔE 35.5 against thresholds of
+#: 8 and 15. The yellow and aqua pairings separate slightly better but fall
+#: under the contrast floor. Split is additionally encoded by line style
+#: below, so identity never rests on colour alone.
+SPLIT_COLORS: dict[str, str] = {"random": "#6250d6", "scaffold": "#008300"}
 
 #: Split is the line-style / marker channel — the secondary encoding.
 SPLIT_STYLES: dict[str, dict[str, object]] = {
@@ -577,3 +594,121 @@ def make_all_figures(
             ),
         ]
     return [p for p in written if p is not None]
+
+
+# --------------------------------------------------------------------------- #
+# Figure 4 — the mechanism behind the headline result
+# --------------------------------------------------------------------------- #
+
+
+def max_tanimoto_to_train(
+    smiles: Sequence[str],
+    *,
+    kind: str,
+    seed: int = 0,
+    fractions: tuple[float, float, float] = (0.8, 0.1, 0.1),
+    n_bits: int = 2048,
+    radius: int = 2,
+) -> np.ndarray:
+    """For each test molecule, its Tanimoto similarity to its nearest neighbour
+    in the training set.
+
+    This is the quantity the scaffold split is *for*. The report says test
+    molecules are structurally unlike the training molecules and then shows a
+    0.073 ROC-AUC drop; this measures the first claim directly instead of
+    inferring it from the second.
+
+    Computed as a dense matrix: Tanimoto on bit vectors is
+    ``|a & b| / |a | b|``, and with popcounts ``pa``, ``pb`` the union is
+    ``pa + pb - intersection``, so one matrix product gives every pair. Tox21
+    is 782 test molecules against 6258 training ones — a 20 MB float32 block.
+    """
+    from admet.data.splits import make_split
+    from admet.features.fingerprints import featurize_smiles
+
+    split = make_split(
+        kind,
+        smiles,
+        frac_train=fractions[0],
+        frac_valid=fractions[1],
+        frac_test=fractions[2],
+        seed=seed,
+    )
+    if not split.train or not split.test:
+        return np.empty(0, dtype=float)
+
+    matrix = featurize_smiles(smiles, radius=radius, n_bits=n_bits).astype(np.float32)
+    train = matrix[list(split.train)]
+    test = matrix[list(split.test)]
+
+    popcount_train = train.sum(axis=1)
+    popcount_test = test.sum(axis=1)
+    intersection = test @ train.T
+    union = popcount_test[:, None] + popcount_train[None, :] - intersection
+    # A molecule whose fingerprint is all zeros gives a zero union; it has no
+    # bits to share, so its similarity to anything is 0 rather than undefined.
+    with np.errstate(divide="ignore", invalid="ignore"):
+        tanimoto = np.where(union > 0, intersection / union, 0.0)
+    return np.asarray(tanimoto.max(axis=1), dtype=float)
+
+
+def plot_train_test_similarity(
+    smiles: Sequence[str],
+    path: str | Path,
+    *,
+    dataset: str | None = None,
+    seed: int = 0,
+    bins: int = 40,
+) -> Path | None:
+    """Nearest-training-neighbour similarity, random split versus scaffold split.
+
+    The two distributions on one axis are the mechanism behind the main
+    result: under a scaffold split the curve sits to the left, which is what
+    "the test molecules are structurally different" means in numbers. Every
+    other figure in this set plots a model score; this one plots the data, and
+    it is the only one that would look the same if both models were deleted.
+
+    Returns the written path, or ``None`` if the dataset is too small to split.
+    """
+    target = Path(path)
+    series = {
+        kind: max_tanimoto_to_train(smiles, kind=kind, seed=seed)
+        for kind in ("random", "scaffold")
+    }
+    if any(values.size == 0 for values in series.values()):
+        return None
+
+    edges = np.linspace(0.0, 1.0, bins + 1)
+    figure, ax = _new_figure()
+    for kind, values in series.items():
+        counts, _ = np.histogram(values, bins=edges)
+        share = counts / counts.sum()
+        style = SPLIT_STYLES[kind]
+        ax.stairs(
+            share,
+            edges,
+            color=SPLIT_COLORS[kind],
+            linewidth=_LINE_WIDTH,
+            linestyle=str(style["linestyle"]),
+            fill=False,
+            label=f"{_label(SPLIT_LABELS, kind)} (median {np.median(values):.2f})",
+        )
+        ax.stairs(share, edges, color=SPLIT_COLORS[kind], fill=True, alpha=0.12)
+
+    _style_axes(
+        ax,
+        title=f"Similarity of each test molecule to its nearest "
+        f"training molecule{_suffix(dataset)}",
+        xlabel="Maximum Tanimoto similarity to any training molecule",
+        ylabel="Share of test molecules",
+    )
+    ax.set_xlim(0.0, 1.0)
+    ax.legend(frameon=False, fontsize=9, labelcolor=_INK_SECONDARY)
+    figure.text(
+        0.01,
+        0.015,
+        f"Morgan fingerprints, radius 2, 2048 bits. One seed (seed {seed}).",
+        fontsize=8,
+        color=_INK_SECONDARY,
+    )
+    return _save(figure, target, bottom=0.05)
