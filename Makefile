@@ -53,5 +53,14 @@ all: test main sweep clintox aggregate plots  ## Everything, in order
 clean:  ## Remove caches and build artefacts (keeps results and figures)
 	rm -rf .pytest_cache .ruff_cache **/__pycache__ src/*.egg-info
 
+figures-clean:  ## Delete figures/ and redraw it from the committed tables
+	rm -f figures/*/*.png figures/*.png
+	$(ADMET) plots
+
+# Both patterns are needed: run files and figures live one directory down,
+# under results/<dataset>/ and figures/<dataset>/, while the aggregated
+# tables sit at the top of results/. A single-level glob matches only the
+# tables, which is what this target used to do -- it reported success and
+# left all 146 run files and all 12 figures in place.
 clean-results:  ## Delete every run result and figure. Destructive.
-	rm -f results/*.json results/*.csv figures/*.png
+	rm -f results/*.csv results/*/*.json figures/*/*.png figures/*.png
