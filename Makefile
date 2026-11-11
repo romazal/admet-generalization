@@ -42,7 +42,7 @@ clintox:  ## Second dataset: the same grid on ClinTox (proposal §3.1)
 	$(ADMET) run configs/clintox_gnn_random.yaml   --train-fractions 0.1 0.25 0.5 1.0
 	$(ADMET) run configs/clintox_gnn_scaffold.yaml --train-fractions 0.1 0.25 0.5 1.0
 
-aggregate:  ## Summarize results/ into runs.csv, summary.csv and gap.csv
+aggregate:  ## Summarize results/ into runs.csv, summary.csv, gap.csv and per_task.csv
 	$(ADMET) aggregate
 
 plots:  ## Redraw every figure from the aggregated tables

@@ -556,3 +556,44 @@ inactive" across the whole matrix, inflate every baseline, and leave the
 masking argument in §3.4 resting on nothing — and it would not fail any other
 test in the suite. That gap is now closed, and it was the one module where it
 was still open.
+
+## Per-assay table and a dummy baseline, contributed by Jollly23
+
+*Instruction (Jollly23's, with her own agent):* tasks 2 and 4 of `TODO.md` —
+break the macro average down per assay, and add a null model to put a floor
+under the scores.
+
+Two additions. `per_task_table()` and `PerTaskRow` in `aggregate.py` collapse
+across seeds the per-assay metrics each run already records, and `aggregate()`
+writes `results/per_task.csv` beside the existing three tables; this is an
+aggregation over stored values, not a recomputation from predictions, so it
+cannot disagree with the headline numbers. `DummyModel` is a per-assay
+class-prior predictor registered as `dummy`, with configs for both splits.
+
+**Checked.** The committed `per_task.csv` was regenerated from the committed
+run files and matches byte-for-byte, and after merging, `make aggregate` still
+rewrites all four tables with zero diff — the property the whole
+verify-by-reproduction argument rests on. The dummy was run on synthetic data
+at 10% and 50% prevalence with some labels masked: constant predictions,
+ROC-AUC exactly 0.5, PR-AUC equal to prevalence, masked labels excluded. That
+is the claimed floor, confirmed rather than assumed. `gap_table()` takes
+`baseline="rf"` and `advanced="gnn"` explicitly, so a third registered model
+does not disturb the H1 gap. 163 tests pass.
+
+**Not done, and it matters.** The dummy model exists but has never been run.
+There are no dummy result files, so the floor is still absent from the report —
+and the floor is the useful half of task 4. The PR-AUC figure is the one to
+want: a Tox21 PR-AUC of 0.47 means little until the number a model that knows
+nothing scores is next to it. Running the two configs is a few minutes of CPU.
+
+**An authorship problem, recorded because it is an agent problem.** The branch
+arrived as four commits: the same tree committed three times under three
+different identities — `Copilot <copilot@example.com>`, `romazal` and
+Jollly23 — plus one empty commit. Her agent had been reassigning the author
+field, so on GitHub the work read as partly Copilot's and partly Roman's. The
+code was unaffected, but the contribution record was wrong, and the assignment
+asks who did what. Squashed to a single commit authored by Jollly23, verified
+to produce a tree identical to a real merge of all four, and force-pushed over
+the branch; the duplicate `feature/per-assay-results`, which pointed at the
+same commit, was deleted. Worth watching for on other branches: an agent left
+to manage git will happily sign work with whatever identity it finds.

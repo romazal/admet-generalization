@@ -22,7 +22,7 @@ git clone <repo-url> && cd admet-generalization
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # must print 160 passed
+make test                        # must print 163 passed
 ```
 
 **Three rules for working with a free agent:**
@@ -145,7 +145,11 @@ falls inside the axis limits.
 
 ---
 
-## 2. Per-assay results, not just the average
+## 2. Per-assay results, not just the average — done
+
+*Done by Jollly23 (`Jollly23`, merged 2026-11-11). `per_task_table()` in
+`aggregate.py`, written to `results/per_task.csv` by `make aggregate`. The
+original task text is kept below as the record.*
 
 Every score we report is macro-averaged over the 12 Tox21 assays, so a single
 number hides which toxicity endpoints are easy and which are impossible.
@@ -242,7 +246,12 @@ model success.
 
 ---
 
-## 4. A `dummy` baseline — the floor every score should beat
+## 4. A `dummy` baseline — the floor every score should beat — done
+
+*Done by Jollly23 (`Jollly23`, merged 2026-11-11). `src/admet/models/dummy.py`
+plus `configs/tox21_dummy_random.yaml` and `configs/tox21_dummy_scaffold.yaml`.
+The model exists but **has not been run** — no dummy result files, so the floor
+is not in the report yet. The original task text is kept below as the record.*
 
 Right now we compare a GNN against a random forest. Neither is compared
 against *nothing*. A dummy model that ignores the molecule and predicts the
@@ -386,9 +395,9 @@ are.
 
 ### The constraint that makes this delicate
 
-`results/runs.csv`, `summary.csv` and `gap.csv` are **committed**, and
-`make aggregate` on a fresh clone currently regenerates all three with zero
-diff. That property is load-bearing — it is what lets anyone verify the
+`results/runs.csv`, `summary.csv`, `gap.csv` and `per_task.csv` are
+**committed**, and `make aggregate` on a fresh clone currently regenerates
+all four with zero diff. That property is load-bearing — it is what lets anyone verify the
 tables came from the run files — and a rewrite that changes one digit of
 formatting breaks it silently, leaving a dirty working tree for everyone who
 regenerates.

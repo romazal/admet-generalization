@@ -25,7 +25,7 @@ matplotlib all publish wheels for 3.12–3.14).
 python -m venv .venv
 source .venv/bin/activate        # .venv\Scripts\activate on Windows
 pip install -e ".[dev]"
-make test                        # 160 tests, ~3 s
+make test                        # 163 tests, ~3 s
 ```
 
 No download, and a GPU is optional (it makes the GNN ~2.5x faster; see
@@ -43,6 +43,7 @@ from a clone:
 | The full written report | **[REPORT.md](REPORT.md)** |
 | Headline numbers | *[Summary of results](#summary-of-results)* below |
 | Per-condition means and SDs | `results/summary.csv` |
+| Per-assay means and SDs | `results/per_task.csv` |
 | GNN-minus-baseline gaps | `results/gap.csv` |
 | One row per run | `results/runs.csv` |
 | Every individual run | `results/tox21/*.json`, `results/clintox/*.json` |
@@ -60,7 +61,7 @@ make main        # Tox21: both models x both splits, 5 seeds     (~1.1 h)
 make sweep       # Tox21 learning curves: 10/25/50/100% training (~40 min)
 make clintox     # ClinTox: the same grid, 5 seeds x 4 fractions (~17 min)
 
-make aggregate   # results/**/*.json -> runs.csv, summary.csv, gap.csv
+make aggregate   # results/**/*.json -> runs.csv, summary.csv, gap.csv, per_task.csv
 make plots       # -> figures/*.png
 ```
 
@@ -273,8 +274,9 @@ ClinTox results and the cross-dataset comparison are in
 ## Reproducibility
 
 `make aggregate && make plots` on a fresh clone regenerates `runs.csv`,
-`summary.csv`, `gap.csv` and all 12 figures with **zero diff** — every table
-and figure is a pure function of the committed result files.
+`summary.csv`, `gap.csv`, `per_task.csv` and all 12 figures with **zero
+diff** — every table and figure is a pure function of the committed result
+files.
 
 Re-running the *training* is reproducible to the extent the libraries are.
 The whole grid was run twice, once with the GNN on CPU and once on a GPU,
@@ -439,7 +441,7 @@ admet-generalization/
 │   └── analysis/
 │       ├── aggregate.py    # results/**/*.json -> summary + gap tables
 │       └── plots.py        # the three figures, one set per dataset
-├── tests/                  # 160 tests
+├── tests/                  # 163 tests
 ├── data/                   # raw datasets, committed so a clone runs offline
 ├── results/
 │   ├── tox21/              # 56 run files
