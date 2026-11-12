@@ -883,3 +883,47 @@ complication of it — the same lesson the three-seed finding teaches from the
 other direction.
 
 194 tests pass.
+
+## Figure review, and configs by dataset
+
+*Instruction:* check every figure, and move the config files into a directory
+per dataset.
+
+**Fourteen figures, all sound.** Axes, legends, error bars and the dummy floor
+all render correctly, including the case that used to break — a dummy landing
+exactly on the ROC axis floor of 0.500. Two things are worth acting on and are
+written up in TODO §9: the ClinTox bar charts carry no class-prior floor,
+because the dummy was only ever run on Tox21, which makes ClinTox's 0.855 look
+comparable to Tox21's 0.834 with nothing to calibrate either; and the ClinTox
+similarity histogram spreads ~146 test molecules over the same fixed bin count
+as Tox21's ~783, so its spikes are three or four molecules each and mean
+nothing. Its medians are fine.
+
+**One figure turned out to carry an argument the report was not making.**
+Reading the two similarity histograms side by side: the scaffold split cuts
+ClinTox's median test-to-train similarity by 0.190 (36%) against Tox21's 0.164
+(28%) — a *larger* structural shift — while ClinTox's baseline loses 0.021
+ROC-AUC against Tox21's 0.073. A score carried by structure cannot lose less
+accuracy to a bigger structural shift. That is now in §4 as the strongest form
+of the provenance argument, which until then rested on the duplicate labels
+and on a drop that was merely small.
+
+**Configs now live in `configs/<dataset>/`**, with `base.yaml` shared at the
+top and the dataset prefix dropped from each filename, since the directory
+carries it. `extends:` became `../base.yaml`, the sweep's child list became
+bare siblings, and the Makefile, the CLI's error text, two docstrings, two
+tests and the README tree were repointed. `run_name()` is built from the
+config's *contents*, not its path, so every one of the 146 result filenames is
+unchanged — checked by loading all fourteen configs and comparing. A missing
+config now prints what is actually available, since a bare `gnn_scaffold` is
+ambiguous between two datasets and is deliberately not guessed.
+
+**The move exposed a trap that was already there.** Because `run_name()` uses
+dataset, model and split but not the featurization,
+`configs/tox21/rf_maccs_random.yaml` and `configs/tox21/rf_random.yaml`
+generate the *same* result filename. Running the MACCS comparison would either
+silently skip as "already done" or, with `--overwrite`, destroy ten committed
+baseline results. Recorded as a warning in TODO §5 rather than fixed: the fix
+renames every result file.
+
+194 tests pass.

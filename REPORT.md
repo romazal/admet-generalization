@@ -182,6 +182,25 @@ across three passes of the same grid; at ±0.05–±0.06 per arm all three are
 consistent with one underlying value and none of them is measurable. Only the
 baseline's small drop should be cited.
 
+That small drop is more damning than it first looks, because the scaffold
+split works *harder* on ClinTox than on Tox21. Measuring each test molecule's
+Tanimoto similarity to its nearest training molecule, under both splits:
+
+| Dataset | Median, random | Median, scaffold | Drop | Baseline ROC-AUC lost |
+|---|---|---|---|---|
+| Tox21 | 0.583 | 0.419 | −0.164 (28%) | **0.073** |
+| ClinTox | 0.523 | 0.333 | −0.190 (36%) | **0.021** |
+
+ClinTox's test molecules end up *less* like its training molecules than
+Tox21's do, and its baseline still loses a third as much accuracy. If the
+score were carried by structure, a larger structural shift could not cost
+less. Something in the ClinTox label survives having the scaffolds pulled
+apart — which is what a label partly recoverable from provenance would do, and
+is the strongest version of the argument above. It is drawn from one seed of
+each split (`figures/clintox/train_test_similarity_clintox.png`), so read the
+medians rather than the shape of that histogram: with 146 test molecules its
+bars stand on three or four molecules each.
+
 **Read ClinTox as a cautionary comparison of dataset sizes, not as a second
 test of H1 and H2.** A high score on a small, provenance-mixed dataset is the
 failure mode the study was designed to expose, not a success.

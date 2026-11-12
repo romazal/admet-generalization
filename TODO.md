@@ -232,7 +232,7 @@ curl -sL https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/BBBP.csv | hea
 For BBBP this returns `num,name,p_np,smiles` — so `smiles_column="smiles"`,
 `task_columns=("p_np",)`, and `num`/`name` are simply left out. (Checked:
 that is the real header, and the file has 2050 rows.) Then copy the four
-`configs/clintox_*.yaml` files, change `dataset.name`, and drop the `tasks:`
+`configs/clintox/*.yaml` files, change `dataset.name`, and drop the `tasks:`
 line if you want every label column.
 
 **Test:** add a case to `tests/test_loaders.py` (task 7) or
@@ -240,7 +240,7 @@ line if you want every label column.
 its `task_columns` do not include the SMILES column — a real and easy mistake
 that silently trains the model to predict its own input.
 
-**Then run it:** `admet run configs/bbbp_rf_scaffold.yaml`. Report what you
+**Then run it:** `admet run configs/bbbp/rf_scaffold.yaml`. Report what you
 find even if it is dull. A third dataset where the scaffold split costs
 ~0.08 ROC-AUC would be the strongest single result in the project; one where
 it does not is more interesting still.
@@ -254,7 +254,7 @@ model success.
 ## 4. A `dummy` baseline — the floor every score should beat — done and run
 
 *Done by Jollly23 (`Jollly23`, merged 2026-11-11). `src/admet/models/dummy.py`
-plus `configs/tox21_dummy_random.yaml` and `configs/tox21_dummy_scaffold.yaml`.
+plus `configs/tox21/dummy_random.yaml` and `configs/tox21/dummy_scaffold.yaml`.
 Run on 2026-11-11, 5 seeds x 2 splits: ROC-AUC 0.500 both splits, PR-AUC 0.077
 random and 0.100 scaffold. The floor is in README and REPORT §3. The original
 task text is kept below as the record.*
@@ -275,7 +275,7 @@ nothing to tune, which is correct and worth a comment. Then add
 `from admet.models import dummy as _dummy` to the imports inside
 `build_model` in `src/admet/models/base.py`, or it will never be registered.
 
-Add `configs/tox21_dummy_random.yaml` and `configs/tox21_dummy_scaffold.yaml`
+Add `configs/tox21/dummy_random.yaml` and `configs/tox21/dummy_scaffold.yaml`
 by copying the `rf` ones and changing `model.name`.
 
 **Test:** in a new `tests/test_models.py`, assert the dummy's ROC-AUC on a toy
@@ -300,8 +300,19 @@ would stop reproducing, taking the control argument in REPORT §5b with them.
 It would also spend part of the baseline's budget on a second representation
 while the GNN keeps all of its own on one. `fp_kind` is therefore selected
 per-run through `model.params` instead, with the two
-`configs/tox21_rf_maccs_*.yaml` configs; two tests pin this. The original task
+`configs/tox21/rf_maccs_*.yaml` configs; two tests pin this. The original task
 text is kept below as the record.*
+
+***Before anyone runs the MACCS comparison, read this.** `run_name()` is built
+from dataset, model, split, fraction and seed — not from the config file or
+from `fp_kind` — so `configs/tox21/rf_maccs_random.yaml` and
+`configs/tox21/rf_random.yaml` produce **the same result filename**,
+`tox21_rf_random_frac100_seed0.json`, which is a committed baseline result.
+Without `--overwrite` the MACCS run silently skips as "already done"; with it,
+the run **destroys ten committed baseline results**. Run it with
+`--results-dir` pointing somewhere outside `results/` and compare by hand, or
+give `run_name()` a way to distinguish the featurization first — which renames
+every result file and is Roman's call, not a task to pick up unasked.*
 
 The baseline only knows Morgan/ECFP fingerprints. MACCS keys are 166
 predefined substructure patterns — chemically interpretable in a way Morgan
@@ -490,6 +501,17 @@ deleted anything. `n_valid` in the result tables is the one left.*
   `n_test`. Add `n_valid`.
 - **A `make figures-clean` target** that deletes only `figures/` and redraws
   it.
+- **No dummy floor on the ClinTox charts.** The Tox21 bar charts carry a
+  class-prior bar; the ClinTox ones do not, because the dummy was only run on
+  Tox21. Side by side, ClinTox's 0.855 reads as comparable to Tox21's 0.834
+  with nothing to say what chance looks like on either. Ten ClinTox dummy runs
+  cost about 30 s and would make the pair symmetric. Adding runs is allowed;
+  this touches nothing existing.
+- **The ClinTox similarity histogram is mostly sampling noise.** Its ~146 test
+  molecules spread over the same fixed bin count as Tox21's ~783, so every bar
+  stands on three or four molecules and the spikes mean nothing. Scale the bin
+  count with the test-set size, or state `n` on the figure. The medians in the
+  legend (0.52 random, 0.33 scaffold) are the part worth reading.
 
 ## 10. Make the GNN reproducible — done (2026-11-12)
 
