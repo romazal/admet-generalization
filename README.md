@@ -28,8 +28,8 @@ pip install -e ".[dev]"
 make test                        # 192 tests, ~4 s
 ```
 
-No download, and a GPU is optional (it makes the GNN ~2.5x faster; see
-*CPU and GPU*): both raw datasets are committed under
+No download, and a GPU is optional — the code falls back to CPU on its own:
+both raw datasets are committed under
 `data/` (123 KB Tox21, 20 KB ClinTox), so a fresh clone runs offline. Set
 `ADMET_DATA_DIR` to move the cache elsewhere.
 
@@ -65,7 +65,7 @@ make aggregate   # results/**/*.json -> runs.csv, summary.csv, gap.csv, per_task
 make plots       # -> figures/*.png
 ```
 
-`make all` runs the lot in order (~2.0 h on a CUDA GPU, ~3.8 h on CPU).
+`make all` runs the lot in order (~4.2 h on a CUDA GPU).
 Every command skips a cell
 that already has a result file, so an interrupted pass resumes by reissuing
 the same command; pass `--overwrite` to redo them. To reproduce a single cell:
@@ -78,8 +78,9 @@ admet run configs/tox21/gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
 
 Measured, not estimated: every figure below comes from the `timing_seconds`
 field of the committed result files. Windows desktop, 16 threads, 31 GB RAM,
-GNN on an **RTX 5070 Ti**; each result file records the device it used in
-`versions.torch_device`.
+GNN on an **RTX 5070 Ti**. (`versions.torch_device` in each result file
+records the device torch could *see*, not the one the model used — see
+*Running on a GPU*.)
 
 | Step | Time |
 |---|---|
@@ -104,32 +105,22 @@ models at once, which is the point (see *Safeguards*).
 These are indicative of relative cost rather than a benchmark: the machine was
 in ordinary use and the baseline uses all cores via `n_jobs=-1`.
 
-### CPU and GPU
+### Running on a GPU
 
-Nothing in the code needs changing to switch — `GNNModel` picks CUDA whenever
-`torch.cuda.is_available()` is true, and falls back to CPU otherwise. What is
-committed is the GPU grid with deterministic kernels pinned.
+Nothing in the code needs setting — `GNNModel` picks CUDA whenever
+`torch.cuda.is_available()` is true and falls back to CPU otherwise. Every
+committed result was produced on one GPU, an RTX 5070 Ti, with deterministic
+kernels pinned.
 
-Two caveats before the numbers. `versions.torch_device` records what torch
-could *see*, not what the model used, so it reads `cuda` even on baseline runs
-that are scikit-learn and never touch the card — read the `model` column
-instead. And the CPU pass predates the determinism fix and used a different
-wheel (2.15.0+cpu against 2.11.0+cu128), so that row is an order of magnitude
-rather than a controlled comparison.
+One caveat on reading the result files: `versions.torch_device` records what
+torch could *see*, not what the model used, so it says `cuda` even on
+baseline runs, which are scikit-learn and never touch the card. Read the
+`model` column to know what ran where.
 
-| Tox21 GNN at 100%, per run | Time |
-|---|---|
-| CPU, non-deterministic (torch 2.15.0+cpu) | 555 s |
-| GPU, non-deterministic (torch 2.11.0+cu128) | 221 s |
-| **GPU, deterministic — what is committed** | **673 s** |
-
-The card is worth about 2.5x with the brakes off, and determinism costs 3.0x
-on top of that, which leaves the committed configuration slower per run than
-the CPU pass it replaced. That is the trade this project made deliberately: a
-number that repeats beats a number that arrives sooner. Only the GNN is
-affected either way — the baseline runs on cores at 178 s per Tox21 run at
-100%, and the GPU's remaining value is for the larger datasets in
-[TODO.md](TODO.md), where ToxCast and HIV are expensive.
+Determinism is what dominates the GNN's runtime here: the same Tox21 run at
+the full training set takes 673 s with the kernels pinned against 221 s
+without, a factor of 3.0 (see *Reproducibility*). The baseline is unaffected
+at 178 s per Tox21 run — it runs on cores either way.
 
 To install a CUDA build (the PyPI default on Windows is CPU-only):
 
@@ -140,9 +131,9 @@ python -c "import torch; print(torch.cuda.is_available())"   # expect True
 ```
 
 Match the `cu…` version to your driver; recent NVIDIA cards need cu128 or
-later. **The device changes the GNN's scores slightly** — see *Reproducibility*
-below for how much, why the baseline is unaffected, and why the GNN needed
-deterministic kernels pinned before any of it could be measured.
+later. **The GNN's scores depend on the kernels being pinned** — see
+*Reproducibility* below for what was happening before they were, and why the
+baseline was never affected.
 
 ---
 
@@ -306,15 +297,13 @@ files.
 Re-running the *training* reproduces too. It did not at first, and the way
 that was found is worth recording.
 
-**What went wrong.** An earlier pass ran the whole grid twice, once with the
-GNN on CPU and once on a GPU, and read the difference between them as a device
-effect. It was not one. Repeating a single Tox21 scaffold run three times on
-the *same* card, with the same torch wheel, the same seed and the same data,
-gave test ROC-AUC 0.7369 / 0.7413 / 0.7690 — a spread of 0.032, three times
+**What went wrong.** Repeating a single Tox21 scaffold run three times —
+same card, same wheel, same seed, same data, nothing changed between them —
+gave test ROC-AUC 0.7369 / 0.7413 / 0.7690. A spread of 0.032, three times
 the seed-to-seed SD of 0.011, and enough to change which hyperparameter
-configuration the tuning selected. The CPU-versus-GPU deltas reported at the
-time (−0.002 and −0.001) were far smaller than the noise inside the
-measurement, so they were not measuring the device at all.
+configuration the tuning selected: two runs of the same experiment could pick
+different models. Against that, the 0.005 differences this study reports
+between the two architectures were not measurable at all.
 
 **Why.** The GNN sums each atom's incoming messages with a scatter-add, and on
 a GPU the order in which those partial sums land is not fixed from run to run;
@@ -330,11 +319,10 @@ commit with it on. Re-running any of them reproduces the file bit for bit,
 every tuning-trial score included. `ADMET_NONDETERMINISTIC=1` opts out.
 
 **It is not free.** Determinism costs the Tox21 GNN **3.0× its runtime** —
-221 s to 673 s per run at the full training set, same card, same wheel, only
-the flag differing. (The earlier CPU pass took 555 s per run, but on a
-different torch version, so treat that as an order of magnitude rather than a
-clean comparison.) On graphs this small the GPU's margin does not survive the
-requirement to be repeatable.
+221 s to 673 s per run at the full training set, on the same card and the
+same wheel with only the flag differing. That is most of why the grid takes
+4.19 h, and it was worth it: a number that repeats is worth more than a
+number that arrives sooner.
 
 **The baseline was never the problem**, and it stays the control. Across all
 68 random forest runs the re-run reproduced every test metric bit-identically;
@@ -572,11 +560,11 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   offline and every number can be traced to its run file. The whole lot is
   2.8 MB.
 - **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
-  hours". The committed results use a GPU (RTX 5070 Ti) and take 4.19 h, inside
-  that, though deterministic kernels tripled the GNN's share of it. An earlier
-  pass ran the grid end to end on the CPU alone in 3.83 h — also inside the
-  budget — so a teammate without a CUDA card can reproduce everything; see
-  *CPU and GPU* and *Reproducibility* above. The code selects
+  hours". The committed results use a GPU (RTX 5070 Ti) and take 4.19 h,
+  inside that, though deterministic kernels tripled the GNN's share of it.
+  `models/gnn.py` falls back to CPU when no card is available, so a teammate
+  without one can still run everything; see *Running on a GPU* and
+  *Reproducibility* above. The code selects
   CUDA automatically when available (`models/gnn.py`); no flag to set.
 - **No PyTorch Geometric.** Proposal §3.2 allows "a GIN in PyTorch Geometric";
   the same model is implemented directly in PyTorch (`index_add_` for the

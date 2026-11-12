@@ -131,10 +131,10 @@ that has survived every rerun unchanged to three decimal places (§5b).
 the GNN with little data and the advantage closes as data is added. The
 cleanest evidence is PR-AUC, where the 10% gap is more than twice its own SD
 in both splits and shrinks monotonically to −0.011 (random) and −0.025
-(scaffold) at 100%. An earlier, non-deterministic pass had the decline monotone
-under only one split, and disagreed with itself about which (§5b); that was the
-GNN's own run-to-run spread. The endpoints carry the claim either way, and the
-shape in between is not worth reading as a trend at 3 seeds.
+(scaffold) at 100%. Before the GNN was made deterministic the decline was
+monotone under one split and not the other (§5b) — that was its own
+run-to-run spread. The endpoints carry the claim either way, and the shape in
+between is not worth reading as a trend at 3 seeds.
 
 **H1 is not supported, because its premise fails.** At the full training set
 there is no GNN advantage to shrink: +0.005 ± 0.019 and +0.003 ± 0.016, both
@@ -183,10 +183,10 @@ like this.
 
 The scaffold drop is the weaker half of that argument, and the reruns are why.
 The baseline loses only 0.021 — a third of what it loses on Tox21, which is
-the suspicious part. The GNN's drop has read 0.043, then 0.082, and now 0.074
-across three passes of the same grid; at ±0.05–±0.06 per arm all three are
-consistent with one underlying value and none of them is measurable. Only the
-baseline's small drop should be cited.
+the suspicious part. The GNN's drop read 0.082 before the determinism fix and
+0.074 after it; at ±0.05–±0.06 per arm both are consistent with one
+underlying value and neither is measurable. Only the baseline's small drop
+should be cited.
 
 That small drop is more damning than it first looks, because the scaffold
 split works *harder* on ClinTox than on Tox21. Measuring each test molecule's
@@ -216,8 +216,7 @@ failure mode the study was designed to expose, not a success.
 Measured on a Windows desktop (16 threads, 31 GB RAM, RTX 5070 Ti) from the
 `timing_seconds` field of each result file. Total across all 156 result files:
 **4.19 h (251 min)** of wall clock, GNN on the GPU with deterministic kernels
-pinned. The same grid took 2.03 h before they were pinned, and 3.83 h on the
-CPU before that (§5b).
+pinned. The same grid took 2.03 h before they were pinned (§5b).
 
 Per run, including the full 8-trial tuning search:
 
@@ -240,9 +239,8 @@ At the full training set only:
 **The GNN costs 3.8× the baseline on Tox21 and 5.5× on ClinTox** at the full
 training set, for no measurable gain on Tox21 and an unresolvable one on
 ClinTox. Deterministic kernels are most of that: the Tox21 ratio was 1.3×
-before they were pinned, and 2.5× on the CPU (§5b). The cost ratio belongs in
-the discussion alongside the scores, and the direction of the argument does not
-depend on the hardware — the cheaper model is also the one that never lost.
+before they were pinned (§5b). The cost ratio belongs in the discussion
+alongside the scores — the cheaper model is also the one that never lost.
 
 Early stopping on validation ROC-AUC ends a GNN trial at a mean best epoch of
 34.4 on Tox21 and 25.8 on ClinTox, against a 50-epoch ceiling — so the ceiling
@@ -251,8 +249,8 @@ does not rule out that more tuning trials would help.
 
 These timings are indicative of relative cost, not a benchmark: the machine
 was in ordinary use and the baseline uses all cores via `n_jobs=-1`. The
-baseline's own mean has read 119, 106 and now 115 s across three passes with
-bit-identical arithmetic every time, which puts the noise floor on these
+baseline's own mean has read 106 and now 115 s across two runs of the grid
+with bit-identical arithmetic both times, which puts the noise floor on these
 figures at roughly ±10%.
 
 ### Environment
@@ -262,7 +260,7 @@ figures at roughly ±10%.
 | Python | 3.14.4 |
 | Platform | Windows 11 (10.0.26300) |
 | GPU | NVIDIA RTX 5070 Ti (sm_120), CUDA 12.8 |
-| PyTorch | 2.11.0+cu128 (CPU pass: 2.15.0+cpu) |
+| PyTorch | 2.11.0+cu128 |
 | RDKit | 2026.09.1 |
 | scikit-learn | 1.9.1 |
 | NumPy | 2.5.4 |
@@ -274,21 +272,16 @@ what torch could *see*, not what the model used, so it is only meaningful for
 the GNN runs; the baseline never calls torch. Read the `model` column to know
 what ran where.
 
-## 5b. Three passes: the device, the determinism, and what repeats
+## 5b. Determinism: what repeats, and what it costs
 
-The grid has now been run three times — once with the GNN on the CPU, once on
-the GPU, and once on the GPU with deterministic kernels pinned. The first two
-were meant to measure the speedup and use the repetition as an independent
-check on the results. The third exists because that check turned out to be
-measuring something else.
+Everything in this report was produced on one GPU. The grid was run twice on
+it: once before deterministic kernels were pinned, and once after. The second
+pass exists because the first one could not be repeated.
 
-### The check that failed
+### The problem
 
-Comparing pass 1 with pass 2 attributed every GNN difference to the device and
-to the torch wheel that came with it. That attribution was wrong, and the way
-to see it is to take the device out of the comparison. Repeating a single
-Tox21 scaffold run three times on the same card, the same wheel, the same seed
-and the same data gives:
+Repeating a single Tox21 scaffold run three times — same card, same wheel,
+same seed, same data, nothing changed between them — gives:
 
 | Repeat of one identical run | Test ROC-AUC |
 |---|---|
@@ -296,12 +289,11 @@ and the same data gives:
 | 2 | 0.7413 |
 | 3 | 0.7690 |
 
-A spread of 0.032 with nothing changed between the runs — three times the
-seed-to-seed SD of 0.011. It also changed which of the 8 hyperparameter
-configurations the tuning selected, so the variation is not confined to the
-final score. The CPU-to-GPU deltas reported from passes 1 and 2 were −0.002
-and −0.001: an order of magnitude *below* the noise inside the measurement
-that produced them. They were not evidence about the device.
+A spread of 0.032, three times the seed-to-seed SD of 0.011. It also changed
+which of the 8 hyperparameter configurations the tuning selected, so the
+variation is not confined to the final score: two runs of the same experiment
+could choose different models. Against that, the 0.005 differences this study
+reports between the two architectures are not measurable at all.
 
 ### Cause
 
@@ -310,8 +302,8 @@ a GPU the order in which those partial sums are applied is not fixed from run
 to run; cuBLAS picks kernels opportunistically for the same reason. Float
 addition is not associative, so neither is repeatable. Both are deliberate
 speed-for-ordering trades in the libraries rather than bugs — but a study
-whose unit of evidence is a 0.005 difference between two models cannot afford
-0.032 of unexplained movement.
+whose unit of evidence is a 0.005 difference cannot afford 0.032 of
+unexplained movement.
 
 ### The fix, and what it costs
 
@@ -327,32 +319,27 @@ significant digits (0.75171164118465583), as do test PR-AUC, the selected
 hyperparameters, the best epoch, and all 8 tuning-trial scores. Only the
 wall-clock fields differ.
 
-| Tox21 GNN at 100%, per run | Time | |
-|---|---|---|
-| Pass 1 — CPU, non-deterministic (torch 2.15.0+cpu) | 555 s | |
-| Pass 2 — GPU, non-deterministic (torch 2.11.0+cu128) | 221 s | 2.5× faster |
-| Pass 3 — GPU, deterministic (torch 2.11.0+cu128) | 673 s | 3.0× slower |
-
-On graphs this small, determinism costs more than the GPU wins. Passes 2 and 3
-differ in nothing but the flag, so that 3.0× is a controlled measurement; the
-CPU row used a different wheel and should be read as an order of magnitude.
-Only the GNN is affected — the baseline is scikit-learn, runs on cores, and
-took 178 s per Tox21 run at 100% in pass 3.
+It is not free. The same Tox21 GNN run at the full training set goes from
+**221 s to 673 s — 3.0×** — on the same card and the same wheel, with only
+the flag differing. That is most of why the grid takes 4.19 h, and it is the
+trade this project made deliberately: a number that repeats is worth more
+than a number that arrives sooner. Only the GNN is affected; the baseline is
+scikit-learn and took 178 s per Tox21 run at 100%.
 
 ### What the baseline shows
 
 The baseline is the control throughout, and it has never moved. Across all 68
-random forest runs, pass 3 reproduced every **test** metric bit-identically
-against pass 2. One validation ROC-AUC drifted by 8.3e-7
-(`tox21_rf_random_frac100_seed2`), from non-deterministic float summation
-across threads; it did not change which tuning trial won, and no reported
-number depends on it. That the data, the splits, the tuning search and the
-metric code all come back identical is what licenses attributing the GNN's
-movement to the GNN.
+random forest runs, the deterministic pass reproduced every **test** metric
+bit-identically against the one before it. One validation ROC-AUC drifted by
+8.3e-7 (`tox21_rf_random_frac100_seed2`), from non-deterministic float
+summation across threads; it did not change which tuning trial won, and no
+reported number depends on it. That the data, the splits, the tuning search
+and the metric code all come back identical is what licenses attributing the
+GNN's movement to the GNN.
 
 ### What changed in the findings
 
-| | Pass 2 → pass 3 |
+| | Before → after |
 |---|---|
 | Tox21 GNN means, 100% | moved ≤ 0.008 ROC-AUC |
 | Tox21 GNN means, learning curve | moved ≤ 0.019 |
@@ -363,21 +350,20 @@ movement to the GNN.
 (0.073 / 0.075), both headline gaps still sit inside one SD of zero, and the
 baseline still leads at 10% in PR-AUC and not at 100%.
 
-What moved is the finer structure that passes 1 and 2 had already shown to be
-fragile:
+What moved is the finer structure that was already flagged as fragile:
 
-- The PR-AUC learning curve is now monotone under *both* splits. Passes 1 and
-  2 each had it monotone under one split and disagreed about which. The
-  10%-to-100% narrowing held in all three passes.
+- The PR-AUC learning curve is now monotone under *both* splits. Before, it
+  was monotone under one and not the other. The 10%-to-100% narrowing held
+  either way.
 - The 100% scaffold ROC-AUC gap changed sign, −0.005 → +0.003. It has sat
-  inside one SD of zero in every pass.
-- On ClinTox the GNN's scaffold drop has read 0.043, then 0.082, then 0.074.
+  inside one SD of zero throughout.
+- On ClinTox the GNN's scaffold drop read 0.082 and now reads 0.074.
 
 Nothing in that list ever fell outside its stated uncertainty, and that is the
-point. Three passes have failed to overturn a single quantity reported with an
-SD smaller than its mean, and have reshuffled almost every quantity that was
-not. The determinism fix does not make the conclusions truer; it makes them
-checkable, which is the weaker claim this study is actually entitled to make.
+point. The rerun did not overturn a single quantity reported with an SD
+smaller than its mean, and it reshuffled almost every quantity that was not.
+The fix does not make the conclusions truer; it makes them checkable, which is
+the weaker claim this study is actually entitled to make.
 
 ## 6. Figures
 
@@ -426,12 +412,12 @@ the numbers do not support.
   3-seed learning-curve gaps changed sign between passes (§5b). The
   learning-curve rows in §3 are 3-seed and are directional only.
 - **The GNN's numbers were not reproducible at all until they were made so.**
-  Repeating one identical run moved its ROC-AUC by 0.032, three times the seed
-  SD, and changed the selected hyperparameters (§5b). Deterministic kernels are
-  now pinned and the committed grid re-runs bit for bit, at 3× the GNN's
-  runtime. The risk this leaves is a reading one: every GNN number here comes
-  from one fixed kernel ordering, so a single run quoted to three decimals is
-  still over-precise on any other machine.
+  Repeating one identical run moved its ROC-AUC by 0.032, three times the
+  seed SD, and changed the selected hyperparameters (§5b). Deterministic
+  kernels are now pinned and the committed grid re-runs bit for bit, at 3×
+  the GNN's runtime. The risk this leaves is a reading one: every GNN number
+  here comes from one fixed kernel ordering on one card, so a single run
+  quoted to three decimals is still over-precise on any other machine.
 - **The GNN may simply be undertrained.** 8 tuning trials is equal across
   models, which makes the comparison fair, but not necessarily sufficient. A
   null result is evidence about *this* budget.
@@ -454,11 +440,9 @@ the numbers do not support.
 - **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
   hours". The committed results use an RTX 5070 Ti and take 4.19 h, inside
   that budget, with deterministic kernels accounting for most of the increase
-  over the 2.03 h the same grid took without them. An earlier pass completed
-  on the CPU alone in 3.83 h, also inside the budget, so the study does not
-  require a GPU to reproduce. `models/gnn.py` selects CUDA automatically when
-  it is available, so no pass needed a code change for the device — only a
-  different torch wheel. See §5b.
+  over the 2.03 h the same grid took without them. `models/gnn.py` selects
+  CUDA automatically when it is available and falls back to CPU otherwise, so
+  the study does not require a card to re-run, only patience. See §5b.
 - **No PyTorch Geometric** (§3.2 allows it). The same GINE model is written
   directly in PyTorch, using `index_add_` for the neighbour sum, to avoid a
   dependency that does not install cleanly here. Covered by tests.
@@ -485,10 +469,10 @@ ClinTox neither confirms nor contradicts this; it is too small to resolve a
 gap of this size, and the baseline's suspiciously small scaffold penalty on it
 is better explained by dataset provenance than by model quality.
 
-The grid has now been run three times — CPU, GPU, and GPU with deterministic
-kernels — and every one of these conclusions has stood through all three while
-the smaller numbers moved around inside their error bars (§5b). The second pass
-was nearly read as a device effect when it was really the GNN's own
-irreproducibility; finding that is the strongest argument in this report for
-having reported SDs throughout rather than point estimates, and for the
-three-line change that makes the third pass repeatable.
+The grid has been run twice, before and after the GNN was made
+deterministic, and every one of these conclusions stood through both while
+the smaller numbers moved around inside their error bars (§5b). Finding that
+the GNN's own scores moved by 0.032 between identical runs — six times the
+difference it was being credited with over the baseline — is the strongest
+argument in this report for having reported SDs throughout rather than point
+estimates, and for the three-line change that makes the grid repeatable.

@@ -1093,3 +1093,34 @@ against the repository by script rather than by memory — config counts,
 `extends` paths, the 11.2-minute and 3.9-hour figures, the 16 gap rows, the
 24 figures, which spec field each dataset uses, and the heatmap's guard.
 
+## The CPU/GPU comparison comes out
+
+*Instruction:* the CPU-versus-GPU comparison was never the point of the
+experiment — it was my mistake. Remove the comparisons and report the GPU
+time only.
+
+Agreed, and it makes §5b stronger rather than weaker. Running the grid on two
+devices was never in the design, and presenting it as a result is what let a
+confound pose as a finding: the "device effect" of −0.002 and −0.001 was an
+order of magnitude smaller than the GNN's own run-to-run spread, so those
+numbers measured nothing. The determinism finding never needed the CPU pass —
+it rests entirely on repeating one run three times on the same card.
+
+§5b is now **"Determinism: what repeats, and what it costs"** and says so in
+one line: everything was produced on one GPU, and the grid was run twice on
+it, before and after the kernels were pinned. Removed from README and REPORT:
+the three-row speed table, the 2.5× and 3.83 h figures, the two torch wheels,
+the "three passes" framing, and the README subsection titled *CPU and GPU*,
+now *Running on a GPU*.
+
+**What was kept, and the reason, in case it should also go.** The 221 s →
+673 s figure stays. It is not a device comparison — same card, same wheel,
+only the determinism flag differing — and it is what explains why the grid
+takes 4.19 h instead of 2.03 h. Dropping it would leave the 3× cost claim
+unsupported.
+
+**The historical entries above were left alone.** They describe a CPU pass
+that did happen, and this file is the record of how the work went rather than
+a claim about the experiment — a wrong turn belongs in it. The reports are
+where the project states what it found, and the comparison is gone from both.
+
