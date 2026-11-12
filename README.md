@@ -85,17 +85,18 @@ GNN on an **RTX 5070 Ti**; each result file records the device it used in
 |---|---|
 | Test suite | ~3 s |
 | Parse a dataset (no download — both are committed) | ~3 s |
-| Baseline, one Tox21 run at 100% (8 tuning trials, 1 seed) | 2.7 min |
-| GNN, one Tox21 run at 100% (8 tuning trials, 1 seed) | 3.7 min |
+| Baseline, one Tox21 run at 100% (8 tuning trials, 1 seed) | 3.0 min |
+| GNN, one Tox21 run at 100% (8 tuning trials, 1 seed) | 11.2 min |
 | Baseline, one ClinTox run at 100% | 7 s |
-| GNN, one ClinTox run at 100% | 38 s |
-| `make main` (4 configs x 5 seeds) | ~1.1 h |
-| `make sweep` (the 36 cells below 100%) | ~40 min |
-| `make clintox` (4 configs x 5 seeds x 4 fractions) | ~17 min |
-| **Everything: 136 runs** | **2.03 h** |
+| GNN, one ClinTox run at 100% | 36 s |
+| `make main` (4 configs x 5 seeds) | ~2.4 h |
+| `make sweep` (the 36 cells below 100%) | ~1.5 h |
+| `make clintox` (4 configs x 5 seeds x 4 fractions) | ~18 min |
+| **Everything: 146 runs** | **4.18 h** |
 
-The GNN costs about 1.3x the baseline on Tox21 and 5x on ClinTox. Early
-stopping ends a GNN trial at a mean best epoch of 35.4 (Tox21) and 26.2
+The GNN costs about 3.8x the baseline on Tox21 and 5.5x on ClinTox, with
+deterministic kernels pinned (*Reproducibility* has what that costs). Early
+stopping ends a GNN trial at a mean best epoch of 34.4 (Tox21) and 25.8
 (ClinTox) against a 50-epoch ceiling, so the ceiling rarely binds. To shorten
 a pass, lower `tuning.budget` in `configs/base.yaml` — it applies to **both**
 models at once, which is the point (see *Safeguards*).
@@ -106,24 +107,29 @@ in ordinary use and the baseline uses all cores via `n_jobs=-1`.
 ### CPU and GPU
 
 Nothing in the code needs changing to switch — `GNNModel` picks CUDA whenever
-`torch.cuda.is_available()` is true, and falls back to CPU otherwise. The
-grid was run both ways; `versions.torch_device` in each result file says
-which. On CPU the same 136 runs take **3.83 h** instead of 2.03 h:
+`torch.cuda.is_available()` is true, and falls back to CPU otherwise. What is
+committed is the GPU grid with deterministic kernels pinned.
 
-| | CPU | GPU | Speedup |
-|---|---|---|---|
-| Tox21 GNN, mean per run | 302 s | 118 s | **2.6x** |
-| Tox21 GNN at 100% | 555 s | 221 s | **2.5x** |
-| ClinTox GNN, mean per run | 43 s | 19 s | **2.2x** |
-| Baseline (scikit-learn, either way) | 119 s | 106 s | — |
-| **All 136 runs** | **3.83 h** | **2.03 h** | **1.9x** |
+Two caveats before the numbers. `versions.torch_device` records what torch
+could *see*, not what the model used, so it reads `cuda` even on baseline runs
+that are scikit-learn and never touch the card — read the `model` column
+instead. And the CPU pass predates the determinism fix and used a different
+wheel (2.15.0+cpu against 2.11.0+cu128), so that row is an order of magnitude
+rather than a controlled comparison.
 
-Only the GNN is accelerated; the baseline is scikit-learn and never touches
-the card, so its 119 → 106 s is machine noise, not a speedup. The overall
-1.9x is therefore bounded by the baseline's share of the grid, and the 2.5x
-on the heaviest cell is the figure that matters for scaling up — worth having
-before attempting the larger datasets in [TODO.md](TODO.md), where ToxCast
-and HIV are expensive.
+| Tox21 GNN at 100%, per run | Time |
+|---|---|
+| CPU, non-deterministic (torch 2.15.0+cpu) | 555 s |
+| GPU, non-deterministic (torch 2.11.0+cu128) | 221 s |
+| **GPU, deterministic — what is committed** | **673 s** |
+
+The card is worth about 2.5x with the brakes off, and determinism costs 3.0x
+on top of that, which leaves the committed configuration slower per run than
+the CPU pass it replaced. That is the trade this project made deliberately: a
+number that repeats beats a number that arrives sooner. Only the GNN is
+affected either way — the baseline runs on cores at 178 s per Tox21 run at
+100%, and the GPU's remaining value is for the larger datasets in
+[TODO.md](TODO.md), where ToxCast and HIV are expensive.
 
 To install a CUDA build (the PyPI default on Windows is CPU-only):
 
@@ -135,53 +141,57 @@ python -c "import torch; print(torch.cuda.is_available())"   # expect True
 
 Match the `cu…` version to your driver; recent NVIDIA cards need cu128 or
 later. **The device changes the GNN's scores slightly** — see *Reproducibility*
-below for how much, and why the baseline is unaffected.
+below for how much, why the baseline is unaffected, and why the GNN needed
+deterministic kernels pinned before any of it could be measured.
 
 ---
 
 ## Summary of results
 
-136 runs: both models and both splits on Tox21 (five seeds at the full
+146 runs: both models and both splits on Tox21 (five seeds at the full
 training set, three along the learning curve) and the same grid on ClinTox
-(five seeds throughout). 2.03 h of compute, GNN on a GPU. Full tables and
+(five seeds throughout), plus a dummy floor. 4.18 h of compute, GNN on a GPU
+with deterministic kernels pinned (see *Reproducibility*). Full tables and
 threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 *[Findings](#findings)* below.
 
 - **The split type is the whole story.** Scaffold splitting costs the baseline
-  0.073 ROC-AUC and the GNN 0.078 — roughly ten times the difference between
+  0.073 ROC-AUC and the GNN 0.075 — roughly ten times the difference between
   the two models in any condition. When the test molecules stop resembling the
   training molecules, both methods degrade far more than either gains from its
   architecture.
 - **H2 (data size): supported, with one caveat.** The fingerprint baseline
   beats the GNN with little data and the advantage closes as data is added —
-  in PR-AUC the gap runs from −0.047 at 10% of the training set to −0.019 at
-  100% under a scaffold split, monotonically. Under a random split it runs
-  from −0.094 to −0.024 but not monotonically, and that ordering did not
-  survive a rerun on different hardware (see *Reproducibility*).
+  in PR-AUC the gap runs from −0.057 at 10% of the training set to −0.025 at
+  100% under a scaffold split, and from −0.059 to −0.011 under a random split,
+  monotonically in both. An earlier pass had the random-split ordering break;
+  that turned out to be the GNN's own run-to-run noise (see *Reproducibility*).
 - **H1 (generalization): not supported, because its premise fails.** At the
-  full training set there is no GNN advantage to shrink: +0.000 ± 0.018 under
-  the random split, −0.005 ± 0.017 under the scaffold split, both within one
+  full training set there is no GNN advantage to shrink: +0.005 ± 0.019 under
+  the random split, +0.003 ± 0.016 under the scaffold split, both within one
   standard deviation of zero and of each other.
 - **Headline numbers** (Tox21 test ROC-AUC, five seeds): baseline
   **0.834 ± 0.009** random / **0.760 ± 0.013** scaffold; GNN
-  **0.834 ± 0.015** random / **0.755 ± 0.011** scaffold.
+  **0.838 ± 0.016** random / **0.763 ± 0.010** scaffold.
 - **ClinTox is inconclusive, and informative anyway.** Every GNN-minus-baseline
-  gap on it is smaller than its own SD (+0.083 ± 0.085 at best), so it settles
+  gap on it is no larger than its own SD (+0.091 ± 0.088 at best), so it settles
   nothing about H1 or H2. But it scores *higher* than Tox21 on a fifth of the
   data and the baseline loses only 0.021 ROC-AUC to a scaffold split, where
-  Tox21 loses 0.073–0.078. Together with 19 duplicate structures carrying
+  Tox21 loses 0.073–0.075. Together with 19 duplicate structures carrying
   contradictory labels, that points at dataset provenance rather than at model
   quality.
-- **The GNN costs 1.3x the baseline on Tox21 and 5x on ClinTox** with the GPU
-  (2.5x and 12x without one), for no measurable gain.
+- **The GNN costs 3.8x the baseline on Tox21 and 5.5x on ClinTox** at the full
+  training set, on the GPU, for no measurable gain. Pinning deterministic
+  kernels tripled its cost (see *Reproducibility*).
 - **A methodological result worth the same weight.** An intermediate three-seed
-  pass put the scaffold gap at −0.016 ± 0.020, which reads as a real effect;
-  at five seeds it is −0.005 ± 0.017. The proposal's "target 5, minimum 3" is
-  doing real work — three-seed numbers are directional only.
+  pass put the scaffold gap at −0.008 ± 0.011, which reads as a real effect at
+  four times its own SD; at five seeds it is +0.003 ± 0.016 and the sign flips.
+  The proposal's "target 5, minimum 3" is doing real work — three-seed numbers
+  are directional only.
 
 The honest one-line answer to the research question: *on this dataset, at this
-tuning budget, the GNN never outperformed the fingerprint baseline — and the
-structural shift hurt it slightly more.*
+tuning budget, the GNN and the fingerprint baseline are indistinguishable — and
+the structural shift hurt both about equally.*
 
 ---
 
@@ -212,10 +222,10 @@ grid is 16× larger). 56 Tox21 runs. Every number below comes from
 
 | Metric | Split | Dummy (floor) | Baseline (Morgan + RF) | GNN (GINE) | GNN − baseline |
 |---|---|---|---|---|---|
-| ROC-AUC | Random | 0.500 ± 0.000 | 0.834 ± 0.009 | 0.834 ± 0.015 | **+0.000 ± 0.018** |
-| ROC-AUC | Scaffold | 0.500 ± 0.000 | 0.760 ± 0.013 | 0.755 ± 0.011 | **−0.005 ± 0.017** |
-| PR-AUC | Random | 0.077 ± 0.002 | 0.473 ± 0.023 | 0.449 ± 0.029 | −0.024 ± 0.037 |
-| PR-AUC | Scaffold | 0.100 ± 0.007 | 0.379 ± 0.019 | 0.360 ± 0.020 | −0.019 ± 0.028 |
+| ROC-AUC | Random | 0.500 ± 0.000 | 0.834 ± 0.009 | 0.838 ± 0.016 | **+0.005 ± 0.019** |
+| ROC-AUC | Scaffold | 0.500 ± 0.000 | 0.760 ± 0.013 | 0.763 ± 0.010 | **+0.003 ± 0.016** |
+| PR-AUC | Random | 0.077 ± 0.002 | 0.473 ± 0.023 | 0.462 ± 0.018 | −0.011 ± 0.029 |
+| PR-AUC | Scaffold | 0.100 ± 0.007 | 0.379 ± 0.019 | 0.354 ± 0.017 | −0.025 ± 0.025 |
 
 The dummy ignores the molecule and predicts each assay's training-set
 positive rate. It is there to make the PR-AUC column readable: 0.473 looks
@@ -225,15 +235,15 @@ weak in isolation and is about six times chance on a dataset this imbalanced.
 
 | Training set | ROC-AUC, random | ROC-AUC, scaffold | PR-AUC, random | PR-AUC, scaffold |
 |---|---|---|---|---|
-| 10% | −0.016 ± 0.020 | −0.018 ± 0.035 | **−0.094 ± 0.033** | **−0.047 ± 0.019** |
-| 25% | +0.005 ± 0.015 | −0.003 ± 0.007 | −0.033 ± 0.018 | −0.039 ± 0.010 |
-| 50% | −0.003 ± 0.013 | −0.001 ± 0.014 | −0.041 ± 0.020 | −0.034 ± 0.020 |
-| 100% | +0.000 ± 0.018 | −0.005 ± 0.017 | −0.024 ± 0.037 | −0.019 ± 0.028 |
+| 10% | −0.014 ± 0.023 | +0.001 ± 0.014 | **−0.059 ± 0.024** | **−0.057 ± 0.024** |
+| 25% | +0.006 ± 0.014 | −0.006 ± 0.012 | −0.052 ± 0.021 | −0.029 ± 0.025 |
+| 50% | −0.007 ± 0.011 | −0.002 ± 0.024 | −0.042 ± 0.017 | −0.027 ± 0.028 |
+| 100% | +0.005 ± 0.019 | +0.003 ± 0.016 | −0.011 ± 0.029 | −0.025 ± 0.025 |
 
 Four things follow, in order of how well the data supports them.
 
 **1. The split type dominates everything else.** Moving from a random to a
-scaffold split costs the baseline 0.073 ROC-AUC and the GNN 0.078 — an order of
+scaffold split costs the baseline 0.073 ROC-AUC and the GNN 0.075 — an order of
 magnitude more than the difference between the two models in any condition.
 Whatever is gained by choosing an architecture here is small next to what is
 lost when the test molecules stop resembling the training molecules. This is
@@ -241,24 +251,25 @@ the result the research question was asked to expose, and it is unambiguous.
 
 **2. H2 is supported, with a caveat on how cleanly.** The baseline is clearly
 better than the GNN with little data, and the advantage closes as data is
-added. The cleanest evidence is PR-AUC, where the 10% gap (−0.094 random,
-−0.047 scaffold) is larger than its own SD and falls to roughly −0.02 at 100%
-in both splits. Under the scaffold split the decline is monotone; under the
-random split it is not (the 25% point sits above the 50% one), and which of
-the two is monotone changed between the CPU and GPU passes. The *endpoints*
-are robust, the shape in between is not — treat H2 as supported by the 10%
-versus 100% contrast rather than by a smooth curve.
+added. The cleanest evidence is PR-AUC, where the 10% gap (−0.059 random,
+−0.057 scaffold) is more than twice its own SD and shrinks monotonically to
+−0.011 and −0.025 at 100%. An earlier, non-deterministic pass had the random
+split break monotonicity and the two splits disagree about which was smooth;
+that was the GNN's own run-to-run spread, not a property of the data. The
+*endpoints* carry the claim either way — treat H2 as supported by the 10%
+versus 100% contrast rather than by the shape in between.
 
 **3. H1 is not supported, because its premise does not hold.** H1 predicts a
 GNN advantage that shrinks under structural shift. At 100% there is no GNN
-advantage to shrink in either split: +0.000 ± 0.018 random, −0.005 ± 0.017
+advantage to shrink in either split: +0.005 ± 0.019 random, +0.003 ± 0.016
 scaffold, both inside one SD of zero and indistinguishable from each other. The
 honest statement is *no GNN advantage was detected under either split*. That
 outcome is compatible with H1 and equally compatible with a GNN that is simply
 undertrained at 8 tuning trials; this design cannot separate those.
 
 **4. Three seeds were not enough, and the data shows it.** At 3 seeds the
-scaffold ROC-AUC gap read −0.016 ± 0.020; at 5 it reads −0.005 ± 0.017. The
+scaffold ROC-AUC gap read −0.008 ± 0.011 — four times its own SD, which reads
+as a real baseline win; at 5 it reads +0.003 ± 0.016 and the sign flips. The
 apparent effect was seed noise. Treat every 3-seed row above as directional
 only.
 
@@ -288,45 +299,61 @@ ClinTox results and the cross-dataset comparison are in
 ## Reproducibility
 
 `make aggregate && make plots` on a fresh clone regenerates `runs.csv`,
-`summary.csv`, `gap.csv`, `per_task.csv` and all 12 figures with **zero
+`summary.csv`, `gap.csv`, `per_task.csv` and all 14 figures with **zero
 diff** — every table and figure is a pure function of the committed result
 files.
 
-Re-running the *training* is reproducible to the extent the libraries are.
-The whole grid was run twice, once with the GNN on CPU and once on a GPU,
-which measures that directly:
+Re-running the *training* reproduces too. It did not at first, and the way
+that was found is worth recording.
 
-| | Reproduced |
-|---|---|
-| Baseline test metrics, all 68 runs | **bit-identical** |
-| Baseline validation metrics | 67/68 bit-identical; one drifted by 8e-7 |
-| GNN test metrics | changed, within seed noise (see below) |
+**What went wrong.** An earlier pass ran the whole grid twice, once with the
+GNN on CPU and once on a GPU, and read the difference between them as a device
+effect. It was not one. Repeating a single Tox21 scaffold run three times on
+the *same* card, with the same torch wheel, the same seed and the same data,
+gave test ROC-AUC 0.7369 / 0.7413 / 0.7690 — a spread of 0.032, three times
+the seed-to-seed SD of 0.011, and enough to change which hyperparameter
+configuration the tuning selected. The CPU-versus-GPU deltas reported at the
+time (−0.002 and −0.001) were far smaller than the noise inside the
+measurement, so they were not measuring the device at all.
 
-**The baseline is exactly reproducible and the GNN is not.** The baseline is
-scikit-learn with fixed seeds and never touches the GPU, so it is the control:
-its test metrics came back identical to the last decimal place, which is what
-licenses attributing every GNN change to the GNN rather than to the data, the
-splits or the harness. The one baseline value that moved is a validation
-ROC-AUC, 8e-7, from non-deterministic float summation across threads; it did
-not change which tuning trial won, so no reported number depends on it.
+**Why.** The GNN sums each atom's incoming messages with a scatter-add, and on
+a GPU the order in which those partial sums land is not fixed from run to run;
+cuBLAS picks kernels the same opportunistic way. Float addition is not
+associative, so neither is repeatable. Neither is a bug — both are the normal
+speed-for-ordering trade — but both make a result impossible to repeat.
 
-The GNN's scores moved more. Two things differed at once — the device, and
-the torch version (2.15.0+cpu → 2.11.0+cu128, because no cu128 wheel exists
-for 2.15 yet) — so the change cannot be attributed to the GPU alone:
+**The fix** is three lines in [`src/admet/training.py`](src/admet/training.py):
+pin `CUBLAS_WORKSPACE_CONFIG=:4096:8`, turn off `cudnn.benchmark`, and call
+`torch.use_deterministic_algorithms(True)`. Every result file now records
+`"deterministic": true`, and all 146 files in `results/` come from a single
+commit with it on. Re-running any of them reproduces the file bit for bit,
+every tuning-trial score included. `ADMET_NONDETERMINISTIC=1` opts out.
 
-| Tox21 GNN ROC-AUC, 100% | CPU | GPU | Δ | SD |
-|---|---|---|---|---|
-| Random | 0.836 | 0.834 | −0.002 | ± 0.015 |
-| Scaffold | 0.756 | 0.755 | −0.001 | ± 0.011 |
+**It is not free.** Determinism costs the Tox21 GNN **3.0× its runtime** —
+221 s to 673 s per run at the full training set, same card, same wheel, only
+the flag differing. (The earlier CPU pass took 555 s per run, but on a
+different torch version, so treat that as an order of magnitude rather than a
+clean comparison.) On graphs this small the GPU's margin does not survive the
+requirement to be repeatable.
 
-Both shifts are an order of magnitude below the seed-to-seed SD, and **every
-conclusion above survives**: the split type still dominates, both headline
-gaps still sit inside one SD of zero, and the 10%-to-100% narrowing still
-holds. What did *not* survive is the finer structure — the monotone ordering
-of the PR-AUC learning curve swapped splits, and on ClinTox the GNN's random
-split moved +0.037 and its scaffold drop went from 0.043 to 0.082. Those were
-always inside the SDs; the rerun is a reminder that reading them as findings
-would have been wrong.
+**The baseline was never the problem**, and it stays the control. Across all
+68 random forest runs the re-run reproduced every test metric bit-identically;
+one validation ROC-AUC moved by 8e-7, from thread-order float summation, and
+it did not change which tuning trial won. scikit-learn, fixed seeds, no GPU,
+no drift — which is what licenses attributing any GNN movement to the GNN
+rather than to the data, the splits or the harness.
+
+**What it cost in findings: nothing load-bearing.** Every number in this README
+is the deterministic one. Against the earlier pass the GNN's Tox21 means moved
+by at most 0.008 ROC-AUC at the full training set, 0.019 along the learning
+curve and 0.025 on ClinTox, and each conclusion survived: the split type still
+dominates, both headline gaps still sit inside one SD of zero, and the
+10%-to-100% narrowing still holds. What moved is the finer structure the
+earlier pass had already flagged as fragile — the PR-AUC learning curve is now
+monotone under *both* splits, and the 100% scaffold gap changed sign
+(−0.005 → +0.003). Both were always inside their SDs. That is the same lesson
+the three-seed result teaches from the other direction: a quantity reported
+with an SD as large as its mean was never a finding.
 
 ## Data
 
@@ -523,10 +550,11 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   offline and every number can be traced to its run file. The whole lot is
   2.8 MB.
 - **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
-  hours". The committed results use a GPU (RTX 5070 Ti) and take 2.03 h, well
-  inside that. The grid was also run end to end on the CPU alone, in 3.83 h —
-  still inside it — so a teammate without a CUDA card can reproduce
-  everything; see *CPU and GPU* and *Reproducibility* above. The code selects
+  hours". The committed results use a GPU (RTX 5070 Ti) and take 4.18 h, inside
+  that, though deterministic kernels tripled the GNN's share of it. An earlier
+  pass ran the grid end to end on the CPU alone in 3.83 h — also inside the
+  budget — so a teammate without a CUDA card can reproduce everything; see
+  *CPU and GPU* and *Reproducibility* above. The code selects
   CUDA automatically when available (`models/gnn.py`); no flag to set.
 - **No PyTorch Geometric.** Proposal §3.2 allows "a GIN in PyTorch Geometric";
   the same model is implemented directly in PyTorch (`index_add_` for the
