@@ -1049,3 +1049,47 @@ two names in.
 
 211 tests pass. 156 results, 24 figures.
 
+## §3's instructions had gone stale
+
+*Instruction:* the instructions in §3 of `TODO.md` look deprecated — do not
+do the task, update them.
+
+They were. The task itself is unchanged and still open; what had drifted was
+every step after "add a `DatasetSpec`", because four things landed underneath
+it. Following the old text would have produced a dataset that was half-wired
+into the project:
+
+- configs now live in `configs/<dataset>/` and inherit with
+  `extends: ../base.yaml`, so "copy the four `configs/clintox_*.yaml` files"
+  named files that no longer exist;
+- there are now **six** files to copy, not four — the dummy pair is part of
+  a dataset's setup, and a dataset without a floor repeats exactly the defect
+  ClinTox had for a day;
+- nothing said to add a Makefile target, which is how the Tox21 dummy ended
+  up runnable only by hand;
+- nothing said the runs have to come from the pinned deterministic path.
+
+The cost guidance was the most misleading part, because it was qualitative.
+"Slow" and "the largest by far" were written when a Tox21 GNN run took a
+third of what it takes now, so the section now carries the one measurement
+worth scaling from — 11.2 minutes per run, 3.9 h for the Tox21 grid — and
+says HIV's GNN arm is an overnight job rather than an afternoon.
+
+Two things the new figures imply were added as well: the per-assay heatmap
+returns `None` below two assays, so BBBP, HIV and BACE will not produce one
+and that is correct rather than broken, while ToxCast *would* produce a
+617-row heatmap that nobody can read. And `all_gaps` is the figure that grows
+with each dataset — 16 rows now, 24 with a third.
+
+**One claim in the rewrite was wrong on first pass and had to be checked out
+of it.** It said `admet datasets` reports `n_unparseable` and
+`n_label_conflicts`. It does not: it prints molecules, assays and label
+density, and the conflict count only reaches you as a warning. The numbers
+live in `Dataset.summary()`, which is what `make data` prints. The corrected
+step names both commands and says which gives what.
+
+All fourteen factual claims in the rewritten section were then checked
+against the repository by script rather than by memory — config counts,
+`extends` paths, the 11.2-minute and 3.9-hour figures, the 16 gap rows, the
+24 figures, which spec field each dataset uses, and the heatmap's guard.
+

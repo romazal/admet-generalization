@@ -217,11 +217,16 @@ dataset, and it belongs in REPORT.md.
 
 ## 3. Add a third dataset
 
-Adding a dataset is about fifteen lines, because `loaders.py` is a registry:
-you describe the file and everything downstream — splitting, masking, tuning,
-metrics, figures — works unchanged. H1 and H2 currently rest on one real
-dataset (ClinTox was too small to resolve anything), so a third is the
-cheapest way to make the conclusion more than a Tox21 anecdote.
+Adding a dataset is still about fifteen lines of registry entry, because
+everything downstream — splitting, masking, tuning, metrics, figures — keys
+off it. H1 and H2 rest on one real dataset (ClinTox was too small to resolve
+anything), so a third is the cheapest way to make the conclusion more than a
+Tox21 anecdote.
+
+*Instructions rewritten 2026-11-12. The task itself is unchanged and still
+open; what follows it had drifted out of date. See **What changed under this
+task** below before starting — three of the old steps would now produce a
+dataset that is half-wired into the project.*
 
 ### Hard constraint, read first
 
@@ -232,31 +237,61 @@ ADMET relevance. Labels must be 0/1, with blanks for unknown.
 
 ### Candidates
 
-All five filenames below were checked against the MoleculeNet mirror and
-exist. The counts are what MoleculeNet documents; treat them as *expected*,
-not verified — the loader prints what it actually parsed, and that is the
-number to write down.
+All five filenames below were checked against the MoleculeNet mirror on
+2026-11-11 and existed then. The counts are what MoleculeNet documents; treat
+them as *expected*, not verified — the loader prints what it actually parsed,
+and that is the number to write down.
 
 | Dataset | File | Molecules | Tasks | Why it is worth adding |
 |---|---|---|---|---|
 | **BBBP** | `BBBP.csv` | 2050 | 1 | Blood–brain-barrier penetration — the **D** in ADMET, and the proposal's own named example (§3.1). Small and fast. |
-| **SIDER** | `sider.csv.gz` | ~1427 | 27 | Marketed drugs against 27 side-effect classes. The only candidate that genuinely exercises the multitask head the way Tox21 does. |
-| **ToxCast** | `toxcast_data.csv.gz` | ~8575 | 617 | The real stress test for the masked loss — the label matrix is mostly empty. Slow; try one model first. |
-| **HIV** | `HIV.csv` | ~41k | 1 | Large and very imbalanced (~3.5% positives), so PR-AUC finally matters more than ROC-AUC. The largest of these by far. |
+| **SIDER** | `sider.csv.gz` | ~1427 | 27 | Marketed drugs against 27 side-effect classes. The only candidate that genuinely exercises the multitask head the way Tox21 does, and small enough to be cheap. |
+| **ToxCast** | `toxcast_data.csv.gz` | ~8575 | 617 | The real stress test for the masked loss — the label matrix is mostly empty. Expensive, and see the heatmap warning below. |
+| **HIV** | `HIV.csv` | ~41k | 1 | Large and very imbalanced (~3.5% positives), so PR-AUC finally matters more than ROC-AUC. Budget a night, not an afternoon. |
 | **BACE** | `bace.csv` | ~1513 | 1 | Clean and small, but it is target binding, not ADMET. Only interesting as a contrast. |
 
-**BBBP is the natural first choice.** It is the dataset the proposal itself
-named, it is an ADMET endpoint, it is quick to run, and it has a documented
-quirk worth reporting — a number of its SMILES do not parse, which our loader
+**BBBP is still the natural first choice.** It is the dataset the proposal
+named, it is an ADMET endpoint, it is quick, and it has a documented quirk
+worth reporting — a number of its SMILES do not parse, which the loader
 already counts and drops. **SIDER** is the one to take if you want the
-multitask story.
+multitask story; it is the better second choice now that the per-assay
+heatmap exists, because 27 assays is a readable figure.
+
+**On cost.** The one measurement to scale from: a Tox21 GNN run at the full
+training set takes **11.2 minutes**, and the whole Tox21 grid takes 3.9 h.
+That is with deterministic kernels pinned, which cost the GNN 3× (REPORT
+§5b). This section used to say only "slow" and "the largest by far", which
+was written when a GNN run took a third as long, so treat any cost intuition
+carried over from then as an underestimate. Scaling by molecule count, HIV's
+GNN arm alone is an overnight job; run the baseline first and decide from
+its numbers whether the GNN arm is worth the machine time.
+
+### What changed under this task
+
+Four things landed after this section was written, and each one is a step
+the old instructions do not mention:
+
+1. **Configs live in `configs/<dataset>/`** (2026-11-12), not
+   `configs/<dataset>_<name>.yaml`, and they inherit with
+   `extends: ../base.yaml` rather than `extends: base.yaml`.
+2. **Every dataset has a dummy floor** (§4, §9). ClinTox went without one for
+   a day and its bar charts sat beside Tox21's with nothing saying what
+   chance scores. A third dataset without a floor repeats that exactly.
+3. **Determinism is pinned** (§10). Every committed result records
+   `"deterministic": true`; a new dataset's runs must come from the same code
+   path, and must not be mixed with anything produced before it.
+4. **There are 24 figures, not 12**, and two of the new ones behave
+   differently per dataset — see *Figures* below.
 
 ### How
 
-Add one `DatasetSpec` to `DATASETS` in `src/admet/data/loaders.py`, copying
-the `clintox` entry. The base URL `_MOLECULENET` is already defined, so
-`url=f"{_MOLECULENET}/BBBP.csv"`. The fields you need are `name`, `url`,
-`filename`, `smiles_column` and `task_columns`.
+**1. Register it.** Add one `DatasetSpec` to `DATASETS` in
+`src/admet/data/loaders.py`, copying the `clintox` entry. `_MOLECULENET` is
+already defined, so `url=f"{_MOLECULENET}/BBBP.csv"`. The fields are `name`,
+`url`, `filename`, `smiles_column`, and then either `task_columns` (an
+explicit tuple) or `exclude_columns` (everything else becomes a task) — Tox21
+uses the second, ClinTox the first. Fill in `description`: `admet datasets`
+prints it, and it is where the dataset's known problems belong.
 
 **Get the column names right** — they differ per file, and guessing wastes an
 hour. Download it once and look:
@@ -265,25 +300,72 @@ hour. Download it once and look:
 curl -sL https://deepchemdata.s3-us-west-1.amazonaws.com/datasets/BBBP.csv | head -3
 ```
 
-For BBBP this returns `num,name,p_np,smiles` — so `smiles_column="smiles"`,
-`task_columns=("p_np",)`, and `num`/`name` are simply left out. (Checked:
-that is the real header, and the file has 2050 rows.) Then copy the four
-`configs/clintox/*.yaml` files, change `dataset.name`, and drop the `tasks:`
-line if you want every label column.
+For BBBP this returned `num,name,p_np,smiles` — so `smiles_column="smiles"`,
+`task_columns=("p_np",)`, and `num`/`name` are left out.
 
-**Test:** add a case to `tests/test_loaders.py` (task 7) or
-`tests/test_aggregate.py` asserting the new spec is in `DATASETS` and that
-its `task_columns` do not include the SMILES column — a real and easy mistake
-that silently trains the model to predict its own input.
+**2. Check it before running anything.** Two commands, because they show
+different things:
 
-**Then run it:** `admet run configs/bbbp/rf_scaffold.yaml`. Report what you
-find even if it is dull. A third dataset where the scaffold split costs
-~0.08 ROC-AUC would be the strongest single result in the project; one where
-it does not is more interesting still.
+- **`admet datasets`** gives the parsed molecule count, the assay count and
+  the label density — a one-line table across every registered dataset. The
+  molecule count it prints is the number that goes in the report, not the one
+  in the table above. It also *surfaces* the duplicate-conflict warning (§9),
+  which is the loudest thing a bad dataset does on arrival.
+- **`make data`**, which prints `Dataset.summary()` and is the only place
+  `n_unparseable_dropped`, `n_duplicates_merged` and `n_label_conflicts`
+  appear as numbers. BBBP is expected to drop some SMILES. ClinTox reports
+  4 / 19 / 38, and that last figure drives most of REPORT §4 — so if a new
+  dataset reports a non-zero conflict count, that is a finding to write up,
+  not noise to skip past.
 
-**Watch for:** a suspiciously high score. BBBP is known to be easy, and
-REPORT §4 already explains why that reads as a dataset problem rather than a
-model success.
+**3. Add its configs** in a new `configs/<dataset>/` directory — **six**
+files, not four, copying `configs/clintox/`:
+`{rf,gnn}_{random,scaffold}.yaml` plus `dummy_{random,scaffold}.yaml`. Change
+`dataset.name`, keep `extends: ../base.yaml`, and drop the `tasks:` line if
+you want every label column. The dummy pair is not optional: without it the
+new dataset's bar charts have no floor.
+
+**4. Add a Makefile target** next to `clintox:`, and add its name to
+`.PHONY`. Nothing ran the Tox21 dummy from `make` for a week, which meant
+`make clean-results` could delete results `make` could not rebuild.
+
+**5. Test:** add a case to `tests/test_loaders.py` asserting the new spec is
+in `DATASETS` and that its `task_columns` do not include the SMILES column —
+a real and easy mistake that silently trains the model to predict its own
+input. Check your test is not vacuous: break the spec on purpose and confirm
+the test fails.
+
+**6. Run it:** `admet run configs/bbbp/rf_scaffold.yaml`, then the rest.
+Report what you find even if it is dull. A third dataset where the scaffold
+split costs ~0.07 ROC-AUC would be the strongest single result in the
+project; one where it does not is more interesting still.
+
+**7. Update the counts.** A third dataset moves numbers that are asserted in
+prose: the result-file count and total compute in README's *Summary of
+results* and REPORT §2 and §5, the figure count in both, and the directory
+tree in README. `make aggregate && make plots` must leave a zero diff
+afterwards.
+
+### Figures
+
+`make plots` picks a new dataset up with no changes, but two of the newer
+figures depend on its shape:
+
+- **`per_assay_*`** needs at least two assays and returns `None` below that,
+  so BBBP, HIV and BACE will not produce one — correct, not a bug. ToxCast
+  *will*, with 617 rows, which is unreadable; if you add ToxCast, either cap
+  the heatmap to the N most-screened assays or skip it there.
+- **`all_gaps_*`** is the one figure spanning datasets, so a third one makes
+  it four rows longer per split. It is already 16 rows; past about 24 it
+  wants a taller figure or splitting by dataset.
+
+### If the dataset-agnostic milestone lands first
+
+The milestone's Part A (below) replaces step 1 of this task: a dataset
+becomes a `datasets/*.yaml` file instead of a code change, and the registry
+reads that directory at import. If someone is partway through Part A, do this
+task *after* it rather than writing a `DatasetSpec` that then has to be
+converted. Steps 2–7 are unaffected either way.
 
 ---
 
