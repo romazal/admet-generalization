@@ -6,7 +6,7 @@ Record of how the coding agent was used, as the assignment requires
 **How the work was divided.** We set the requirements, choose the design, read
 what comes back and decide what is kept; the agent drafts to that
 specification and carries the volume work — writing out the test suites,
-running the 136-run grids, regenerating the tables and the twelve figures,
+running the 146-run grids, regenerating the tables and the fourteen figures,
 and applying mechanical edits across the documentation. It is a fast pair of
 hands, not a collaborator with judgement about this project: left to itself it
 has asserted things it had not checked, and several of the bugs below are
@@ -824,4 +824,62 @@ array rather than a wrong number. Twelve scaffolds of uneven size fixed it.
 Worth knowing when writing any fixture for this splitter: equal-sized groups
 are the pathological case, not the clean one.
 
-192 tests pass.
+## GNN determinism
+
+*Instruction:* the GNN's numbers moved between the CPU and the GPU passes —
+work out why, and if it can be fixed, fix it and re-run the grid so every
+committed result comes from one version of the code.
+
+**What it actually was.** §5b read the CPU-to-GPU movement as a device effect.
+Asked to isolate the device, the agent repeated one Tox21 scaffold run three
+times on the same card, the same wheel and the same seed: 0.7369 / 0.7413 /
+0.7690. A spread of 0.032 against a seed SD of 0.011, with nothing changed
+between the runs, and the tuning selected a different winning configuration
+each time. The CPU-to-GPU deltas the report had been quoting were −0.002 and
+−0.001 — well inside the noise of the measurement that produced them. That
+comparison had never been measuring the device.
+
+The cause is the scatter-add in message passing: on a GPU the order the
+partial sums land in is not fixed between runs, float addition is not
+associative, and cuBLAS picks kernels the same opportunistic way. The fix is
+three lines applied before any run (`CUBLAS_WORKSPACE_CONFIG`,
+`cudnn.benchmark = False`, `use_deterministic_algorithms`), with
+`ADMET_NONDETERMINISTIC=1` to opt out and a `deterministic` field in every
+result file, so the provenance is recorded rather than assumed.
+
+**Re-running the grid was the expensive part, and half of it was wasted.** All
+146 runs were redone with `--overwrite` so that every committed result comes
+from one commit. Only the 68 GNN runs could change. The 68 baseline runs and
+the 10 dummy runs came back with every test metric bit-identical — which is
+the control doing its job, but it is also 78 runs of machine time spent to add
+a provenance field to results that were already reproducible. Scoping the
+re-run to the GNN would have been the better call, and the agent did not make
+it or flag the cost before starting.
+
+**Two other things it got wrong on the way.** It estimated 2.5–3 h for the
+re-run and it took 4.18 h, because deterministic kernels cost the Tox21 GNN
+3.0× its runtime (221 s → 673 s per run at the full training set) and that was
+not priced in. And twice it reported the GPU as idle from `nvidia-smi` without
+first checking which configuration was running — both times the grid was in a
+scikit-learn phase, which is CPU by design.
+
+**Verification.** `tox21_gnn_scaffold` seed 0 at 100% was re-run into a
+separate results directory and compared field by field against the committed
+file: test ROC-AUC identical to all 17 significant digits, same PR-AUC, same
+selected hyperparameters, same best epoch, same eight tuning-trial scores,
+only the wall-clock fields differing. A claim of reproducibility is worth
+nothing without that check, and the check costs one run.
+
+**What it changed in the findings: nothing load-bearing.** Every GNN number in
+the README and the report was updated from the regenerated tables, and all 38
+quoted values were then re-checked against `results/*.csv` by script rather
+than by eye. The Tox21 GNN means moved by at most 0.008 ROC-AUC at the full
+training set and 0.019 along the learning curve. Two smaller things did move:
+the PR-AUC learning curve is now monotone under both splits, where the two
+earlier passes each had it monotone under one split and disagreed about which;
+and the 100% scaffold gap changed sign, −0.005 to +0.003. Both had always sat
+inside one SD of zero. That is the point of the exercise rather than a
+complication of it — the same lesson the three-seed finding teaches from the
+other direction.
+
+194 tests pass.

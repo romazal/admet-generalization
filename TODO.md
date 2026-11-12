@@ -491,6 +491,31 @@ deleted anything. `n_valid` in the result tables is the one left.*
 - **A `make figures-clean` target** that deletes only `figures/` and redraws
   it.
 
+## 10. Make the GNN reproducible — done (2026-11-12)
+
+*Done. The GNN was not reproducible on the GPU: repeating one identical run
+moved its test ROC-AUC by 0.032 — three times the seed-to-seed SD — and
+changed which hyperparameter configuration the tuning selected.
+`src/admet/training.py` now pins deterministic kernels before every run, every
+result file records a `deterministic` field, and all 146 results were
+regenerated from one commit so the grid has a single provenance. It costs the
+Tox21 GNN 3.0× its runtime. REPORT §5b has the account; two follow-ups fell
+out of it and are below.*
+
+- **`versions.torch_device` reports the wrong thing.** It records what torch
+  could *see*, not what the model used, so it reads
+  `cuda:NVIDIA GeForce RTX 5070 Ti` on the 68 baseline runs, which are
+  scikit-learn and never touch the card. Recording the device the model chose
+  would make the field mean what its name says. It is documented as a caveat
+  in README and REPORT §5 for now, because fixing it properly means
+  regenerating 146 results for a provenance field — not worth 4 h on its own,
+  but worth folding into the next re-run that happens for another reason.
+- **Pin the CSVs in `.gitattributes`.** The four tables in `results/` are
+  written with `lineterminator="\r\n"` and `core.autocrlf` is on here, so
+  `make aggregate` gives a zero diff on this machine. On a Linux clone it
+  would not. `results/*.csv -text` makes the zero-diff property survive the
+  clone — which is the property README's *Reproducibility* section claims.
+
 ---
 
 ## A larger milestone: make the project dataset-agnostic
@@ -635,9 +660,11 @@ invalidate every result without failing a test:
   silently emptied the validation set.
 - the masking in `src/admet/evaluation.py` and `masked_bce_loss` in
   `src/admet/models/gnn.py`.
-- anything under `results/` — those files are the record of 2 h of compute
-  (3.8 h without a GPU), and every number in the report traces back to them.
-  Adding new runs is fine; editing existing ones is not.
+- anything under `results/` — those files are the record of 4.2 h of compute,
+  and every number in the report traces back to them. Adding new runs is fine;
+  editing existing ones is not. If a task needs existing runs regenerated, say
+  so and scope it: the determinism re-run (§10) redid all 146 when only the 68
+  GNN runs could change, and the other 78 came back bit-identical.
 
 If a task seems to need a change in one of those, ask Roman first.
 
