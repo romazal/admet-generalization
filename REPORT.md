@@ -41,16 +41,17 @@ lecture.
 
 Both models, both splits, four training fractions. Tox21: 5 seeds at 100% and
 3 along the learning curve (56 runs). ClinTox: 5 seeds throughout (80 runs).
-**136 runs in total**, and with the dummy floor below, **146 result files**.
+**136 runs in total**, and with the dummy floor below, **156 result files**.
 
-A dummy class-prior model was run separately on Tox21, both splits, 5 seeds at
-100% (10 runs), to establish the floor in §3. It is not part of the 136; it
-contributes 26 s to the §5 timings and nothing to the §5b comparison, both of
-which describe the main grid.
+A dummy class-prior model was run separately on each dataset, both splits, 5
+seeds at 100% (20 runs), to establish the floor in §3 and §4. It is not part
+of the 136; it contributes 35 s to the §5 timings and nothing to the §5b
+comparison, both of which describe the main grid.
 
-Every one of the 146 files was produced by a single commit with deterministic
-kernels pinned, and records `"deterministic": true`. §5b says why that
-mattered and what it cost.
+Every one of the 156 files was produced with deterministic kernels pinned and
+records `"deterministic": true`; the 146 main-grid and Tox21-dummy files come
+from a single commit, and the ten ClinTox dummy runs were added afterwards.
+§5b says why that mattered and what it cost.
 
 `CT_TOX` is scored alone because ClinTox's second label is the same label
 inverted — `CT_TOX == NOT FDA_APPROVED` for 98.8% of molecules — and
@@ -151,8 +152,13 @@ Test ROC-AUC, mean ± SD over 5 seeds, full training set:
 | Random | 0.855 ± 0.077 | 0.921 ± 0.058 | +0.067 ± 0.096 |
 | Scaffold | 0.833 ± 0.045 | 0.847 ± 0.029 | +0.014 ± 0.054 |
 
-Taken at face value this reverses the Tox21 finding: the GNN leads on both
-splits. It should not be taken at face value. **Every ClinTox gap is far
+The dummy floor is 0.500 ROC-AUC on both splits, as it must be. In PR-AUC it
+is 0.070 ± 0.013 random and 0.096 ± 0.023 scaffold, so the baseline's 0.494
+and 0.417 are about seven and four times chance — ClinTox is imbalanced in the
+same direction as Tox21 and its scores have to be read against that.
+
+Taken at face value the table above reverses the Tox21 finding: the GNN leads
+on both splits. It should not be taken at face value. **Every ClinTox gap is far
 smaller than its own standard deviation** — ±0.096 on a +0.067 difference — and
 while the ROC-AUC gap stays positive at every training fraction, its SDs run up
 to ±0.16, and the PR-AUC gap changes sign twice. With
@@ -208,8 +214,8 @@ failure mode the study was designed to expose, not a success.
 ## 5. Runtime and compute
 
 Measured on a Windows desktop (16 threads, 31 GB RAM, RTX 5070 Ti) from the
-`timing_seconds` field of each result file. Total across all 146 result files:
-**4.18 h (251 min)** of wall clock, GNN on the GPU with deterministic kernels
+`timing_seconds` field of each result file. Total across all 156 result files:
+**4.19 h (251 min)** of wall clock, GNN on the GPU with deterministic kernels
 pinned. The same grid took 2.03 h before they were pinned, and 3.83 h on the
 CPU before that (§5b).
 
@@ -263,7 +269,7 @@ figures at roughly ±10%.
 
 Each result file also records the git commit it was produced at and, in
 `versions.torch_device`, the device torch had available —
-`cuda:NVIDIA GeForce RTX 5070 Ti` in all 146 committed runs. The field reports
+`cuda:NVIDIA GeForce RTX 5070 Ti` in all 156 committed runs. The field reports
 what torch could *see*, not what the model used, so it is only meaningful for
 the GNN runs; the baseline never calls torch. Read the `model` column to know
 what ran where.
@@ -446,7 +452,7 @@ the numbers do not support.
   clone reproduce this report offline and lets any number be traced to its
   run file; the whole lot is 2.8 MB.
 - **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
-  hours". The committed results use an RTX 5070 Ti and take 4.18 h, inside
+  hours". The committed results use an RTX 5070 Ti and take 4.19 h, inside
   that budget, with deterministic kernels accounting for most of the increase
   over the 2.03 h the same grid took without them. An earlier pass completed
   on the CPU alone in 3.83 h, also inside the budget, so the study does not

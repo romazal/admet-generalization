@@ -11,7 +11,7 @@ ADMET  := $(PYTHON) -m admet.cli
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install data test main sweep clintox aggregate plots all clean clean-results
+.PHONY: help install data test main sweep dummy clintox aggregate plots all clean clean-results
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -35,6 +35,12 @@ main:  ## Main experiment: both models x both splits, all seeds (proposal §3.3)
 
 sweep:  ## Additional experiment: the learning-curve grid
 	$(ADMET) sweep configs/tox21/sweep_learning_curve.yaml
+
+dummy:  ## The class-prior floor every score is read against, both datasets
+	$(ADMET) run configs/tox21/dummy_random.yaml
+	$(ADMET) run configs/tox21/dummy_scaffold.yaml
+	$(ADMET) run configs/clintox/dummy_random.yaml
+	$(ADMET) run configs/clintox/dummy_scaffold.yaml
 
 clintox:  ## Second dataset: the same grid on ClinTox (proposal §3.1)
 	$(ADMET) run configs/clintox/rf_random.yaml    --train-fractions 0.1 0.25 0.5 1.0

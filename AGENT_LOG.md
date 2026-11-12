@@ -1015,3 +1015,37 @@ stood on three or four molecules, and the leftward shift the figure exists to
 show was buried in sampling noise.
 
 211 tests pass. 24 figures.
+
+## Closing §1 and §9
+
+*Instruction:* §1 and §9 of `TODO.md` are not marked done and are not updated.
+
+Correct on both counts, and the headings were the clearer complaint: every
+other finished section in that file carries "— done" on its `##` line, and
+these two did not, so the file read as though nothing in them had landed.
+
+§1 was finished and simply unmarked. §9 was not: the ClinTox dummy floor was
+still open, so marking it would have been a lie. It is now run — two configs,
+ten runs, 35 s, no existing result touched. The ROC floor comes out at 0.500
+as it must; the PR floor is 0.070 random and 0.096 scaffold, which is the
+useful half, because the baseline's 0.494 reads as weak until the 0.070 next
+to it says what knowing nothing scores. §4 of the report now makes that
+comparison.
+
+Running it exposed something small: **no Makefile target ever ran the dummy.**
+The Tox21 dummy runs had only ever been launched by hand, which means
+`make clean-results` could delete ten committed results that `make` had no way
+to rebuild. There is a `make dummy` target now, covering both datasets.
+
+Counts updated where the ten new files moved them: 146 → 156 result files,
+4.18 → 4.19 h. `gap.csv` is unchanged, which is the right answer — the gap is
+GNN-minus-baseline and the dummy is in neither arm. Only the two ClinTox bar
+charts were redrawn, and a second regeneration is byte-identical.
+
+Both headings now say what the sections are. §9 keeps one item that no code
+change can close: `CITATION.cff` still has two literal `TODO:` placeholders,
+so the citation GitHub offers for this project is wrong until a human types
+two names in.
+
+211 tests pass. 156 results, 24 figures.
+

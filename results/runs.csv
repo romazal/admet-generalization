@@ -1,4 +1,14 @@
 run,dataset,model,split,seed,train_fraction,test_roc_auc,test_pr_auc,n_train,n_valid,n_test,path
+clintox_dummy_random_frac100_seed0,clintox,dummy,random,0,1.0,0.5,0.07534246575342465,1169,146,146,clintox/clintox_dummy_random_frac100_seed0.json
+clintox_dummy_random_frac100_seed1,clintox,dummy,random,1,1.0,0.5,0.07534246575342465,1169,146,146,clintox/clintox_dummy_random_frac100_seed1.json
+clintox_dummy_random_frac100_seed2,clintox,dummy,random,2,1.0,0.5,0.0821917808219178,1169,146,146,clintox/clintox_dummy_random_frac100_seed2.json
+clintox_dummy_random_frac100_seed3,clintox,dummy,random,3,1.0,0.5,0.04794520547945205,1169,146,146,clintox/clintox_dummy_random_frac100_seed3.json
+clintox_dummy_random_frac100_seed4,clintox,dummy,random,4,1.0,0.5,0.0684931506849315,1169,146,146,clintox/clintox_dummy_random_frac100_seed4.json
+clintox_dummy_scaffold_frac100_seed0,clintox,dummy,scaffold,0,1.0,0.5,0.11643835616438356,1169,146,146,clintox/clintox_dummy_scaffold_frac100_seed0.json
+clintox_dummy_scaffold_frac100_seed1,clintox,dummy,scaffold,1,1.0,0.5,0.0684931506849315,1169,146,146,clintox/clintox_dummy_scaffold_frac100_seed1.json
+clintox_dummy_scaffold_frac100_seed2,clintox,dummy,scaffold,2,1.0,0.5,0.10273972602739725,1169,146,146,clintox/clintox_dummy_scaffold_frac100_seed2.json
+clintox_dummy_scaffold_frac100_seed3,clintox,dummy,scaffold,3,1.0,0.5,0.11643835616438356,1169,146,146,clintox/clintox_dummy_scaffold_frac100_seed3.json
+clintox_dummy_scaffold_frac100_seed4,clintox,dummy,scaffold,4,1.0,0.5,0.07534246575342465,1169,146,146,clintox/clintox_dummy_scaffold_frac100_seed4.json
 clintox_gnn_random_frac010_seed0,clintox,gnn,random,0,0.1,0.8693602693602694,0.3857297904000629,117,146,146,clintox/clintox_gnn_random_frac010_seed0.json
 clintox_gnn_random_frac010_seed1,clintox,gnn,random,1,0.1,0.7683501683501683,0.2512826511670575,117,146,146,clintox/clintox_gnn_random_frac010_seed1.json
 clintox_gnn_random_frac010_seed2,clintox,gnn,random,2,0.1,0.8041044776119403,0.1834046054297705,117,146,146,clintox/clintox_gnn_random_frac010_seed2.json

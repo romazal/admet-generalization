@@ -92,7 +92,7 @@ GNN on an **RTX 5070 Ti**; each result file records the device it used in
 | `make main` (4 configs x 5 seeds) | ~2.4 h |
 | `make sweep` (the 36 cells below 100%) | ~1.5 h |
 | `make clintox` (4 configs x 5 seeds x 4 fractions) | ~18 min |
-| **Everything: 146 runs** | **4.18 h** |
+| **Everything: 156 runs** | **4.19 h** |
 
 The GNN costs about 3.8x the baseline on Tox21 and 5.5x on ClinTox, with
 deterministic kernels pinned (*Reproducibility* has what that costs). Early
@@ -148,9 +148,9 @@ deterministic kernels pinned before any of it could be measured.
 
 ## Summary of results
 
-146 runs: both models and both splits on Tox21 (five seeds at the full
+156 runs: both models and both splits on Tox21 (five seeds at the full
 training set, three along the learning curve) and the same grid on ClinTox
-(five seeds throughout), plus a dummy floor. 4.18 h of compute, GNN on a GPU
+(five seeds throughout), plus a dummy floor on both. 4.19 h of compute, GNN on a GPU
 with deterministic kernels pinned (see *Reproducibility*). Full tables and
 threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 *[Findings](#findings)* below.
@@ -325,7 +325,7 @@ speed-for-ordering trade — but both make a result impossible to repeat.
 **The fix** is three lines in [`src/admet/training.py`](src/admet/training.py):
 pin `CUBLAS_WORKSPACE_CONFIG=:4096:8`, turn off `cudnn.benchmark`, and call
 `torch.use_deterministic_algorithms(True)`. Every result file now records
-`"deterministic": true`, and all 146 files in `results/` come from a single
+`"deterministic": true`, and all 156 files in `results/` come from a single
 commit with it on. Re-running any of them reproduces the file bit for bit,
 every tuning-trial score included. `ADMET_NONDETERMINISTIC=1` opts out.
 
@@ -496,7 +496,7 @@ admet-generalization/
 ├── data/                   # raw datasets, committed so a clone runs offline
 ├── results/
 │   ├── tox21/              # 66 run files (56 main grid + 10 dummy)
-│   ├── clintox/            # 80 run files
+│   ├── clintox/            # 90 run files (80 main grid + 10 dummy)
 │   └── {runs,summary,gap,per_task}.csv
 └── figures/
     ├── all_gaps_{roc,pr}_auc.png   # the only figure spanning both datasets
@@ -572,7 +572,7 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   offline and every number can be traced to its run file. The whole lot is
   2.8 MB.
 - **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
-  hours". The committed results use a GPU (RTX 5070 Ti) and take 4.18 h, inside
+  hours". The committed results use a GPU (RTX 5070 Ti) and take 4.19 h, inside
   that, though deterministic kernels tripled the GNN's share of it. An earlier
   pass ran the grid end to end on the CPU alone in 3.83 h — also inside the
   budget — so a teammate without a CUDA card can reproduce everything; see

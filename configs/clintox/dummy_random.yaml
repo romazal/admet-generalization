@@ -1,0 +1,23 @@
+# Dummy prior baseline on ClinTox, random split.
+#
+# The same null model as the Tox21 dummy: it predicts the training-set
+# positive rate and ignores the molecule. It exists so the ClinTox bar
+# charts carry a floor, as the Tox21 ones do. Without it the two datasets'
+# figures sat side by side with ClinTox's 0.855 looking comparable to
+# Tox21's 0.834 and nothing on either saying what chance scores.
+#
+# Only CT_TOX is scored, matching every other ClinTox config — a dummy on
+# FDA_APPROVED would report a PR-AUC near 0.94, which is the majority rate
+# and not a floor anyone should read.
+
+extends: ../base.yaml
+dataset:
+  name: clintox
+  tasks: [CT_TOX]
+
+split:
+  kind: random
+
+model:
+  name: dummy
+  params: {}

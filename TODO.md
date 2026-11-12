@@ -49,7 +49,7 @@ git push -u origin your-name/short-description
 
 ---
 
-## 1. More ways of showing the data and the results
+## 1. More ways of showing the data and the results — done
 
 We currently draw three figures per dataset per metric — a bar chart, a
 learning curve and a gap plot — and they carry the argument adequately but
@@ -58,9 +58,11 @@ underlying distributions, nothing shows the twelve Tox21 assays separately,
 and nothing shows *why* the scaffold split is harder. There is a lot of room
 here, and figures are what the audience actually remembers.
 
-*All five ideas are now implemented (a on 2026-11-11, b–e on 2026-11-12).
-The set is 24 figures. If you want another, the conventions at the end of
-this section still apply — they are the part worth reading.*
+*Done 2026-11-12. All five ideas are implemented — a on 2026-11-11, b–e on
+2026-11-12 — and the set is 24 figures. The section stays open only in the
+sense that "or your own" always is: if you add a sixth, the conventions at
+the end are the part worth reading, and idea b changed a sentence in the
+report, so a figure here is not decoration.*
 
 Pick one of the ideas below — or your own. Each is a standalone figure.
 
@@ -293,6 +295,12 @@ Run on 2026-11-11, 5 seeds x 2 splits: ROC-AUC 0.500 both splits, PR-AUC 0.077
 random and 0.100 scaffold. The floor is in README and REPORT §3. The original
 task text is kept below as the record.*
 
+*Extended to ClinTox on 2026-11-12 (§9): `configs/clintox/dummy_*.yaml`, same
+5 seeds × 2 splits, PR-AUC 0.070 random and 0.096 scaffold. `make dummy` now
+runs the floor on both datasets — before that, nothing in the Makefile ran it
+at all and `make clean-results` could delete results `make` could not
+rebuild.*
+
 Right now we compare a GNN against a random forest. Neither is compared
 against *nothing*. A dummy model that ignores the molecule and predicts the
 training-set positive rate gives the floor — ROC-AUC 0.5 by construction, and
@@ -514,12 +522,14 @@ why in the commit.
 
 ---
 
-## 9. Smaller things
+## 9. Smaller things — done
 
-*Status is per item below, because this section is no longer one batch. Four
-landed on 2026-11-11, `n_valid` and the similarity-histogram bin count on
-2026-11-12. The ClinTox dummy floor is the only one still open.
-`CITATION.cff` is done but still needs two names typed in by a human.*
+*Done 2026-11-12. Status is per item below, because this section was never
+one batch: four landed on 2026-11-11, and `n_valid`, the similarity-histogram
+bin count and the ClinTox dummy floor on 2026-11-12. **One thing here still
+needs a human and no code can do it:** `CITATION.cff` has two literal `TODO:`
+placeholders, so the citation GitHub currently offers for this project is
+wrong.*
 
 - **`admet --version`** — *done.* Reads `__version__` from
   `src/admet/__init__.py` in `build_parser`; prints `admet 0.1.0`.
@@ -538,7 +548,7 @@ landed on 2026-11-11, `n_valid` and the similarity-histogram bin count on
 - **Validation-set size in the result files** — *done.* `RunRecord` now
   carries `n_valid` between `n_train` and `n_test`, and the header follows the
   dataclass, so `runs.csv` gained the column on the next `make aggregate`. No
-  re-run was needed: `split_sizes` was already in all 146 result files and
+  re-run was needed: `split_sizes` was already in every result file and
   only the summary dropped it. It earns its place immediately — the column
   shows validation and test pinned at 782 and 783 across all four training
   fractions, which is the learning-curve design's central claim (only the
@@ -549,12 +559,15 @@ landed on 2026-11-11, `n_valid` and the similarity-histogram bin count on
 **Added 2026-11-12, from a review of every figure.** Both are figure defects,
 not bugs; neither blocks anything.
 
-- **No dummy floor on the ClinTox charts.** The Tox21 bar charts carry a
-  class-prior bar; the ClinTox ones do not, because the dummy was only ever
-  run on Tox21. Side by side, ClinTox's 0.855 reads as comparable to Tox21's
-  0.834 with nothing to say what chance looks like on either. Ten ClinTox
-  dummy runs cost about 30 s. Adding runs is allowed and this touches nothing
-  that exists.
+- **No dummy floor on the ClinTox charts** — *done 2026-11-12.*
+  `configs/clintox/dummy_{random,scaffold}.yaml` and ten runs, which took
+  35 s and touched no existing result. The ROC floor is 0.500 as it must be;
+  the PR floor is 0.070 random and 0.096 scaffold, which is the part that
+  matters — the baseline's 0.494 is about seven times chance, and without the
+  floor beside it a PR-AUC of 0.49 reads as weak. REPORT §4 now says so. A
+  `make dummy` target runs the floor on both datasets, which nothing did
+  before: the Tox21 dummy runs had only ever been launched by hand, so
+  `make clean-results` could delete something `make` could not rebuild.
 - **The ClinTox similarity histogram was mostly sampling noise** — *done
   2026-11-12.* Its ~146 test molecules were spread over the same fixed 40
   bins as Tox21's ~783, so every bar stood on three or four molecules. The

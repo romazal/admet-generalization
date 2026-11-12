@@ -1,0 +1,20 @@
+# Dummy prior baseline on ClinTox, scaffold split.
+#
+# Same null model as dummy_random.yaml under the structural-shift regime.
+# The floor moves between splits because the scaffold test part has a
+# different positive rate, which is exactly why the floor has to be drawn
+# per split rather than assumed.
+
+extends: ../base.yaml
+dataset:
+  name: clintox
+  tasks: [CT_TOX]
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: dummy
+  params: {}
