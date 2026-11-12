@@ -67,6 +67,10 @@ class RunRecord:
     test_roc_auc: float | None
     test_pr_auc: float | None
     n_train: int
+    #: Carried for the same reason as the other two: a reader checking that a
+    #: learning-curve point varied only the *training* set needs to see that
+    #: validation and test did not move with it.
+    n_valid: int
     n_test: int
     #: Location of the result file *relative to the results directory*, with
     #: forward slashes — e.g. ``tox21/tox21_rf_random_frac100_seed0.json``.
@@ -211,6 +215,7 @@ def load_results(results_dir: str | Path) -> list[RunRecord]:
                 test_roc_auc=test.get("roc_auc"),
                 test_pr_auc=test.get("pr_auc"),
                 n_train=int(sizes.get("train", 0)),
+                n_valid=int(sizes.get("valid", 0)),
                 n_test=int(sizes.get("test", 0)),
                 path=_relative_path(path, directory),
             )

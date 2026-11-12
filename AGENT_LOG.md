@@ -927,3 +927,40 @@ baseline results. Recorded as a warning in TODO §5 rather than fixed: the fix
 renames every result file.
 
 194 tests pass.
+
+## `n_valid`, and a TODO section that had stopped being true
+
+*Instruction:* §9 of `TODO.md` claims to be done — is it?
+
+Not quite, and part of that was the agent's doing. The section opened with
+"four of the five are done", which was accurate until two figure items were
+appended to it earlier the same day without touching the header, leaving a
+list of seven under a count of five. Rewritten so status sits on each item
+instead of in a paragraph that goes stale the moment anyone adds a bullet.
+
+Checking each of the five rather than trusting the header: `admet --version`,
+the duplicate-conflict warning and `make figures-clean` are genuinely done.
+`CITATION.cff` exists but still contains two literal `TODO:` placeholders at
+lines 40 and 48, so the citation GitHub currently offers for this project is
+wrong, and no code change can fix it. `n_valid` was the one real remainder.
+
+**`n_valid` is now done, and it needed no re-run** — which is what separated
+it from everything open in §10. `split_sizes` was already in all 146 result
+files; only `RunRecord` dropped the middle value. One field, one line to read
+it, and the header follows the dataclass automatically.
+
+It paid for itself on the first regeneration. The column shows validation and
+test pinned at 782 and 783 across all four training fractions, which is the
+learning-curve design's central claim — that only the *training* set varies
+— and until now that claim could not be checked from the committed tables at
+all, only from the individual run files.
+
+The first test written for it would have passed against a wrong
+implementation: the shared fixture gives validation and test the same size, so
+an assertion could not tell `sizes["valid"]` from `sizes["test"]`. Rewritten
+with three distinct sizes, and both tests were then run against two mutants
+— one reading the wrong key, one dropping the column — and both mutants were
+caught.
+
+196 tests pass.
+

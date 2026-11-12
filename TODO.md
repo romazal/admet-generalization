@@ -482,36 +482,52 @@ why in the commit.
 
 ## 9. Smaller things
 
-*Four of the five are done (2026-11-11): `admet --version`, `CITATION.cff`
-(two names still need filling in by a human), the duplicate-conflict warning,
-and `make figures-clean` — which turned out to also need `clean-results`
-fixed, since its globs missed the per-dataset subdirectories and it had never
-deleted anything. `n_valid` in the result tables is the one left.*
+*Status is per item below, because this section is no longer one batch. Four
+landed on 2026-11-11 and `n_valid` on 2026-11-12; the two figure items below
+were added the same day after a review of all fourteen figures, and are the
+only ones still open. `CITATION.cff` is done but still needs two names typed
+in by a human.*
 
-- **`admet --version`.** Read `__version__` from `src/admet/__init__.py`. One
-  line in `build_parser`.
-- **`CITATION.cff`** in the repo root so the project can be cited; GitHub
-  renders it automatically. All four names.
-- **Warn when merged duplicates disagree.** The loader counts
-  `n_label_conflicts` — 19 on ClinTox, 0 on Tox21 — but never says so out
-  loud, so the single most suspicious fact about ClinTox is invisible unless
-  you open a result file. Emit a warning at load time when it is non-zero.
-- **Validation-set size in the result files.** `split_sizes` has train, valid
-  and test, but `aggregate.py`'s `RunRecord` only keeps `n_train` and
-  `n_test`. Add `n_valid`.
-- **A `make figures-clean` target** that deletes only `figures/` and redraws
-  it.
+- **`admet --version`** — *done.* Reads `__version__` from
+  `src/admet/__init__.py` in `build_parser`; prints `admet 0.1.0`.
+- **`CITATION.cff`** — *done, but two fields still need a human.* The file is
+  in the repo root and GitHub renders it, placeholders and all: line 40 is
+  `family-names: "TODO: surname"` and line 48 is `name: "TODO: name"`. Until
+  someone fills those in, the citation GitHub offers for this project is
+  wrong. Nothing in the code can fix it.
+- **Warn when merged duplicates disagree** — *done.* The loader emits a
+  `RuntimeWarning` at load time when `n_label_conflicts` is non-zero: 38
+  conflicting assay labels across 19 duplicate rows on ClinTox, 0 on Tox21.
+  Both numbers are quoted, because the row count alone understates it by half.
+- **A `make figures-clean` target** — *done*, and it exposed `clean-results`,
+  whose globs missed the per-dataset subdirectories and had therefore never
+  deleted a single run file while reporting success. Both fixed.
+- **Validation-set size in the result files** — *done.* `RunRecord` now
+  carries `n_valid` between `n_train` and `n_test`, and the header follows the
+  dataclass, so `runs.csv` gained the column on the next `make aggregate`. No
+  re-run was needed: `split_sizes` was already in all 146 result files and
+  only the summary dropped it. It earns its place immediately — the column
+  shows validation and test pinned at 782 and 783 across all four training
+  fractions, which is the learning-curve design's central claim (only the
+  *training* set varies) and was previously not checkable from the tables.
+  Two tests cover it, both confirmed to fail against a mutant that reads the
+  wrong key.
+
+**Added 2026-11-12, from a review of every figure.** Both are figure defects,
+not bugs; neither blocks anything.
+
 - **No dummy floor on the ClinTox charts.** The Tox21 bar charts carry a
-  class-prior bar; the ClinTox ones do not, because the dummy was only run on
-  Tox21. Side by side, ClinTox's 0.855 reads as comparable to Tox21's 0.834
-  with nothing to say what chance looks like on either. Ten ClinTox dummy runs
-  cost about 30 s and would make the pair symmetric. Adding runs is allowed;
-  this touches nothing existing.
+  class-prior bar; the ClinTox ones do not, because the dummy was only ever
+  run on Tox21. Side by side, ClinTox's 0.855 reads as comparable to Tox21's
+  0.834 with nothing to say what chance looks like on either. Ten ClinTox
+  dummy runs cost about 30 s. Adding runs is allowed and this touches nothing
+  that exists.
 - **The ClinTox similarity histogram is mostly sampling noise.** Its ~146 test
   molecules spread over the same fixed bin count as Tox21's ~783, so every bar
   stands on three or four molecules and the spikes mean nothing. Scale the bin
-  count with the test-set size, or state `n` on the figure. The medians in the
-  legend (0.52 random, 0.33 scaffold) are the part worth reading.
+  count with the test-set size, or print `n` on the figure. The medians in the
+  legend (0.52 random, 0.33 scaffold) are the part worth reading, and §4 of
+  the report now leans on them.
 
 ## 10. Make the GNN reproducible — done (2026-11-12)
 

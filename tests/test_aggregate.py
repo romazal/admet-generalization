@@ -223,3 +223,42 @@ def test_the_escape_hatch_is_recorded_rather_than_silent(monkeypatch) -> None:
 
     monkeypatch.setenv("ADMET_NONDETERMINISTIC", "1")
     assert deterministic_mode() is False
+
+
+def test_split_sizes_are_read_from_their_own_keys(tmp_path: Path) -> None:
+    """`n_valid` must come from `valid`, not from whichever size is nearby.
+
+    The three sizes are deliberately distinct here. The shared fixture gives
+    validation and test the same count, so an assertion against it would pass
+    just as happily if the field were wired to the wrong key.
+    """
+    payload = {
+        "run": "tox21_rf_random_frac100_seed0",
+        "dataset": "tox21",
+        "model": "rf",
+        "split": "random",
+        "seed": 0,
+        "train_fraction": 1.0,
+        "metrics": {"test": {"roc_auc": 0.8, "pr_auc": 0.4}},
+        "split_sizes": {"train": 111, "valid": 222, "test": 333},
+    }
+    into = tmp_path / "tox21"
+    into.mkdir(parents=True)
+    (into / "tox21_rf_random_frac100_seed0.json").write_text(
+        json.dumps(payload), encoding="utf-8"
+    )
+
+    (record,) = load_results(tmp_path)
+    assert (record.n_train, record.n_valid, record.n_test) == (111, 222, 333)
+
+
+def test_runs_csv_reports_the_validation_size(tmp_path: Path) -> None:
+    """The column has to reach the committed table, not just the dataclass."""
+    _write_run(tmp_path)
+    aggregate(tmp_path, write=True)
+
+    frame = pd.read_csv(tmp_path / "runs.csv")
+    assert list(frame.columns).index("n_valid") == list(frame.columns).index(
+        "n_train"
+    ) + 1
+    assert frame["n_valid"].tolist() == [20]
