@@ -11,11 +11,10 @@
 # reproducing; see that method's docstring. Selecting it per-run keeps the
 # comparison deliberate and leaves the main results untouched.
 #
-# Run it against configs/tox21_rf_scaffold.yaml, which differs only in this
+# Run it against configs/tox21/rf_scaffold.yaml, which differs only in this
 # one setting.
 
-extends: base.yaml
-
+extends: ../base.yaml
 split:
   kind: scaffold
   params:

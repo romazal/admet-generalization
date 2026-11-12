@@ -4,8 +4,7 @@
 # comes from memorising scaffold-level patterns rather than from learning
 # chemistry that transfers, this is where it should shrink.
 
-extends: base.yaml
-
+extends: ../base.yaml
 split:
   kind: scaffold
   params:

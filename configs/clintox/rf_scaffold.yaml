@@ -14,8 +14,7 @@
 #
 # Five seeds, not three: the small test part makes this noisier than Tox21.
 
-extends: base.yaml
-
+extends: ../base.yaml
 dataset:
   name: clintox
   tasks: [CT_TOX]

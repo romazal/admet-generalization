@@ -5,12 +5,11 @@
 # the random-to-scaffold drop — the one effect Tox21 showed unambiguously —
 # could not be measured on the smaller dataset at all.
 #
-# Only CT_TOX is scored; see clintox_rf_scaffold.yaml for why FDA_APPROVED is
+# Only CT_TOX is scored; see rf_scaffold.yaml for why FDA_APPROVED is
 # excluded, and expect an inconclusive model comparison either way: the test
 # part holds ~146 molecules and ~10-17 positives.
 
-extends: base.yaml
-
+extends: ../base.yaml
 dataset:
   name: clintox
   tasks: [CT_TOX]

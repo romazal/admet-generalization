@@ -28,19 +28,19 @@ test:  ## Run the test suite
 	$(PYTHON) -m pytest -q
 
 main:  ## Main experiment: both models x both splits, all seeds (proposal §3.3)
-	$(ADMET) run configs/tox21_rf_random.yaml
-	$(ADMET) run configs/tox21_rf_scaffold.yaml
-	$(ADMET) run configs/tox21_gnn_random.yaml
-	$(ADMET) run configs/tox21_gnn_scaffold.yaml
+	$(ADMET) run configs/tox21/rf_random.yaml
+	$(ADMET) run configs/tox21/rf_scaffold.yaml
+	$(ADMET) run configs/tox21/gnn_random.yaml
+	$(ADMET) run configs/tox21/gnn_scaffold.yaml
 
 sweep:  ## Additional experiment: the learning-curve grid
-	$(ADMET) sweep configs/sweep_learning_curve.yaml
+	$(ADMET) sweep configs/tox21/sweep_learning_curve.yaml
 
 clintox:  ## Second dataset: the same grid on ClinTox (proposal §3.1)
-	$(ADMET) run configs/clintox_rf_random.yaml    --train-fractions 0.1 0.25 0.5 1.0
-	$(ADMET) run configs/clintox_rf_scaffold.yaml  --train-fractions 0.1 0.25 0.5 1.0
-	$(ADMET) run configs/clintox_gnn_random.yaml   --train-fractions 0.1 0.25 0.5 1.0
-	$(ADMET) run configs/clintox_gnn_scaffold.yaml --train-fractions 0.1 0.25 0.5 1.0
+	$(ADMET) run configs/clintox/rf_random.yaml    --train-fractions 0.1 0.25 0.5 1.0
+	$(ADMET) run configs/clintox/rf_scaffold.yaml  --train-fractions 0.1 0.25 0.5 1.0
+	$(ADMET) run configs/clintox/gnn_random.yaml   --train-fractions 0.1 0.25 0.5 1.0
+	$(ADMET) run configs/clintox/gnn_scaffold.yaml --train-fractions 0.1 0.25 0.5 1.0
 
 aggregate:  ## Summarize results/ into runs.csv, summary.csv, gap.csv and per_task.csv
 	$(ADMET) aggregate

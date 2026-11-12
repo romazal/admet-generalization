@@ -257,7 +257,7 @@ class RandomForestModel(Model):
            do with graph neural networks.
 
         Select MACCS per-run instead, via ``model.params.fp_kind`` in a config
-        (see ``configs/tox21_rf_maccs_scaffold.yaml``). That keeps it a
+        (see ``configs/tox21/rf_maccs_scaffold.yaml``). That keeps it a
         deliberate comparison rather than a hidden degree of freedom.
         """
         return {

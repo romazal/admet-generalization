@@ -57,7 +57,7 @@ but only for the assay whose *positive* class is the rare one.
 ``FDA_APPROVED`` is positive for 91% of the test part, so its PR-AUC runs at
 ~0.98 where a constant predictor already scores ~0.91; macro-averaging it with
 ``CT_TOX`` lifted the headline PR-AUC from 0.38 to 0.68 in a measured run and
-hid the real signal. ``configs/clintox_*.yaml`` therefore set
+hid the real signal. ``configs/clintox/*.yaml`` therefore set
 ``tasks: [CT_TOX]``. Treat a ROC-AUC near 0.98 as suspected provenance leakage
 rather than success.
 

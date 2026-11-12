@@ -4,8 +4,7 @@
 # proposal §3.4. Epochs and patience are fixed rather than tuned: early
 # stopping on the validation set already selects the effective epoch count.
 
-extends: base.yaml
-
+extends: ../base.yaml
 split:
   kind: random
 

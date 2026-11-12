@@ -1,7 +1,7 @@
 # The additional experiment (proposal §3.3): learning curves.
 #
 # Defines the grid of training fractions x models x splits x seeds that
-# `admet sweep configs/sweep_learning_curve.yaml` launches. Each cell is one
+# `admet sweep configs/tox21/sweep_learning_curve.yaml` launches. Each cell is one
 # ordinary run, written to results/ like any other, so the sweep adds no new
 # result format and the curves are drawn from the same files.
 #
@@ -11,14 +11,13 @@
 #
 # Full grid: 4 configs x 4 fractions x 3 seeds = 48 runs.
 
-extends: base.yaml
-
+extends: ../base.yaml
 sweep:
   configs:
-    - tox21_rf_random.yaml
-    - tox21_rf_scaffold.yaml
-    - tox21_gnn_random.yaml
-    - tox21_gnn_scaffold.yaml
+    - rf_random.yaml
+    - rf_scaffold.yaml
+    - gnn_random.yaml
+    - gnn_scaffold.yaml
   train_fractions: [0.1, 0.25, 0.5, 1.0]
   # Three seeds is the proposal's stated minimum (§3.3); the main experiment
   # runs five. The learning curve is 16x larger, so it uses the minimum.

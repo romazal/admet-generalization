@@ -3,8 +3,7 @@
 # A trivial null model used as the floor for ROC-AUC and PR-AUC. It predicts
 # the training-set positive rate and ignores the molecule entirely.
 
-extends: base.yaml
-
+extends: ../base.yaml
 split:
   kind: random
 

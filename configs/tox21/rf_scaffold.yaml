@@ -6,8 +6,7 @@
 # proposal §3.3 — each seed gives a different split, so the spread over seeds
 # reflects split variance as well as model variance.
 
-extends: base.yaml
-
+extends: ../base.yaml
 split:
   kind: scaffold
   params:

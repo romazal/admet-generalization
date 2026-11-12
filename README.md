@@ -71,7 +71,7 @@ that already has a result file, so an interrupted pass resumes by reissuing
 the same command; pass `--overwrite` to redo them. To reproduce a single cell:
 
 ```bash
-admet run configs/tox21_gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
+admet run configs/tox21/gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
 ```
 
 ### Runtime and hardware
@@ -394,7 +394,7 @@ appear both as approved and as failed-for-toxicity, consistent with the dataset
 being assembled from two sources. The measured results bear this out — see
 [REPORT.md](REPORT.md) §4.
 
-**Score `CT_TOX` only** — `configs/clintox_*.yaml` set `tasks: [CT_TOX]`.
+**Score `CT_TOX` only** — `configs/clintox/*.yaml` set `tasks: [CT_TOX]`.
 `FDA_APPROVED` is positive for 91% of the test part, so its PR-AUC runs at
 ~0.98 where a constant predictor scores ~0.91; averaging it in lifted the
 headline PR-AUC from 0.38 to 0.68 in a measured run and hid the real signal.
@@ -433,7 +433,7 @@ than merely weaken it:
   baseline tunes its own representation (fingerprint radius, length, counts)
   alongside the forest, so it is not handicapped by a fixed featurization. A
   second fingerprint, MACCS, is implemented and selectable per-run
-  (`configs/tox21_rf_maccs_*.yaml`) but deliberately **not** in the tuned
+  (`configs/tox21/rf_maccs_*.yaml`) but deliberately **not** in the tuned
   space: spending part of the baseline's budget on a second representation
   while the GNN spends all of its own on one would quietly unbalance the
   comparison in the GNN's favour.
@@ -465,13 +465,15 @@ admet-generalization/
 ├── REPORT.md               # the results report: tables, runtimes, validity
 ├── TODO.md                 # small contributions open to the team
 ├── AGENT_LOG.md            # record of the AI-assisted development
-├── configs/
+├── configs/                     # one directory per dataset; base.yaml is shared
 │   ├── base.yaml                   # shared defaults incl. the tuning budget
-│   ├── tox21_{rf,gnn}_{random,scaffold}.yaml
-│   ├── clintox_{rf,gnn}_{random,scaffold}.yaml
-│   ├── tox21_dummy_{random,scaffold}.yaml      # the class-prior floor
-│   ├── tox21_rf_maccs_{random,scaffold}.yaml   # MACCS side comparison
-│   └── sweep_learning_curve.yaml   # the learning-curve grid
+│   ├── tox21/
+│   │   ├── {rf,gnn}_{random,scaffold}.yaml
+│   │   ├── dummy_{random,scaffold}.yaml        # the class-prior floor
+│   │   ├── rf_maccs_{random,scaffold}.yaml     # MACCS side comparison
+│   │   └── sweep_learning_curve.yaml           # the learning-curve grid
+│   └── clintox/
+│       └── {rf,gnn}_{random,scaffold}.yaml
 ├── src/admet/
 │   ├── cli.py              # admet run / sweep / aggregate / plots
 │   ├── training.py         # one run: config + seed -> result file

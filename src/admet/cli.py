@@ -48,6 +48,11 @@ def _resolve_config(value: str, *, relative_to: Path | None = None) -> Path:
     is tried first. A sweep config therefore refers to its children the same
     way ``extends:`` refers to its parent — by a name relative to itself —
     so a sweep outside ``configs/`` still finds its own siblings.
+
+    Experiment configs live in a per-dataset directory, so a name under
+    ``configs/`` includes it: ``tox21/gnn_scaffold``. The failure message
+    lists what is actually there, because a bare ``gnn_scaffold`` would
+    otherwise be ambiguous between datasets and is deliberately not guessed.
     """
     candidate = Path(value)
     if candidate.exists():
@@ -62,9 +67,14 @@ def _resolve_config(value: str, *, relative_to: Path | None = None) -> Path:
             return guess
 
     searched = ", ".join(str(p) for p in {relative_to, _CONFIG_DIR} if p)
+    available = sorted(
+        p.relative_to(_CONFIG_DIR).as_posix() for p in _CONFIG_DIR.rglob("*.yaml")
+    )
+    listing = "\n".join(f"  {name}" for name in available)
     raise SystemExit(
         f"config not found: {value}\n"
-        f"Looked in the current directory and in: {searched}."
+        f"Looked in the current directory and in: {searched}.\n"
+        f"Available under configs/:\n{listing}"
     )
 
 
@@ -176,7 +186,7 @@ def command_sweep(args: argparse.Namespace) -> int:
     if not sweep:
         raise SystemExit(
             f"{path.name} has no `sweep:` block. Use `admet run` for a single "
-            f"config, or see configs/sweep_learning_curve.yaml."
+            f"config, or see configs/tox21/sweep_learning_curve.yaml."
         )
 
     child_names = sweep.get("configs") or []

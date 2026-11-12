@@ -61,8 +61,8 @@ def test_datasets_needs_no_arguments() -> None:
 @pytest.mark.parametrize(
     ("command", "argv"),
     [
-        ("run", ["run", "tox21_rf_random.yaml"]),
-        ("sweep", ["sweep", "sweep_learning_curve.yaml"]),
+        ("run", ["run", "tox21/rf_random.yaml"]),
+        ("sweep", ["sweep", "tox21/sweep_learning_curve.yaml"]),
         ("aggregate", ["aggregate"]),
         ("plots", ["plots"]),
         ("datasets", ["datasets"]),
