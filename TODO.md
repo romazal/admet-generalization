@@ -58,6 +58,10 @@ underlying distributions, nothing shows the twelve Tox21 assays separately,
 and nothing shows *why* the scaffold split is harder. There is a lot of room
 here, and figures are what the audience actually remembers.
 
+*All five ideas are now implemented (a on 2026-11-11, b–e on 2026-11-12).
+The set is 24 figures. If you want another, the conventions at the end of
+this section still apply — they are the part worth reading.*
+
 Pick one of the ideas below — or your own. Each is a standalone figure.
 
 ### a. How similar are the test molecules to the training molecules? — done
@@ -82,7 +86,16 @@ index partitions, and `morgan_fingerprint()` in
 between two bit arrays is `(a & b).sum() / (a | b).sum()`. Do it on ClinTox
 first — 1461 molecules is a small enough matrix to compute naively.
 
-### b. Per-assay heatmap
+### b. Per-assay heatmap — done
+
+*Done 2026-11-12. `plot_per_assay_heatmap` →
+`figures/tox21/per_assay_tox21_<metric>.png`. Rows sorted by mean score, so
+it answers "which endpoints" on sight. The dummy is excluded: it scores
+exactly 0.500 on every assay by construction, so it added two dead columns
+and dragged `vmin` to the floor, compressing every real score into the top
+half of the ramp. It immediately showed that the scaffold penalty is not
+uniform — SR-ATAD5 loses 0.16, NR-ER loses nothing — which the macro-average
+cannot say. Returns `None` for ClinTox, which scores one assay.*
 
 Twelve Tox21 assays collapsed into one macro-average hides which endpoints
 are predictable. A heatmap of assay (rows) against model-and-split (columns),
@@ -96,7 +109,15 @@ Use a **sequential** single-hue scale for this, light to dark. Not a rainbow,
 and not the two model colours — those mean "which model", and reusing them
 for magnitude would be misleading.
 
-### c. Paired per-seed scatter
+### c. Paired per-seed scatter — done
+
+*Done 2026-11-12. `plot_paired_seeds` →
+`figures/<dataset>/paired_seeds_<dataset>_<metric>.png`. Legend states the
+count on each side (4/5 random, 2/5 scaffold on Tox21), so the null result
+is readable without measuring pixels. Both axes share one range **and** an
+equal aspect — the first test written for this checked only the range, and a
+mutant that deleted the aspect survived it, which would have left the "45°"
+line at some other angle.*
 
 Every gap we report is a difference of means with an SD attached, which is
 honest but hard to feel. Plot one point per seed: baseline ROC-AUC on x, GNN
@@ -106,14 +127,27 @@ ROC-AUC on y, with a 45° line. Points scattered on both sides of the diagonal
 Colour by split, use the existing `SPLIT_STYLES`, and read the rows from
 `results/runs.csv`.
 
-### d. A single figure for all the gaps
+### d. A single figure for all the gaps — done
+
+*Done 2026-11-12. `plot_all_gaps` → `figures/all_gaps_<metric>.png`, at the
+top of `figures/` rather than in a dataset folder: it is the only figure that
+puts both datasets on one axis, and it may because it plots differences
+rather than scores. Footnote counts the intervals that cross zero — 14 of 16.
+This is the one to put on a slide.*
 
 One horizontal plot: every (dataset, split, training fraction) gap as a point
 with an error bar of ±1 SD, and a vertical line at zero. A reader sees in one
 glance that nearly every interval crosses zero. This is the whole H1/H2 story
 in one image, and it is the figure most likely to end up on a slide.
 
-### e. Dataset characterisation
+### e. Dataset characterisation — done
+
+*Done 2026-11-12. `plot_dataset_overview` →
+`figures/<dataset>/dataset_overview_<dataset>.png`, drawn once per dataset
+rather than once per metric since no score appears in it. Positives against
+molecules screened per assay, plus the heavy-atom distribution. On ClinTox it
+shows the thing §4 argues in prose: `FDA_APPROVED` is positive for 1376 of
+1461 molecules, which is why only `CT_TOX` is scored.*
 
 Not results — the data itself. Positives per assay for Tox21 (they range from
 186 to 942), label density, molecule-size distributions. Useful for the part
@@ -483,10 +517,9 @@ why in the commit.
 ## 9. Smaller things
 
 *Status is per item below, because this section is no longer one batch. Four
-landed on 2026-11-11 and `n_valid` on 2026-11-12; the two figure items below
-were added the same day after a review of all fourteen figures, and are the
-only ones still open. `CITATION.cff` is done but still needs two names typed
-in by a human.*
+landed on 2026-11-11, `n_valid` and the similarity-histogram bin count on
+2026-11-12. The ClinTox dummy floor is the only one still open.
+`CITATION.cff` is done but still needs two names typed in by a human.*
 
 - **`admet --version`** — *done.* Reads `__version__` from
   `src/admet/__init__.py` in `build_parser`; prints `admet 0.1.0`.
@@ -522,12 +555,12 @@ not bugs; neither blocks anything.
   0.834 with nothing to say what chance looks like on either. Ten ClinTox
   dummy runs cost about 30 s. Adding runs is allowed and this touches nothing
   that exists.
-- **The ClinTox similarity histogram is mostly sampling noise.** Its ~146 test
-  molecules spread over the same fixed bin count as Tox21's ~783, so every bar
-  stands on three or four molecules and the spikes mean nothing. Scale the bin
-  count with the test-set size, or print `n` on the figure. The medians in the
-  legend (0.52 random, 0.33 scaffold) are the part worth reading, and §4 of
-  the report now leans on them.
+- **The ClinTox similarity histogram was mostly sampling noise** — *done
+  2026-11-12.* Its ~146 test molecules were spread over the same fixed 40
+  bins as Tox21's ~783, so every bar stood on three or four molecules. The
+  bin count now follows the test-set size (12 bins on ClinTox, 28 on Tox21),
+  and the leftward shift of the scaffold curve — the thing the figure exists
+  to show — is now visible on ClinTox instead of buried in spikes.
 
 ## 10. Make the GNN reproducible — done (2026-11-12)
 

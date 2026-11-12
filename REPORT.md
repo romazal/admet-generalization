@@ -382,14 +382,34 @@ drawn by hand.
 - `random_vs_scaffold_*` — both models under both splits (H1).
 - `learning_curves_*` — test score against training-set size (H2).
 - `gnn_minus_rf_gap_*` — the gap itself, with a zero reference line.
+- `per_assay_*` — Tox21's twelve assays separately, as a heatmap. §3 reports
+  a macro-average, and this is what it averages over: SR-MMP reaches 0.90
+  under a random split where NR-ER manages 0.71, and the scaffold penalty is
+  not uniform across endpoints either: SR-ATAD5 loses 0.16 while NR-ER loses
+  nothing at all (−0.01 — marginally *better* scaffold-split than random).
+- `paired_seeds_*` — baseline against GNN, one point per seed, with the line
+  of equality. §3's headline gaps are differences of means with an SD beside
+  them; this is the same fact as a picture, and points falling on both sides
+  of the diagonal are what "no detectable difference" looks like.
+- `train_test_similarity_*` — the mechanism, measured: nearest-training-
+  neighbour similarity under each split. §4 now leans on it.
+- `dataset_overview_*` — the data before any model.
+
+`figures/all_gaps_<metric>.png` is the exception to the rule below: it puts
+both datasets on one axis, which it may because it plots differences rather
+than scores. Every gap in the study with ±1 SD against a line at zero; 14 of
+16 intervals include zero.
 
 Model is encoded as colour, always the same colour. Split is encoded as
 position: the learning-curve and gap figures are faceted into a random-split
 and a scaffold-split panel on a shared y-axis, so no panel carries more than
-two lines and the step between panels is the split's effect. Error bars are
-±1 SD over seeds and every figure says so in a footnote. The two datasets
-never share an axis: their class balances and test-set sizes differ enough
-that a shared y-axis would invite a comparison the numbers do not support.
+two lines and the step between panels is the split's effect. The per-assay
+heatmap is the only figure using a colour *ramp*; it is a single hue, and a
+hue used nowhere else, because every other hue in the set already means a
+model or a split. Error bars are ±1 SD over seeds and every figure says so in
+a footnote. Two datasets never share an axis for raw scores: their class
+balances and test-set sizes differ enough that it would invite a comparison
+the numbers do not support.
 
 ## 7. Threats to validity
 

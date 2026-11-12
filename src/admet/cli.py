@@ -302,7 +302,7 @@ def _format_pm(mean: float | None, std: float | None) -> str:
 
 def command_plots(args: argparse.Namespace) -> int:
     """Redraw every figure from the aggregated tables."""
-    from admet.analysis.aggregate import aggregate
+    from admet.analysis.aggregate import aggregate, per_task_table
     from admet.analysis.plots import make_all_figures
 
     config = load_config(_resolve_config(args.config))
@@ -314,31 +314,60 @@ def command_plots(args: argparse.Namespace) -> int:
         print(f"No result files in {results_dir}. Run an experiment first.")
         return 1
 
+    # The per-assay heatmap reads assay-level scores and the paired scatter
+    # reads one row per seed, so both need tables the three original figures
+    # did not.
+    per_task = per_task_table(results_dir)
+
     written = []
     for metric in args.metrics:
-        written.extend(make_all_figures(summaries, gaps, figures_dir, metric=metric))
+        written.extend(
+            make_all_figures(
+                summaries,
+                gaps,
+                figures_dir,
+                metric=metric,
+                per_task=per_task,
+                records=records,
+            )
+        )
 
     # The similarity figure is drawn once per dataset, not once per metric:
     # it plots the chemistry of the split, so it is the same picture whichever
     # score is being discussed. It needs the molecules rather than the
     # aggregated tables, which is why it is here and not in make_all_figures.
     if not args.no_similarity:
-        from admet.analysis.plots import plot_train_test_similarity
+        from admet.analysis.plots import (
+            plot_dataset_overview,
+            plot_train_test_similarity,
+        )
         from admet.data.loaders import load_dataset
 
         for dataset in sorted({s.dataset for s in summaries}):
             try:
-                molecules = load_dataset(dataset).smiles
+                parsed = load_dataset(dataset)
             except Exception as exc:
-                print(f"skipping the similarity figure for {dataset}: {exc}")
+                print(f"skipping the dataset figures for {dataset}: {exc}")
                 continue
-            path = plot_train_test_similarity(
-                molecules,
-                Path(figures_dir) / dataset / f"train_test_similarity_{dataset}.png",
-                dataset=dataset,
-            )
-            if path is not None:
-                written.append(path)
+            into = Path(figures_dir) / dataset
+            for path in (
+                plot_train_test_similarity(
+                    parsed.smiles,
+                    into / f"train_test_similarity_{dataset}.png",
+                    dataset=dataset,
+                ),
+                # Also drawn once per dataset rather than once per metric:
+                # it describes the data, so no score appears in it at all.
+                plot_dataset_overview(
+                    parsed.y,
+                    parsed.tasks,
+                    parsed.smiles,
+                    into / f"dataset_overview_{dataset}.png",
+                    dataset=dataset,
+                ),
+            ):
+                if path is not None:
+                    written.append(path)
 
     if not written:
         print("Nothing to plot yet - no condition had a scoreable result.")

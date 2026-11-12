@@ -299,7 +299,7 @@ ClinTox results and the cross-dataset comparison are in
 ## Reproducibility
 
 `make aggregate && make plots` on a fresh clone regenerates `runs.csv`,
-`summary.csv`, `gap.csv`, `per_task.csv` and all 14 figures with **zero
+`summary.csv`, `gap.csv`, `per_task.csv` and all 24 figures with **zero
 diff** — every table and figure is a pure function of the committed result
 files.
 
@@ -499,25 +499,45 @@ admet-generalization/
 │   ├── clintox/            # 80 run files
 │   └── {runs,summary,gap,per_task}.csv
 └── figures/
-    ├── tox21/              # 6 PNGs
-    └── clintox/            # 6 PNGs
+    ├── all_gaps_{roc,pr}_auc.png   # the only figure spanning both datasets
+    ├── tox21/              # 12 PNGs
+    └── clintox/            # 10 PNGs (no per-assay heatmap: one assay)
 ```
 
 ## Figures
 
 Regenerated from `results/` by `make plots`; none is drawn by hand. One
 subdirectory per dataset, mirroring `results/`, as
-`figures/<dataset>/<figure>_<dataset>_<metric>.png` — 12 in all. The dataset
+`figures/<dataset>/<figure>_<dataset>_<metric>.png` — 24 in all. The dataset
 is in the filename as well as the folder, because a figure is usually read
 after being pasted into a report or a slide, where the folder is gone:
 
 - `random_vs_scaffold_*.png` — both models under both splits (H1).
 - `learning_curves_*.png` — test score against training-set size (H2).
 - `gnn_minus_rf_gap_*.png` — the gap itself, with a zero reference line.
+- `per_assay_*.png` — every Tox21 assay separately, as a heatmap. The
+  macro-average is one number standing for twelve endpoints, and it hides
+  that SR-MMP reaches 0.90 while NR-ER sits at 0.71. Tox21 only: ClinTox
+  scores one assay, where a heatmap would be a bar chart with extra steps.
+- `paired_seeds_*.png` — one point per seed, baseline on x against GNN on y,
+  with the line of equality. Points on both sides of the diagonal *are* the
+  null result, which a difference of means with an SD beside it states but
+  does not show.
+- `train_test_similarity_*.png` — the chemistry of the split rather than any
+  score; drawn once per dataset, not once per metric.
+- `dataset_overview_*.png` — the data before any model: positives against
+  molecules screened per assay, and the molecule-size distribution.
 
-Two datasets never share an axis. Their class balances and test-set sizes
-differ, so a shared y-axis would invite a comparison the numbers do not
-support; the cross-dataset comparison is made in the tables instead.
+**`figures/all_gaps_<metric>.png`** sits at the top rather than in a dataset
+folder, and is the one figure that puts both datasets on one axis. It may,
+because it plots *differences*: +0.01 means the same thing on Tox21 as on
+ClinTox, where a raw 0.85 does not. Every gap in the study with ±1 SD against
+a line at zero — 14 of the 16 intervals cross it, which is the H1/H2 result in
+one image.
+
+Two datasets never share an axis anywhere else. Their class balances and
+test-set sizes differ, so a shared y-axis would invite a comparison the
+numbers do not support; the cross-dataset comparison is made in the tables.
 
 Model is encoded as colour, always the same colour, and never anything else.
 Split is encoded as **position**: the learning-curve and gap figures are

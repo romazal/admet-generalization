@@ -6,7 +6,8 @@ Record of how the coding agent was used, as the assignment requires
 **How the work was divided.** We set the requirements, choose the design, read
 what comes back and decide what is kept; the agent drafts to that
 specification and carries the volume work — writing out the test suites,
-running the 146-run grids, regenerating the tables and the fourteen figures,
+running the 146-run grids, regenerating the tables and the twenty-four
+figures,
 and applying mechanical edits across the documentation. It is a fast pair of
 hands, not a collaborator with judgement about this project: left to itself it
 has asserted things it had not checked, and several of the bugs below are
@@ -964,3 +965,53 @@ caught.
 
 196 tests pass.
 
+## Four more figures (task 1, ideas b-e)
+
+*Instruction:* §1 of `TODO.md` — do it.
+
+Four figures, each answering something the existing three could not.
+
+**The per-assay heatmap** is the one that changed a sentence in the report.
+§3 reports a macro-average over twelve Tox21 assays, and the heatmap is what
+that average is averaging: SR-MMP reaches 0.90 under a random split where
+NR-ER manages 0.71, and the scaffold penalty is not uniform either — SR-ATAD5
+loses 0.16 and NR-ER loses nothing at all. The first version included the
+dummy, which scores exactly 0.500 on every assay by construction; that put
+two dead columns in the figure *and* pulled the colour scale's floor down to
+0.5, squashing every real score into the top half of the ramp. Looking at the
+PNG is what caught it, not a test.
+
+**The paired per-seed scatter** makes the null result visible: baseline on x,
+GNN on y, one point per seed, line of equality. Points on both sides of the
+diagonal are what "no detectable difference" looks like, where the tables say
+it as ±0.019 around +0.005.
+
+**The all-gaps figure** is the only one allowed to put both datasets on one
+axis, because it plots differences rather than scores — +0.01 means the same
+thing on either, where a raw 0.85 does not. Fourteen of its sixteen intervals
+cross zero.
+
+**The dataset overview** has no score in it at all. On ClinTox it shows in one
+bar what §4 argues in prose: `FDA_APPROVED` is positive for 1376 of 1461
+molecules, which is why only `CT_TOX` is scored.
+
+**What the tests caught, and what they did not.** Sixteen tests were written
+and then run against six deliberate mutants. Five were caught. The sixth
+survived: deleting `set_aspect("equal")` from the scatter left the test
+passing, because it only checked that the two axes had the same *range*. On a
+non-square box the line of equality is no longer at 45° and every point is
+being judged against the wrong line — the exact class of defect this file
+exists to catch. The assertion now checks the aspect too.
+
+Three defects were found by looking at the PNGs rather than by any test: the
+dummy columns above, a legend sitting on top of a panel title on ClinTox
+(short figure, two assays, so the legend had nowhere to go — it is in the
+figure footer now), and a molecule-size axis stretched to 136 heavy atoms by
+seven outliers, where the cut is now made explicit on the figure.
+
+While in the file, the ClinTox similarity histogram's bin count was fixed to
+follow the test-set size: 146 molecules over Tox21's 40 bins meant every bar
+stood on three or four molecules, and the leftward shift the figure exists to
+show was buried in sampling noise.
+
+211 tests pass. 24 figures.

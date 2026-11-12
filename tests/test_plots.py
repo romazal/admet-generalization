@@ -17,7 +17,12 @@ import pytest
 
 matplotlib.use("Agg")
 
-from admet.analysis.aggregate import ConditionSummary, GapRow  # noqa: E402
+from admet.analysis.aggregate import (  # noqa: E402
+    ConditionSummary,
+    GapRow,
+    PerTaskRow,
+    RunRecord,
+)
 from admet.analysis import plots  # noqa: E402
 from admet.analysis.plots import (  # noqa: E402
     GAP_COLOR,
@@ -178,7 +183,11 @@ def capture(monkeypatch):
         return Path(path)
 
     monkeypatch.setattr(plots, "_save", fake_save)
-    return held
+    yield held
+    # The real `_save` closes the figure; this one cannot, because the test
+    # still needs it. Close on teardown instead, or the suite leaks a figure
+    # per test and matplotlib starts warning about it.
+    plots.plt.close("all")
 
 
 def _curve(dataset: str = "tox21"):
@@ -459,3 +468,239 @@ def test_similarity_figure_returns_none_when_a_split_has_no_test_set() -> None:
     from admet.analysis.plots import plot_train_test_similarity
 
     assert plot_train_test_similarity(["CCO"], Path("unused.png")) is None
+
+
+# --------------------------------------------------------------------------- #
+# The four figures added for TODO §1 (ideas b-e)
+#
+# Each is checked the way the section asks for: the right number of drawn
+# artists, and every value actually inside the axis it is drawn on. A figure
+# can be wrong in a way no exception reports - the PR-AUC bars once rendered
+# six blank charts against a hardcoded ylim - so "it saved a PNG" is not a
+# test.
+# --------------------------------------------------------------------------- #
+
+
+def _per_task(dataset: str = "tox21", n_tasks: int = 4):
+    return [
+        PerTaskRow(
+            dataset=dataset,
+            model=m,
+            split=s,
+            train_fraction=1.0,
+            task=f"ASSAY-{i}",
+            n_seeds=5,
+            roc_auc_mean=0.70 + 0.02 * i + (0.05 if s == "random" else 0.0),
+            roc_auc_std=0.01,
+            pr_auc_mean=0.30 + 0.01 * i,
+            pr_auc_std=0.02,
+        )
+        for m in ("dummy", "rf", "gnn")
+        for s in ("random", "scaffold")
+        for i in range(n_tasks)
+    ]
+
+
+def _records(dataset: str = "tox21", n_seeds: int = 5):
+    return [
+        RunRecord(
+            run=f"{dataset}_{m}_{s}_frac100_seed{seed}",
+            dataset=dataset,
+            model=m,
+            split=s,
+            seed=seed,
+            train_fraction=1.0,
+            test_roc_auc=0.80 + 0.01 * seed + (0.004 if m == "gnn" else 0.0),
+            test_pr_auc=0.40 + 0.01 * seed,
+            n_train=6259,
+            n_valid=782,
+            n_test=782,
+            path=f"{dataset}/{dataset}_{m}_{s}_frac100_seed{seed}.json",
+        )
+        for m in ("rf", "gnn")
+        for s in ("random", "scaffold")
+        for seed in range(n_seeds)
+    ]
+
+
+# -- b. the per-assay heatmap ----------------------------------------------
+
+
+def test_heatmap_draws_one_cell_per_assay_and_condition(
+    capture, tmp_path: Path
+) -> None:
+    plots.plot_per_assay_heatmap(_per_task(n_tasks=4), tmp_path / "h.png")
+    (image,) = capture["figure"].axes[0].get_images()
+
+    # 4 assays x 2 models x 2 splits. The dummy is excluded, so 3 models in
+    # equals 2 columns' worth of models out.
+    assert image.get_array().shape == (4, 4)
+
+
+def test_heatmap_excludes_the_dummy(capture, tmp_path: Path) -> None:
+    """A constant 0.500 column would drag vmin to the floor and flatten the ramp."""
+    plots.plot_per_assay_heatmap(_per_task(), tmp_path / "h.png")
+    ax = capture["figure"].axes[0]
+
+    labels = " ".join(t.get_text() for t in ax.get_xticklabels())
+    assert "Dummy" not in labels
+    assert ax.get_images()[0].get_array().min() > 0.5
+
+
+def test_heatmap_colour_range_covers_the_values(capture, tmp_path: Path) -> None:
+    """Positive control: no cell may fall outside the ramp it is coloured by."""
+    plots.plot_per_assay_heatmap(_per_task(), tmp_path / "h.png")
+    (image,) = capture["figure"].axes[0].get_images()
+
+    values = image.get_array()
+    low, high = image.get_clim()
+    assert low <= values.min() and values.max() <= high
+
+
+def test_heatmap_declines_a_single_assay_dataset(tmp_path: Path) -> None:
+    """ClinTox scores one assay; a one-row heatmap is a bar chart with steps."""
+    rows = _per_task(dataset="clintox", n_tasks=1)
+    assert plots.plot_per_assay_heatmap(rows, tmp_path / "h.png") is None
+
+
+# -- c. the paired per-seed scatter ----------------------------------------
+
+
+def test_paired_scatter_draws_one_point_per_seed(capture, tmp_path: Path) -> None:
+    plots.plot_paired_seeds(_records(n_seeds=5), tmp_path / "p.png")
+    collections = capture["figure"].axes[0].collections
+
+    assert len(collections) == 2  # one per split
+    assert sum(len(c.get_offsets()) for c in collections) == 10  # 2 splits x 5
+
+
+def test_every_paired_point_is_inside_the_axes(capture, tmp_path: Path) -> None:
+    plots.plot_paired_seeds(_records(), tmp_path / "p.png")
+    ax = capture["figure"].axes[0]
+    (x0, x1), (y0, y1) = ax.get_xlim(), ax.get_ylim()
+
+    for collection in ax.collections:
+        for x, y in collection.get_offsets():
+            assert x0 <= x <= x1 and y0 <= y <= y1
+
+
+def test_paired_axes_share_one_scale(capture, tmp_path: Path) -> None:
+    """A 45° line only means equality if the axes match in range *and* aspect.
+
+    Equal limits alone are not enough: on a non-square box the line of
+    equality is drawn at some other angle, and a reader judging points
+    against "the diagonal" reads the wrong comparison. An earlier version of
+    this test checked only the limits and a mutant that deleted the aspect
+    survived it.
+    """
+    plots.plot_paired_seeds(_records(), tmp_path / "p.png")
+    ax = capture["figure"].axes[0]
+
+    assert ax.get_xlim() == ax.get_ylim()
+    assert ax.get_aspect() == 1.0
+
+
+def test_paired_scatter_never_paints_a_split_in_a_model_colour(
+    capture, tmp_path: Path
+) -> None:
+    """Colour means split here; the model hues mean model everywhere else."""
+    from matplotlib.colors import to_hex
+
+    plots.plot_paired_seeds(_records(), tmp_path / "p.png")
+    model_hues = {c.lower() for c in plots.MODEL_COLORS.values()}
+
+    for collection in capture["figure"].axes[0].collections:
+        for rgba in collection.get_facecolor():
+            assert to_hex(rgba).lower() not in model_hues
+
+
+# -- d. every gap in one figure --------------------------------------------
+
+
+def test_all_gaps_draws_every_row(capture, tmp_path: Path) -> None:
+    rows = _gaps("tox21") + _gaps("clintox")
+    plots.plot_all_gaps(rows, tmp_path / "g.png")
+    ax = capture["figure"].axes[0]
+
+    assert len(ax.get_yticklabels()) == len(rows)
+
+
+def test_all_gaps_labels_name_both_datasets(capture, tmp_path: Path) -> None:
+    """This is the one figure allowed to mix datasets, so each row must say which."""
+    plots.plot_all_gaps(_gaps("tox21") + _gaps("clintox"), tmp_path / "g.png")
+    labels = [t.get_text() for t in capture["figure"].axes[0].get_yticklabels()]
+
+    assert any("Tox21" in text for text in labels)
+    assert any("ClinTox" in text for text in labels)
+    assert all("%" in text for text in labels)
+
+
+def test_all_gaps_shows_the_zero_line_and_contains_every_interval(
+    capture, tmp_path: Path
+) -> None:
+    rows = _gaps("tox21") + _gaps("clintox")
+    plots.plot_all_gaps(rows, tmp_path / "g.png")
+    ax = capture["figure"].axes[0]
+
+    assert any(line.get_xdata()[0] == 0.0 for line in ax.lines)
+    low, high = ax.get_xlim()
+    for row in rows:
+        assert low <= row.gap - (row.gap_std or 0) and row.gap + (row.gap_std or 0) <= high
+
+
+# -- e. the dataset overview ------------------------------------------------
+
+
+def _labels_and_smiles(n_tasks: int = 3):
+    import numpy as np
+
+    rng = np.random.default_rng(0)
+    y = rng.integers(0, 2, size=(40, n_tasks)).astype(float)
+    y[0, 0] = np.nan  # one unscreened cell, so density is not trivially 1.0
+    tasks = [f"ASSAY-{i}" for i in range(n_tasks)]
+    smiles = ["CCO", "c1ccccc1", "CC(=O)Oc1ccccc1C(=O)O", "CCN(CC)CC"] * 10
+    return y, tasks, smiles
+
+
+def test_overview_draws_two_bars_per_assay(capture, tmp_path: Path) -> None:
+    y, tasks, smiles = _labels_and_smiles(n_tasks=3)
+    plots.plot_dataset_overview(y, tasks, smiles, tmp_path / "o.png")
+    left = capture["figure"].axes[0]
+
+    # One "screened" bar and one "positive" bar for each assay.
+    assert len(left.containers) == 2
+    assert all(len(container) == 3 for container in left.containers)
+
+
+def test_overview_positives_never_exceed_the_screened_count(
+    capture, tmp_path: Path
+) -> None:
+    """The positive bar is drawn over the screened one, so it must fit inside it."""
+    y, tasks, smiles = _labels_and_smiles()
+    plots.plot_dataset_overview(y, tasks, smiles, tmp_path / "o.png")
+    screened, positive = capture["figure"].axes[0].containers
+
+    for total, part in zip(screened, positive):
+        assert part.get_width() <= total.get_width()
+
+
+def test_overview_bars_are_inside_the_visible_axis(capture, tmp_path: Path) -> None:
+    y, tasks, smiles = _labels_and_smiles()
+    plots.plot_dataset_overview(y, tasks, smiles, tmp_path / "o.png")
+    left = capture["figure"].axes[0]
+    _, high = left.get_xlim()
+
+    for container in left.containers:
+        for bar in container:
+            assert bar.get_width() <= high
+
+
+def test_overview_refuses_an_empty_label_matrix(tmp_path: Path) -> None:
+    import numpy as np
+
+    assert (
+        plots.plot_dataset_overview(
+            np.empty((0, 0)), [], [], tmp_path / "o.png"
+        )
+        is None
+    )
