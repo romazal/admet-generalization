@@ -247,6 +247,7 @@
     "test": 782
   },
   "scaffold_disjointness_checked": true,
+  "deterministic": true,
   "best_params": {},
   "tuning": {
     "budget": 8,
@@ -349,9 +350,9 @@
     "yaml": "6.0.3",
     "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "16eb3f0a5d56b92f0bccbc8d4a976f77a2586165",
+  "git_commit": "d76f8522148811c9887c665a5d35819c293e12d5",
   "timing_seconds": {
     "tuning": 0.02,
-    "total": 4.11
+    "total": 3.76
   }
 }

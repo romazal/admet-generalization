@@ -49,6 +49,7 @@
     "test": 146
   },
   "scaffold_disjointness_checked": false,
+  "deterministic": true,
   "best_params": {
     "n_jobs": -1,
     "class_weight": "balanced",
@@ -78,7 +79,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7553956834532375,
-        "seconds": 0.87
+        "seconds": 0.78
       },
       {
         "trial": 1,
@@ -93,7 +94,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.775950668036999,
-        "seconds": 0.87
+        "seconds": 0.79
       },
       {
         "trial": 2,
@@ -108,7 +109,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7204522096608428,
-        "seconds": 1.17
+        "seconds": 1.06
       },
       {
         "trial": 3,
@@ -123,7 +124,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.6700924974306268,
-        "seconds": 0.68
+        "seconds": 0.62
       },
       {
         "trial": 4,
@@ -138,7 +139,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.7040082219938335,
-        "seconds": 0.87
+        "seconds": 0.82
       },
       {
         "trial": 5,
@@ -153,7 +154,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6834532374100719,
-        "seconds": 0.91
+        "seconds": 0.84
       },
       {
         "trial": 6,
@@ -168,7 +169,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7420349434737924,
-        "seconds": 1.14
+        "seconds": 1.06
       },
       {
         "trial": 7,
@@ -183,7 +184,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6269270298047277,
-        "seconds": 0.59
+        "seconds": 0.56
       }
     ]
   },
@@ -255,9 +256,9 @@
     "yaml": "6.0.3",
     "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
+  "git_commit": "d76f8522148811c9887c665a5d35819c293e12d5",
   "timing_seconds": {
-    "tuning": 7.1,
-    "total": 7.61
+    "tuning": 6.55,
+    "total": 7.01
   }
 }

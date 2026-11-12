@@ -247,6 +247,7 @@
     "test": 782
   },
   "scaffold_disjointness_checked": true,
+  "deterministic": true,
   "best_params": {
     "n_jobs": -1,
     "class_weight": "balanced",
@@ -276,7 +277,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7378178825893262,
-        "seconds": 9.04
+        "seconds": 8.94
       },
       {
         "trial": 1,
@@ -291,7 +292,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7465406015964787,
-        "seconds": 9.25
+        "seconds": 8.54
       },
       {
         "trial": 2,
@@ -306,7 +307,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7192126447787889,
-        "seconds": 13.7
+        "seconds": 14.98
       },
       {
         "trial": 3,
@@ -321,7 +322,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.7129985144002196,
-        "seconds": 7.58
+        "seconds": 9.19
       },
       {
         "trial": 4,
@@ -336,7 +337,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.728778165841168,
-        "seconds": 12.81
+        "seconds": 16.22
       },
       {
         "trial": 5,
@@ -351,7 +352,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7374961120003297,
-        "seconds": 12.8
+        "seconds": 12.83
       },
       {
         "trial": 6,
@@ -366,7 +367,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7123042529359861,
-        "seconds": 13.45
+        "seconds": 13.39
       },
       {
         "trial": 7,
@@ -381,7 +382,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.654896185698481,
-        "seconds": 8.41
+        "seconds": 8.68
       }
     ]
   },
@@ -475,9 +476,9 @@
     "yaml": "6.0.3",
     "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
+  "git_commit": "d76f8522148811c9887c665a5d35819c293e12d5",
   "timing_seconds": {
-    "tuning": 87.09,
-    "total": 93.24
+    "tuning": 92.83,
+    "total": 99.81
   }
 }

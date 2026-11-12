@@ -49,6 +49,7 @@
     "test": 146
   },
   "scaffold_disjointness_checked": false,
+  "deterministic": true,
   "best_params": {
     "n_jobs": -1,
     "class_weight": "balanced",
@@ -78,7 +79,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8718572587185727,
-        "seconds": 0.9
+        "seconds": 0.85
       },
       {
         "trial": 1,
@@ -93,7 +94,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9416058394160585,
-        "seconds": 0.89
+        "seconds": 0.83
       },
       {
         "trial": 2,
@@ -108,7 +109,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9367396593673966,
-        "seconds": 1.17
+        "seconds": 1.06
       },
       {
         "trial": 3,
@@ -123,7 +124,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.927007299270073,
-        "seconds": 0.64
+        "seconds": 0.59
       },
       {
         "trial": 4,
@@ -138,7 +139,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.9278183292781833,
-        "seconds": 0.4
+        "seconds": 0.38
       },
       {
         "trial": 5,
@@ -153,7 +154,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9480940794809408,
-        "seconds": 0.89
+        "seconds": 0.81
       },
       {
         "trial": 6,
@@ -168,7 +169,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9140308191403081,
-        "seconds": 1.12
+        "seconds": 1.03
       },
       {
         "trial": 7,
@@ -183,7 +184,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9302514193025142,
-        "seconds": 0.99
+        "seconds": 0.93
       }
     ]
   },
@@ -255,9 +256,9 @@
     "yaml": "6.0.3",
     "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
+  "git_commit": "d76f8522148811c9887c665a5d35819c293e12d5",
   "timing_seconds": {
-    "tuning": 7.01,
-    "total": 7.53
+    "tuning": 6.48,
+    "total": 6.98
   }
 }

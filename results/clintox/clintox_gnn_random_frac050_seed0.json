@@ -7,16 +7,16 @@
   "train_fraction": 0.5,
   "metrics": {
     "test": {
-      "roc_auc": 0.8801346801346801,
-      "pr_auc": 0.7089687194525904,
+      "roc_auc": 0.9171717171717172,
+      "pr_auc": 0.7983405483405485,
       "n_tasks_scored": 1,
       "n_tasks_skipped": 0,
       "skipped_tasks": {},
       "per_task": [
         {
           "task": "CT_TOX",
-          "roc_auc": 0.8801346801346801,
-          "pr_auc": 0.7089687194525904,
+          "roc_auc": 0.9171717171717172,
+          "pr_auc": 0.7983405483405485,
           "n_labelled": 146,
           "n_positive": 11,
           "positive_rate": 0.07534246575342465,
@@ -25,16 +25,16 @@
       ]
     },
     "valid": {
-      "roc_auc": 0.8797533401849948,
-      "pr_auc": 0.5808193574459486,
+      "roc_auc": 0.8766700924974306,
+      "pr_auc": 0.6368920295390883,
       "n_tasks_scored": 1,
       "n_tasks_skipped": 0,
       "skipped_tasks": {},
       "per_task": [
         {
           "task": "CT_TOX",
-          "roc_auc": 0.8797533401849948,
-          "pr_auc": 0.5808193574459486,
+          "roc_auc": 0.8766700924974306,
+          "pr_auc": 0.6368920295390883,
           "n_labelled": 146,
           "n_positive": 7,
           "positive_rate": 0.04794520547945205,
@@ -49,14 +49,15 @@
     "test": 146
   },
   "scaffold_disjointness_checked": false,
+  "deterministic": true,
   "best_params": {
     "epochs": 50,
     "patience": 10,
     "weight_decay": 0.0,
     "batch_size": 128,
-    "dropout": 0.3,
+    "dropout": 0.0,
     "hidden_dim": 256,
-    "learning_rate": 0.0003,
+    "learning_rate": 0.001,
     "n_layers": 3,
     "pooling": "mean"
   },
@@ -75,8 +76,8 @@
           "n_layers": 4,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.790339157245632,
-        "seconds": 1.54
+        "valid_roc_auc": 0.8119218910585817,
+        "seconds": 1.8
       },
       {
         "trial": 1,
@@ -88,8 +89,8 @@
           "n_layers": 4,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.7790339157245633,
-        "seconds": 1.94
+        "valid_roc_auc": 0.7893114080164438,
+        "seconds": 2.22
       },
       {
         "trial": 2,
@@ -101,8 +102,8 @@
           "n_layers": 2,
           "pooling": "sum"
         },
-        "valid_roc_auc": 0.8088386433710175,
-        "seconds": 1.07
+        "valid_roc_auc": 0.8098663926002054,
+        "seconds": 1.06
       },
       {
         "trial": 3,
@@ -114,8 +115,8 @@
           "n_layers": 3,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8797533401849948,
-        "seconds": 2.42
+        "valid_roc_auc": 0.8653648509763617,
+        "seconds": 2.13
       },
       {
         "trial": 4,
@@ -127,8 +128,8 @@
           "n_layers": 3,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8746145940390545,
-        "seconds": 2.28
+        "valid_roc_auc": 0.8766700924974306,
+        "seconds": 2.37
       },
       {
         "trial": 5,
@@ -140,8 +141,8 @@
           "n_layers": 4,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.790339157245632,
-        "seconds": 3.02
+        "valid_roc_auc": 0.7934224049331963,
+        "seconds": 3.12
       },
       {
         "trial": 6,
@@ -153,8 +154,8 @@
           "n_layers": 3,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8406988694758478,
-        "seconds": 2.13
+        "valid_roc_auc": 0.8139773895169579,
+        "seconds": 2.15
       },
       {
         "trial": 7,
@@ -166,8 +167,8 @@
           "n_layers": 3,
           "pooling": "mean"
         },
-        "valid_roc_auc": 0.8489208633093523,
-        "seconds": 2.21
+        "valid_roc_auc": 0.8612538540596094,
+        "seconds": 3.28
       }
     ]
   },
@@ -241,10 +242,10 @@
     "yaml": "6.0.3",
     "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
+  "git_commit": "d76f8522148811c9887c665a5d35819c293e12d5",
   "timing_seconds": {
-    "tuning": 16.61,
-    "total": 17.01
+    "tuning": 18.13,
+    "total": 18.54
   },
-  "best_epoch": 50
+  "best_epoch": 46
 }

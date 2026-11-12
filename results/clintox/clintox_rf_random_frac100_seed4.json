@@ -49,6 +49,7 @@
     "test": 146
   },
   "scaffold_disjointness_checked": false,
+  "deterministic": true,
   "best_params": {
     "n_jobs": -1,
     "class_weight": "balanced",
@@ -78,7 +79,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.7976190476190477,
-        "seconds": 0.63
+        "seconds": 0.61
       },
       {
         "trial": 1,
@@ -93,7 +94,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7154761904761905,
-        "seconds": 1.11
+        "seconds": 1.07
       },
       {
         "trial": 2,
@@ -138,7 +139,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7952380952380953,
-        "seconds": 0.62
+        "seconds": 0.6
       },
       {
         "trial": 5,
@@ -153,7 +154,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8130952380952381,
-        "seconds": 0.44
+        "seconds": 0.48
       },
       {
         "trial": 6,
@@ -168,7 +169,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8880952380952382,
-        "seconds": 0.91
+        "seconds": 0.86
       },
       {
         "trial": 7,
@@ -183,7 +184,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.9095238095238095,
-        "seconds": 0.88
+        "seconds": 0.81
       }
     ]
   },
@@ -255,9 +256,9 @@
     "yaml": "6.0.3",
     "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
+  "git_commit": "d76f8522148811c9887c665a5d35819c293e12d5",
   "timing_seconds": {
-    "tuning": 6.12,
-    "total": 6.64
+    "tuning": 5.95,
+    "total": 6.44
   }
 }

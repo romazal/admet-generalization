@@ -49,6 +49,7 @@
     "test": 146
   },
   "scaffold_disjointness_checked": false,
+  "deterministic": true,
   "best_params": {
     "n_jobs": -1,
     "class_weight": "balanced",
@@ -78,7 +79,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6747769667477697,
-        "seconds": 0.61
+        "seconds": 0.55
       },
       {
         "trial": 1,
@@ -93,7 +94,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7704785077047851,
-        "seconds": 0.62
+        "seconds": 0.55
       },
       {
         "trial": 2,
@@ -108,7 +109,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.6690997566909975,
-        "seconds": 0.84
+        "seconds": 0.77
       },
       {
         "trial": 3,
@@ -123,7 +124,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.702757502027575,
-        "seconds": 0.41
+        "seconds": 0.39
       },
       {
         "trial": 4,
@@ -138,7 +139,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.781021897810219,
-        "seconds": 0.32
+        "seconds": 0.31
       },
       {
         "trial": 5,
@@ -153,7 +154,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7834549878345498,
-        "seconds": 0.6
+        "seconds": 0.56
       },
       {
         "trial": 6,
@@ -168,7 +169,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.726682887266829,
-        "seconds": 0.83
+        "seconds": 0.74
       },
       {
         "trial": 7,
@@ -183,7 +184,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.7283049472830495,
-        "seconds": 0.77
+        "seconds": 0.71
       }
     ]
   },
@@ -255,9 +256,9 @@
     "yaml": "6.0.3",
     "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
+  "git_commit": "d76f8522148811c9887c665a5d35819c293e12d5",
   "timing_seconds": {
-    "tuning": 5.01,
-    "total": 5.52
+    "tuning": 4.59,
+    "total": 5.07
   }
 }

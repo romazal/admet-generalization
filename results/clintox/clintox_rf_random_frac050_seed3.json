@@ -49,6 +49,7 @@
     "test": 146
   },
   "scaffold_disjointness_checked": false,
+  "deterministic": true,
   "best_params": {
     "n_jobs": -1,
     "class_weight": null,
@@ -78,7 +79,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.9247512437810945,
-        "seconds": 0.55
+        "seconds": 0.52
       },
       {
         "trial": 1,
@@ -93,7 +94,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8600746268656716,
-        "seconds": 0.71
+        "seconds": 0.68
       },
       {
         "trial": 2,
@@ -108,7 +109,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.845771144278607,
-        "seconds": 0.48
+        "seconds": 0.45
       },
       {
         "trial": 3,
@@ -123,7 +124,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8955223880597015,
-        "seconds": 0.85
+        "seconds": 0.79
       },
       {
         "trial": 4,
@@ -138,7 +139,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8973880597014926,
-        "seconds": 0.72
+        "seconds": 0.67
       },
       {
         "trial": 5,
@@ -153,7 +154,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8781094527363185,
-        "seconds": 0.59
+        "seconds": 0.54
       },
       {
         "trial": 6,
@@ -168,7 +169,7 @@
           "n_estimators": 500
         },
         "valid_roc_auc": 0.8681592039800995,
-        "seconds": 0.84
+        "seconds": 0.78
       },
       {
         "trial": 7,
@@ -183,7 +184,7 @@
           "n_estimators": 300
         },
         "valid_roc_auc": 0.8395522388059703,
-        "seconds": 0.69
+        "seconds": 0.64
       }
     ]
   },
@@ -255,9 +256,9 @@
     "yaml": "6.0.3",
     "torch_device": "cuda:NVIDIA GeForce RTX 5070 Ti"
   },
-  "git_commit": "51c6328f4c1cde7fec76e6e03de1e4c72c58a2be",
+  "git_commit": "d76f8522148811c9887c665a5d35819c293e12d5",
   "timing_seconds": {
-    "tuning": 5.44,
-    "total": 5.9
+    "tuning": 5.07,
+    "total": 5.5
   }
 }
