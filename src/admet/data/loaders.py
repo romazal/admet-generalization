@@ -64,10 +64,17 @@ rather than success.
 Tox21 remains the primary dataset and that is settled.
 
 .. note::
-   CSV reading uses the standard library rather than pandas. Proposal §5 lists
-   pandas as a dependency, but its compiled extensions are blocked by the
-   Windows Application Control policy on the development machine, and the
-   loader needs only ``csv`` and :mod:`numpy`. See ``AGENT_LOG.md``.
+   CSV reading uses :mod:`pandas`, as proposal §5 specifies. It was written
+   against the standard library for a while because pandas' compiled
+   extensions were blocked by a Windows Application Control policy on the
+   development machine; that block has lifted and pandas is a hard dependency
+   again. See ``AGENT_LOG.md``.
+
+   Two pandas defaults are overridden deliberately in :func:`read_csv`:
+   ``dtype=str`` and ``keep_default_na=False``. Left to infer, pandas turns a
+   blank label cell into ``NaN`` *and* the string ``"NA"`` into ``NaN``, which
+   collapses "not screened" and a literal label together — the exact
+   distinction the masking depends on.
 """
 
 from __future__ import annotations

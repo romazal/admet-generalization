@@ -532,6 +532,16 @@ out of it and are below.*
   in README and REPORT §5 for now, because fixing it properly means
   regenerating 146 results for a provenance field — not worth 4 h on its own,
   but worth folding into the next re-run that happens for another reason.
+- **`versions` does not record pandas.** `_library_versions()` in
+  `training.py` promises "everything whose behaviour could change a number"
+  and lists numpy, sklearn, rdkit, torch and yaml. pandas parses the dataset
+  CSV on every single run — it is the first thing that touches the data — and
+  is not in the list, so no result file says which pandas produced it.
+  `pyproject.toml` also allows `pandas>=2.2` with no ceiling, which spans a
+  major version; pandas 3 changed string-dtype defaults, and `read_csv()`
+  depends on `dtype=str, keep_default_na=False` behaving as it does today.
+  One line to add to the tuple. Group it with the `torch_device` fix above so
+  that a single re-run buys both.
 - **Pin the CSVs in `.gitattributes`.** The four tables in `results/` are
   written with `lineterminator="\r\n"` and `core.autocrlf` is on here, so
   `make aggregate` gives a zero diff on this machine. On a Linux clone it
