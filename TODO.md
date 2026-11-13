@@ -668,24 +668,15 @@ regenerated from one commit so the grid has a single provenance. It costs the
 Tox21 GNN 3.0× its runtime. REPORT §5b has the account; two follow-ups fell
 out of it and are below.*
 
-- **`versions.torch_device` reports the wrong thing.** It records what torch
-  could *see*, not what the model used, so it reads
-  `cuda:NVIDIA GeForce RTX 5070 Ti` on the 68 baseline runs, which are
-  scikit-learn and never touch the card. Recording the device the model chose
-  would make the field mean what its name says. It is documented as a caveat
-  in README and REPORT §5 for now, because fixing it properly means
-  regenerating 146 results for a provenance field — not worth 4 h on its own,
-  but worth folding into the next re-run that happens for another reason.
-- **`versions` does not record pandas.** `_library_versions()` in
-  `training.py` promises "everything whose behaviour could change a number"
-  and lists numpy, sklearn, rdkit, torch and yaml. pandas parses the dataset
-  CSV on every single run — it is the first thing that touches the data — and
-  is not in the list, so no result file says which pandas produced it.
-  `pyproject.toml` also allows `pandas>=2.2` with no ceiling, which spans a
-  major version; pandas 3 changed string-dtype defaults, and `read_csv()`
-  depends on `dtype=str, keep_default_na=False` behaving as it does today.
-  One line to add to the tuple. Group it with the `torch_device` fix above so
-  that a single re-run buys both.
+- **`versions.torch_device` reports the wrong thing** — *fixed for new runs.*
+  It now records the device selected by the model, so random-forest results
+  report `cpu` even if torch can see a GPU. Historical result files still
+  contain the old value; correcting them would require rerunning the full
+  grid.
+- **`versions` does not record pandas** — *fixed for new runs.* The pandas
+  version is now included in the run metadata. Historical result files do not
+  include it; the version used for those runs cannot be recovered from their
+  metadata.
 - **Pin the CSVs in `.gitattributes`.** The four tables in `results/` are
   written with `lineterminator="\r\n"` and `core.autocrlf` is on here, so
   `make aggregate` gives a zero diff on this machine. On a Linux clone it

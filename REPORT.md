@@ -265,12 +265,13 @@ figures at roughly ±10%.
 | scikit-learn | 1.9.1 |
 | NumPy | 2.5.4 |
 
-Each result file also records the git commit it was produced at and, in
-`versions.torch_device`, the device torch had available —
-`cuda:NVIDIA GeForce RTX 5070 Ti` in all 156 committed runs. The field reports
-what torch could *see*, not what the model used, so it is only meaningful for
-the GNN runs; the baseline never calls torch. Read the `model` column to know
-what ran where.
+Each result file also records the git commit it was produced at. The 156
+committed files predate a provenance correction: their
+`versions.torch_device` field records the device torch had available
+(`cuda:NVIDIA GeForce RTX 5070 Ti`), even for random-forest runs, and they do
+not record the pandas version. Newly generated files record the device the
+model actually used and the pandas version. The historical results remain
+unchanged; updating their metadata would require rerunning the full grid.
 
 ## 5b. Determinism: what repeats, and what it costs
 

@@ -79,8 +79,8 @@ admet run configs/tox21/gnn_scaffold.yaml --seeds 3 --train-fractions 0.25
 Measured, not estimated: every figure below comes from the `timing_seconds`
 field of the committed result files. Windows desktop, 16 threads, 31 GB RAM,
 GNN on an **RTX 5070 Ti**. (`versions.torch_device` in each result file
-records the device torch could *see*, not the one the model used — see
-*Running on a GPU*.)
+records the device the model used; the already-committed files predate that
+correction — see *Running on a GPU*.)
 
 | Step | Time |
 |---|---|
@@ -112,10 +112,13 @@ Nothing in the code needs setting — `GNNModel` picks CUDA whenever
 committed result was produced on one GPU, an RTX 5070 Ti, with deterministic
 kernels pinned.
 
-One caveat on reading the result files: `versions.torch_device` records what
-torch could *see*, not what the model used, so it says `cuda` even on
-baseline runs, which are scikit-learn and never touch the card. Read the
-`model` column to know what ran where.
+New result files record the device the model actually used in
+`versions.torch_device` (`cpu` for the random forest, and the selected CPU or
+CUDA device for the GNN), along with the pandas version. The 156 committed
+result files predate this correction: their device field reports CUDA
+availability, including on random-forest runs, and they contain no pandas
+version. Those historical files are unchanged; correcting their metadata
+would require rerunning the full experiment grid.
 
 Determinism is what dominates the GNN's runtime here: the same Tox21 run at
 the full training set takes 673 s with the kernels pinned against 221 s

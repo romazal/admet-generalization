@@ -197,12 +197,12 @@ def deterministic_mode() -> bool:
     return bool(torch.are_deterministic_algorithms_enabled())
 
 
-def _library_versions() -> dict[str, str]:
+def _library_versions(model: Model) -> dict[str, str]:
     """Versions of everything whose behaviour could change a number."""
     import importlib
 
     versions = {"python": platform.python_version(), "platform": platform.platform()}
-    for module in ("numpy", "sklearn", "rdkit", "torch", "yaml"):
+    for module in ("numpy", "pandas", "sklearn", "rdkit", "torch", "yaml"):
         try:
             versions[module] = getattr(
                 importlib.import_module(module), "__version__", "unknown"
@@ -210,19 +210,15 @@ def _library_versions() -> dict[str, str]:
         except ImportError:
             versions[module] = "not installed"
 
-    # The compute device, not just the library version. A torch build string
-    # says what *could* run on a GPU; this says what did. Without it a result
-    # file cannot explain why two runs with the same seed and config differ,
-    # and the CPU and CUDA runs of this project do differ.
-    try:
-        import torch
+    # Report the device selected by this model. In particular, torch may see a
+    # CUDA device even when the random-forest model never uses it.
+    import torch
 
-        if torch.cuda.is_available():
-            versions["torch_device"] = f"cuda:{torch.cuda.get_device_name(0)}"
-        else:
-            versions["torch_device"] = "cpu"
-    except Exception:  # noqa: BLE001 - provenance must never fail a run
-        versions["torch_device"] = "unknown"
+    device = torch.device(getattr(model, "device", "cpu"))
+    if device.type == "cuda":
+        versions["torch_device"] = f"cuda:{torch.cuda.get_device_name(device)}"
+    else:
+        versions["torch_device"] = str(device)
 
     return versions
 
@@ -464,7 +460,7 @@ def run_experiment(
         },
         "dataset_summary": dataset.summary(),
         "config": dict(config),
-        "versions": _library_versions(),
+        "versions": _library_versions(model),
         "git_commit": _git_commit(),
         "timing_seconds": {
             "tuning": round(tuning_seconds, 2),
