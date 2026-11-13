@@ -1124,3 +1124,46 @@ that did happen, and this file is the record of how the work went rather than
 a claim about the experiment — a wrong turn belongs in it. The reports are
 where the project states what it found, and the comparison is gone from both.
 
+## A consistency pass over the whole project
+
+*Instruction:* check the project; fix small bugs or inconsistencies.
+
+Seven things, one of which would have bitten a teammate on a fresh clone.
+
+**`make all` never ran the dummy floor.** The target read
+`test main sweep clintox aggregate plots` — the floor was added as its own
+target but never wired into the one command the README tells people to use.
+Anyone starting from a clean checkout would have produced 136 runs and bar
+charts with no floor on either dataset, which is the defect that had just
+been fixed for ClinTox by hand. Added to `all`, and to both lists of targets
+in the README, which also did not mention it.
+
+**`split.kind` had a default that `base.yaml` said it did not have.**
+`configs/base.yaml` leaves the key unset and explains why: random versus
+scaffold is the independent variable, so a config has to say which one it
+runs. But `DEFAULT_CONFIG` supplied `"scaffold"` underneath, so a config that
+forgot would have run a scaffold split and written a filename claiming so,
+with nothing raised. The comment described a safety property the code did not
+have. `split_kind()` now refuses a config without the key and says which key
+and why; the default is gone. Four tests, checked against two mutants — one
+restoring the default, one making the guard guess instead of raising — and
+both were caught. A committed run re-run through the new path came back
+bit-identical, so nothing in `results/` moved.
+
+**The README contradicted itself about runtimes.** The quickstart block quoted
+~1.1 h, ~40 min and ~17 min for `main`, `sweep` and `clintox`, which are the
+figures from before deterministic kernels tripled the GNN. The runtime table
+forty lines below already said 2.4 h, 1.5 h and 18 min. The table had been
+updated and the quickstart had not.
+
+Three stale counts, all left over from adding the ClinTox dummy floor: the
+scaffold-disjointness check is recorded in 78 files per split, not 73, and
+the committed data, results and figures are 3.9 MB, not 2.8. And
+`configs/base.yaml` still described the pre-move layout, telling readers to
+write `extends: base.yaml` when every config has used `../base.yaml` since
+the per-dataset directories landed, and counting five children where there
+are now fifteen.
+
+216 tests pass. Tables and figures still regenerate with a zero diff, and all
+38 quoted values still match `results/*.csv`.
+

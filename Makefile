@@ -54,7 +54,7 @@ aggregate:  ## Summarize results/ into runs.csv, summary.csv, gap.csv and per_ta
 plots:  ## Redraw every figure from the aggregated tables
 	$(ADMET) plots
 
-all: test main sweep clintox aggregate plots  ## Everything, in order
+all: test main sweep dummy clintox aggregate plots  ## Everything, in order
 
 clean:  ## Remove caches and build artefacts (keeps results and figures)
 	rm -rf .pytest_cache .ruff_cache **/__pycache__ src/*.egg-info

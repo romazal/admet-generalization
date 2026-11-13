@@ -57,9 +57,10 @@ JSON holding the config, the seed, the split sizes, every tuning trial, the
 metrics, the library versions and the git commit.
 
 ```bash
-make main        # Tox21: both models x both splits, 5 seeds     (~1.1 h)
-make sweep       # Tox21 learning curves: 10/25/50/100% training (~40 min)
-make clintox     # ClinTox: the same grid, 5 seeds x 4 fractions (~17 min)
+make main        # Tox21: both models x both splits, 5 seeds     (~2.4 h)
+make sweep       # Tox21 learning curves: 10/25/50/100% training (~1.5 h)
+make clintox     # ClinTox: the same grid, 5 seeds x 4 fractions (~18 min)
+make dummy       # the class-prior floor, both datasets           (~35 s)
 
 make aggregate   # results/**/*.json -> runs.csv, summary.csv, gap.csv, per_task.csv
 make plots       # -> figures/*.png
@@ -93,6 +94,7 @@ records the device torch could *see*, not the one the model used — see
 | `make main` (4 configs x 5 seeds) | ~2.4 h |
 | `make sweep` (the 36 cells below 100%) | ~1.5 h |
 | `make clintox` (4 configs x 5 seeds x 4 fractions) | ~18 min |
+| `make dummy` (4 configs x 5 seeds, both datasets) | ~35 s |
 | **Everything: 156 runs** | **4.19 h** |
 
 The GNN costs about 3.8x the baseline on Tox21 and 5.5x on ClinTox, with
@@ -266,7 +268,7 @@ only.
 
 Three sanity checks passed: the baseline's 0.834 under a random split sits in
 the range published for fingerprint models on Tox21; the scaffold-disjointness
-check is recorded `true` in all 73 scaffold result files and `false` in all 73
+check is recorded `true` in all 78 scaffold result files and `false` in all 78
 random ones; and the dummy's PR-AUC reproduces the measured test-set positive
 rate to three decimals (0.077 vs 0.0768 random, 0.100 vs 0.0997 scaffold),
 which is what a class-prior model must score if the metric is masking missing
@@ -388,7 +390,8 @@ being assembled from two sources. The measured results bear this out — see
 headline PR-AUC from 0.38 to 0.68 in a measured run and hid the real signal.
 
 ```bash
-make clintox     # all four ClinTox configs, 5 seeds x 4 training fractions
+make clintox     # the four model configs, 5 seeds x 4 training fractions
+make dummy       # adds the class-prior floor, on both datasets
 ```
 
 Treat the outcome as a comparison of dataset *sizes* against Tox21, not as a
@@ -558,7 +561,7 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   gives `.gitignore` the job of keeping raw data and large result files out of
   version control. They are tracked instead so a clone reproduces the report
   offline and every number can be traced to its run file. The whole lot is
-  2.8 MB.
+  3.9 MB.
 - **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
   hours". The committed results use a GPU (RTX 5070 Ti) and take 4.19 h,
   inside that, though deterministic kernels tripled the GNN's share of it.

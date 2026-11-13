@@ -85,3 +85,45 @@ def test_an_unknown_command_is_rejected() -> None:
     with pytest.raises(SystemExit) as excinfo:
         main(["definitely-not-a-command"])
     assert excinfo.value.code != 0
+
+
+# --------------------------------------------------------------------------- #
+# `split.kind` has no default, and the configs say so
+#
+# configs/base.yaml leaves it unset on purpose and explains why: random versus
+# scaffold is the independent variable, so inheriting one silently would
+# produce a run nobody meant to make, under a name that claims otherwise.
+# These pin that the promise is enforced rather than merely written down.
+# --------------------------------------------------------------------------- #
+
+
+def test_default_config_supplies_no_split_kind() -> None:
+    from admet.training import DEFAULT_CONFIG
+
+    assert "kind" not in DEFAULT_CONFIG["split"]
+
+
+def test_a_config_without_a_split_kind_is_refused_by_name() -> None:
+    """Not a bare KeyError: the message has to say which key and why."""
+    from admet.training import split_kind
+
+    with pytest.raises(SystemExit) as excinfo:
+        split_kind({"split": {"fractions": [0.8, 0.1, 0.1]}})
+    message = str(excinfo.value)
+    assert "split.kind" in message
+    assert "random" in message and "scaffold" in message
+
+
+def test_run_name_refuses_rather_than_inventing_a_split() -> None:
+    """The run name carries the split, so a guessed one mislabels the file."""
+    from admet.training import run_name
+
+    with pytest.raises(SystemExit):
+        run_name({"dataset": {"name": "tox21"}, "model": {"name": "rf"}, "split": {}}, 0, 1.0)
+
+
+@pytest.mark.parametrize("kind", ["random", "scaffold"])
+def test_a_config_that_states_its_split_passes_through(kind: str) -> None:
+    from admet.training import split_kind
+
+    assert split_kind({"split": {"kind": kind}}) == kind

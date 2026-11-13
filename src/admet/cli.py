@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from admet import __version__
-from admet.training import load_config, run_experiment, run_name
+from admet.training import load_config, run_experiment, run_name, split_kind
 
 __all__ = ["main", "build_parser"]
 
@@ -157,7 +157,7 @@ def command_run(args: argparse.Namespace) -> int:
 
     cells = [(f, s) for f in fractions for s in seeds]
     print(
-        f"{path.name}: {config['model']['name']} / {config['split']['kind']} split / "
+        f"{path.name}: {config['model']['name']} / {split_kind(config)} split / "
         f"{config['dataset']['name']} - {len(cells)} run(s)"
     )
 

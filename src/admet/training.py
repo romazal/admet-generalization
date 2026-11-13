@@ -55,6 +55,7 @@ __all__ = [
     "DEFAULT_CONFIG",
     "deep_merge",
     "load_config",
+    "split_kind",
     "run_name",
     "run_experiment",
     "set_global_seeds",
@@ -67,7 +68,10 @@ __all__ = [
 DEFAULT_CONFIG: dict[str, Any] = {
     "dataset": {"name": "tox21", "tasks": None},
     "split": {
-        "kind": "scaffold",
+        # No `kind` default on purpose. Random versus scaffold is the
+        # independent variable of the whole study, so a config that forgets to
+        # say which one it wants must fail rather than quietly inherit one and
+        # produce a run nobody meant to make. `split_kind()` reports that.
         "fractions": [0.8, 0.1, 0.1],
         "params": {},
     },
@@ -247,13 +251,34 @@ def _git_commit() -> str | None:
 # --------------------------------------------------------------------------- #
 
 
+def split_kind(config: Mapping[str, Any]) -> str:
+    """The configured split kind, or a clear error saying it is missing.
+
+    ``configs/base.yaml`` deliberately leaves `split.kind` unset and says so,
+    because choosing random versus scaffold is the experiment. Without this
+    the omission would surface as a bare ``KeyError: 'kind'`` from whichever
+    line happened to read it first.
+    """
+    kind = config.get("split", {}).get("kind")
+    if not kind:
+        raise SystemExit(
+            "config does not set `split.kind`.\n"
+            "Random versus scaffold is the independent variable of this study, "
+            "so every experiment config has to state which one it runs. Add:\n"
+            "\n"
+            "split:\n"
+            "  kind: scaffold   # or: random\n"
+        )
+    return str(kind)
+
+
 def run_name(config: Mapping[str, Any], seed: int, train_fraction: float) -> str:
     """Stable identifier for a run, used as the result filename stem."""
     percent = int(round(train_fraction * 100))
     return (
         f"{config['dataset']['name']}"
         f"_{config['model']['name']}"
-        f"_{config['split']['kind']}"
+        f"_{split_kind(config)}"
         f"_frac{percent:03d}"
         f"_seed{seed}"
     )
@@ -394,7 +419,7 @@ def run_experiment(
 
     frac_train, frac_valid, frac_test = split_config["fractions"]
     split = make_split(
-        split_config["kind"],
+        split_kind(config),
         dataset.smiles,
         frac_train=frac_train,
         frac_valid=frac_valid,
@@ -406,7 +431,7 @@ def run_experiment(
 
     # §3.4: the unit tests prove the splitter is correct; this proves the
     # split this run actually used is clean.
-    leakage_checked = split_config["kind"] == "scaffold"
+    leakage_checked = split_kind(config) == "scaffold"
     if leakage_checked:
         assert_scaffold_disjoint(dataset.smiles, split)
 
@@ -441,7 +466,7 @@ def run_experiment(
         "run": name,
         "dataset": dataset_config["name"],
         "model": model_config["name"],
-        "split": split_config["kind"],
+        "split": split_kind(config),
         "seed": seed,
         "train_fraction": train_fraction,
         "metrics": {

@@ -1,8 +1,8 @@
 # Shared defaults for every experiment.
 #
-# Experiment configs start with `extends: base.yaml` and override only what
-# differs, so the values below are stated once rather than copied into five
-# files (proposal §5). Anything omitted here falls back to
+# Experiment configs start with `extends: ../base.yaml` and override only
+# what differs, so the values below are stated once rather than copied into
+# fifteen files (proposal §5). Anything omitted here falls back to
 # `admet.training.DEFAULT_CONFIG`.
 
 dataset:
@@ -10,9 +10,11 @@ dataset:
   tasks: null        # null = all 12 assays
 
 split:
-  # `kind` is deliberately not set here: choosing random vs scaffold is the
-  # whole point of the main experiment, so every experiment config must say
-  # which one it is rather than inheriting a default.
+  # `kind` is deliberately not set here, and `DEFAULT_CONFIG` does not set it
+  # either: choosing random vs scaffold is the whole point of the main
+  # experiment, so every experiment config must say which one it is rather
+  # than inheriting a default. `split_kind()` refuses a config that omits it,
+  # so this is enforced and not just a request.
   fractions: [0.8, 0.1, 0.1]   # train / validation / test, MoleculeNet convention
   params: {}
 
