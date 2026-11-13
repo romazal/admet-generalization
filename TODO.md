@@ -686,11 +686,10 @@ out of it and are below.*
   depends on `dtype=str, keep_default_na=False` behaving as it does today.
   One line to add to the tuple. Group it with the `torch_device` fix above so
   that a single re-run buys both.
-- **Pin the CSVs in `.gitattributes`.** The four tables in `results/` are
-  written with `lineterminator="\r\n"` and `core.autocrlf` is on here, so
-  `make aggregate` gives a zero diff on this machine. On a Linux clone it
-  would not. `results/*.csv -text` makes the zero-diff property survive the
-  clone — which is the property README's *Reproducibility* section claims.
+- **Pin the CSVs in `.gitattributes`** — *done 2026-11-13.* The rule
+  `results/*.csv -text` keeps Git from converting line endings, so the four
+  generated tables stay byte-identical across clones regardless of
+  `core.autocrlf`.
 
 ---
 
