@@ -64,6 +64,7 @@ make dummy       # the class-prior floor, both datasets           (~35 s)
 
 make aggregate   # results/**/*.json -> runs.csv, summary.csv, gap.csv, per_task.csv
 make plots       # -> figures/*.png
+make audit       # re-derive every number quoted in README.md and REPORT.md
 ```
 
 `make all` runs the lot in order (~4.2 h on a CUDA GPU).

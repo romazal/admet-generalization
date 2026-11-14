@@ -11,7 +11,7 @@ ADMET  := $(PYTHON) -m admet.cli
 
 .DEFAULT_GOAL := help
 
-.PHONY: help install data test main sweep dummy clintox aggregate plots all clean clean-results
+.PHONY: help install data test main sweep dummy clintox aggregate plots audit all clean clean-results
 
 help:  ## Show this help
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
@@ -53,6 +53,9 @@ aggregate:  ## Summarize results/ into runs.csv, summary.csv, gap.csv and per_ta
 
 plots:  ## Redraw every figure from the aggregated tables
 	$(ADMET) plots
+
+audit:  ## Re-derive every number quoted in README.md and REPORT.md
+	$(PYTHON) scripts/audit_numbers.py .
 
 all: test main sweep dummy clintox aggregate plots  ## Everything, in order
 

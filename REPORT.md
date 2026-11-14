@@ -459,13 +459,47 @@ the numbers do not support.
 - **The GNN may simply be undertrained.** 8 tuning trials is equal across
   models, which makes the comparison fair, but not necessarily sufficient. A
   null result is evidence about *this* budget.
-- **ClinTox is underpowered and probably leaky**, as set out in §4.
+- **ClinTox is underpowered**, as set out in §4: 146 test molecules carrying
+  7 to 17 positives, and 13 of its 16 gap intervals include zero. An earlier
+  draft also called it leaky; that claim is withdrawn and §4 says why.
 - **Tox21 is in vitro.** A model trained on it inherits the assay's imperfect
   in vitro → human concordance. If the model's job is to catch what in vitro
   screening misses, the residual signal is the least structure-predictable
   part. This belongs in the limitations part of the lecture.
 - **One architecture, one baseline.** "GNNs" are not tested; one GINE
   implementation is.
+
+### The mistake this report made four times
+
+Four claims in earlier drafts were wrong in the same way. The pattern is more
+useful than any of them individually, so it is recorded rather than quietly
+corrected.
+
+| Claim | What was compared | What was missed |
+|---|---|---|
+| ClinTox leaks provenance (§4) | 0.021 against 0.073 | the 0.021 has SD 0.084 and changes sign across seeds |
+| "ten times the model difference" (§3) | a ROC-AUC penalty against a gap from a different condition and metric | 5.3× within ROC-AUC, 1.2× counting PR-AUC |
+| "four times its own SD" (§7) | a mean against one SD, printed beside a different SD | paired 0.002, quadrature 0.011 |
+| "H2 is supported" (§3) | two splits offered as equal evidence | 2.4 SE and 1.4 SE |
+
+In every case each individual number was correct and matched the committed
+tables. `scripts/audit_numbers.py` re-derives all 38 values quoted in this
+report and the README from `results/*.csv`, and it passed on all four
+throughout — because it checks whether a number is right, never whether a
+comparison between two of them is warranted. No amount of that kind of
+checking would have caught any of these.
+
+Two habits would have caught all four. **Quote a difference with the spread
+of the difference**, not of its parts, and compute it paired across seeds
+where both arms saw the same split. **When two arms of the same experiment
+disagree, report both** — three of the four failures above survived as long as
+they did because the arm that contradicted them was set aside as too noisy to
+cite, which is a judgement that always favours the conclusion already
+written. Both habits are applied in §3 and §4 now.
+
+This is the result that transfers. The chemistry here is one dataset and one
+architecture; the reasoning error is general, and in a paper nobody would have
+re-derived the spreads either.
 
 ## 8. Deviations from the proposal
 
@@ -507,6 +541,13 @@ ClinTox neither confirms nor contradicts this: with 7 to 17 positives in a
 test set it is too small to resolve a gap of this size, and its one
 suspicious-looking number — a small scaffold penalty on the baseline — turned
 out to be noise that the GNN arm contradicts outright (§4).
+
+The result that travels furthest is not about chemistry. This study produced
+one robust finding, one hypothesis supported by a single arm, one null
+result, and **four confident claims that dissolved** when the spreads were
+compared instead of the means (§7). The chemistry is one dataset and one
+architecture; that reasoning error is general, and nothing in the numeric
+audit the project runs on itself would have caught a single one of them.
 
 The grid has been run twice, before and after the GNN was made
 deterministic, and every one of these conclusions stood through both while

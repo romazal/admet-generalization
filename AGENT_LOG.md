@@ -1287,3 +1287,32 @@ Every number newly written into the two reports was then re-derived from
 `results/runs.csv` by script before committing: eleven statistics, all
 matching.
 
+## The pattern becomes a finding
+
+*Instruction:* add it to the report and the artifact.
+
+The four corrected claims are now written up together rather than fixed one
+at a time and forgotten, as **§7, "The mistake this report made four times"**:
+a table of what was compared against what was missed, and the two habits that
+would have caught all of them — quote a difference with the spread of the
+difference, paired across seeds; and when two arms of an experiment disagree,
+report both. Three of the four survived as long as they did because the
+contradicting arm was set aside as too noisy to cite, which is a judgement
+that always favours the conclusion already written.
+
+§9 now ends on it, because it is the most transferable thing the project
+produced: one robust finding, one hypothesis carried by a single arm, one null
+result, and four confident claims that dissolved under their own error bars.
+
+**The audit script moved into the repository** as `scripts/audit_numbers.py`,
+with `make audit` to run it. It had been living outside the project, which
+made "the audit passes" an unverifiable claim about a file nobody else had.
+Its docstring now states the limitation in the place someone would read it:
+it checks whether each number is right and never whether comparing two of
+them is warranted, and it passed on all four wrong claims throughout.
+
+Also corrected: §7 still described ClinTox as "underpowered and probably
+leaky". The leak is withdrawn; underpowered is the part that survives.
+
+216 tests pass, 38 quoted values re-derived, no broken links.
+
