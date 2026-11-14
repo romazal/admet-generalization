@@ -1,0 +1,19 @@
+# Baseline on BBBP, scaffold split.
+#
+# The arm that matters: BBBP is a single endpoint on a small set, so the
+# random-to-scaffold drop is the only quantity here likely to clear its own
+# error bars. See rf_random.yaml for why PR-AUC is not informative.
+
+extends: ../base.yaml
+dataset:
+  name: bbbp
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: rf
+  params:
+    n_jobs: -1

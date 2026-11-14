@@ -1,0 +1,14 @@
+# Dummy prior baseline on BBBP, scaffold split.
+
+extends: ../base.yaml
+dataset:
+  name: bbbp
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: dummy
+  params: {}

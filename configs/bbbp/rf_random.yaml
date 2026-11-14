@@ -1,0 +1,21 @@
+# Baseline on BBBP, random split — the third dataset (TODO §3).
+#
+# BBBP is blood-brain-barrier penetration: the D in ADMET, and the dataset
+# the proposal names in §3.1. Single-task, ~2k molecules, so it is cheap.
+#
+# Read ROC-AUC here and treat PR-AUC with suspicion: 1501 of 1975 molecules
+# are positive, so the positive class is the 76% MAJORITY and PR-AUC runs
+# near that by construction. This is the same trap ClinTox's FDA_APPROVED
+# set, and the reason that label is excluded there.
+
+extends: ../base.yaml
+dataset:
+  name: bbbp
+
+split:
+  kind: random
+
+model:
+  name: rf
+  params:
+    n_jobs: -1

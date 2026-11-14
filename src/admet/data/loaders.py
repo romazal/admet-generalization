@@ -225,6 +225,24 @@ DATASETS: dict[str, DatasetSpec] = {
             "labels. The primary dataset (proposal §3.1)."
         ),
     ),
+    "bbbp": DatasetSpec(
+        name="bbbp",
+        url=f"{_MOLECULENET}/BBBP.csv",
+        filename="BBBP.csv",
+        smiles_column="smiles",
+        # `task_columns` rather than `exclude_columns`: the file also carries
+        # `num` and `name`, and `name` holds free text like "Propanolol", so
+        # letting every non-excluded column become an assay would train the
+        # model on a compound name.
+        task_columns=("p_np",),
+        description=(
+            "BBBP: ~2k molecules labelled for blood-brain-barrier penetration "
+            "(p_np, 1 = penetrates) — the D in ADMET and the proposal's own "
+            "named example (§3.1). Single-task, so no per-assay heatmap is "
+            "drawn for it. A known share of its SMILES do not parse; the "
+            "loader counts and drops them."
+        ),
+    ),
     "clintox": DatasetSpec(
         name="clintox",
         url=f"{_MOLECULENET}/clintox.csv.gz",

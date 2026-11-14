@@ -94,6 +94,18 @@ for split in ("random", "scaffold"):
     cell = "+%s ± %s" % (f3(g["gap"]), f3(g["gap_std"]))
     expect(cell, "REPORT.md")
 
+# --- every dataset that was run must be written up ---------------------------
+# A dataset can be added to the registry, run, aggregated and plotted without
+# anyone mentioning it in the report. That is a silent omission rather than a
+# wrong number, so nothing else here would catch it.
+LABELS = {"tox21": "Tox21", "clintox": "ClinTox", "bbbp": "BBBP"}
+for name in sorted({k[0] for k in summary}):
+    checks += 1
+    label = LABELS.get(name, name)
+    for doc in ("README.md", "REPORT.md"):
+        if label not in docs[doc]:
+            fails.append("%s: dataset %r was run but is never named" % (doc, label))
+
 # --- scaffold penalties -----------------------------------------------------
 for ds, places in (("tox21", 3), ("clintox", 3)):
     for model in ("rf", "gnn"):

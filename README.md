@@ -60,7 +60,8 @@ metrics, the library versions and the git commit.
 make main        # Tox21: both models x both splits, 5 seeds     (~2.4 h)
 make sweep       # Tox21 learning curves: 10/25/50/100% training (~1.5 h)
 make clintox     # ClinTox: the same grid, 5 seeds x 4 fractions (~18 min)
-make dummy       # the class-prior floor, both datasets           (~35 s)
+make bbbp        # BBBP: blood-brain barrier, the same grid       (~1.1 h)
+make dummy       # the class-prior floor, all three datasets      (~50 s)
 
 make aggregate   # results/**/*.json -> runs.csv, summary.csv, gap.csv, per_task.csv
 make plots       # -> figures/*.png

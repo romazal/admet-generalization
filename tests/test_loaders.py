@@ -141,3 +141,43 @@ def test_the_warning_separates_conflicts_from_duplicate_rows(
     message = str(record[0].message)
     assert "2 assay label(s)" in message
     assert "1 duplicate row(s)" in message
+
+
+# --------------------------------------------------------------------------- #
+# The registry itself
+#
+# Adding a dataset is a hand edit to `DATASETS` (TODO §3), and the mistake
+# that edit invites is listing the SMILES column as a label: the model then
+# trains on its own input and scores suspiciously well. These run over every
+# registered dataset so a fourth one is covered the day it is added.
+# --------------------------------------------------------------------------- #
+
+
+@pytest.mark.parametrize("name", sorted(DATASETS))
+def test_no_dataset_lists_its_smiles_column_as_a_task(name: str) -> None:
+    spec = DATASETS[name]
+    if spec.task_columns is None:
+        assert spec.smiles_column in spec.exclude_columns, (
+            f"{name} takes every non-excluded column as a task but does not "
+            f"exclude {spec.smiles_column!r}, so the model would be trained to "
+            f"predict its own input"
+        )
+    else:
+        assert spec.smiles_column not in spec.task_columns
+
+
+@pytest.mark.parametrize("name", sorted(DATASETS))
+def test_every_dataset_names_a_source_and_describes_itself(name: str) -> None:
+    spec = DATASETS[name]
+    assert spec.name == name, "registry key and spec name must agree"
+    assert spec.url and spec.filename
+    assert len(spec.description) > 40, "the description is what `admet datasets` prints"
+
+
+def test_bbbp_is_registered_with_its_single_endpoint() -> None:
+    """BBBP is the third dataset (TODO §3); its label column is `p_np`."""
+    spec = DATASETS["bbbp"]
+    assert spec.task_columns == ("p_np",)
+    assert spec.smiles_column == "smiles"
+    # `name` holds free text such as "Propanolol"; it must never be a task.
+    assert "name" not in (spec.task_columns or ())

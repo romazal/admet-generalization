@@ -1,0 +1,17 @@
+# Dummy prior baseline on BBBP, random split.
+#
+# Carries more weight here than on the other two datasets. With 76% of
+# molecules positive, a model that ignores the molecule entirely already
+# scores a PR-AUC near 0.76 — so the floor is what stops anyone reading
+# BBBP's PR-AUC as a result.
+
+extends: ../base.yaml
+dataset:
+  name: bbbp
+
+split:
+  kind: random
+
+model:
+  name: dummy
+  params: {}

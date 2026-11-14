@@ -1,0 +1,17 @@
+# GNN on BBBP, scaffold split.
+
+extends: ../base.yaml
+dataset:
+  name: bbbp
+
+split:
+  kind: scaffold
+  params:
+    order: random
+
+model:
+  name: gnn
+  params:
+    epochs: 50
+    patience: 10
+    weight_decay: 0.0
