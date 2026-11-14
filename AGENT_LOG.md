@@ -1167,3 +1167,65 @@ are now fifteen.
 216 tests pass. Tables and figures still regenerate with a zero diff, and all
 38 quoted values still match `results/*.csv`.
 
+## The ClinTox provenance claim, withdrawn
+
+*Instruction:* check that claim properly — it could mean a lot and is very
+loud if true.
+
+It was not true, and checking it is the most useful thing done to this report
+so far.
+
+The claim, which the agent wrote and §4 carried for two days: ClinTox's
+baseline loses only 0.021 ROC-AUC to a scaffold split where Tox21 loses
+0.073, while ClinTox's test molecules become *less* like its training
+molecules than Tox21's do — so the score cannot be carried by structure, and
+the label must be leaking which of the two source files each molecule came
+from. It reads as the strongest result in the project. Both of its premises
+are wrong.
+
+**The 0.021 is noise.** Paired by seed, the ClinTox baseline's scaffold
+penalty reads +0.091, −0.070, +0.082, +0.074, −0.071. Two of five seeds are
+negative — the scaffold split made the model *better*. Mean 0.021 against an
+SD of 0.084. The difference from Tox21's 0.073 is 0.052 ± 0.038, which is
+1.4 SE from zero.
+
+**The other arm says the opposite.** On the same splits the GNN loses 0.074 on
+ClinTox against 0.075 on Tox21: a difference of 0.001, 0.05 SE. By the GNN the
+two datasets lose exactly the same amount to a scaffold split. The report had
+a sentence reading "Only the baseline's small drop should be cited", written
+because the GNN arm was noisy — and that sentence is what licensed quoting the
+single arm that agreed with the conclusion while discarding the one that
+refuted it. It looked like caution and worked like cherry-picking.
+
+**The similarity half came from one seed.** "A median drop of 36% against 28%"
+is seed 0, which the figure happens to draw, and 36% is ClinTox's most extreme
+of five. Across all five the drops are 29.5% ± 1.1% on Tox21 and 31.7% ± 2.6%
+on ClinTox, and in absolute terms they are the same: 0.170 ± 0.006 against
+0.166 ± 0.015. There is no bigger shift to explain.
+
+**The logic was also unsound**, independently of the numbers. A model can rely
+on structural features that are not scaffold features — molecular size, a
+reactive group, gross physicochemistry — and those survive a scaffold split
+intact. "The score survives the shift" does not imply "the score is not
+structural", which is the step the whole argument turned on.
+
+**And the 19 duplicates did not support it either.** They are merged before any
+split, so they cannot leak across one. They show the source labels disagreeing
+with each other, which is label noise, not provenance recoverable from the
+test set.
+
+The cause of the volatility is one number the report should have led with: a
+ClinTox test set holds 146 molecules of which 7 to 17 are positive.
+
+§4 now carries the retraction and the arithmetic behind it rather than the
+claim, the conclusion in §9 no longer rests on it, the README bullet is
+rewritten, and the published briefing page says the same. What stands is
+narrower and still worth saying — ClinTox is underpowered and internally
+inconsistent, which is reason to distrust its score, not a demonstration of
+where the score comes from.
+
+Worth recording as a process point: every individual number in the withdrawn
+claim was correct and matched the committed tables. The 38-value audit passed
+on it throughout. What was wrong was comparing two quantities without
+comparing their spreads, and the audit cannot catch that.
+

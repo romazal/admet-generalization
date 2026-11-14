@@ -166,50 +166,71 @@ to ±0.16, and the PR-AUC gap changes sign twice. With
 moving across the decision boundary swings the score. This is the inconclusive
 result the dataset decision predicted, and it is reported as inconclusive.
 
-The informative comparison is the **drop from random to scaffold**:
+The comparison that looks informative is the **drop from random to scaffold**,
+paired by seed so both arms see the same split:
 
 | Dataset | Training molecules | Baseline drop | GNN drop |
 |---|---|---|---|
-| Tox21 | 6259 | **−0.073** | **−0.075** |
-| ClinTox | 1169 | −0.021 | −0.074 |
+| Tox21 | 6259 | **−0.073 ± 0.013** | **−0.075 ± 0.024** |
+| ClinTox | 1169 | −0.021 ± 0.084 | −0.074 ± 0.044 |
 
-ClinTox scores *higher* than Tox21 (0.92 vs 0.84) on a fifth of the data: the
-ClinTox label is easier to predict than clinical toxicity should be. ClinTox is
-assembled from two sources, and the cleaning step found 19 duplicate structures
-carrying *contradictory* labels — the same molecule appearing as approved and
-as failed-for-toxicity. A label that is partly recoverable from which source a
-molecule came from, rather than from whether it is toxic, would look exactly
-like this.
+ClinTox scores *higher* than Tox21 (0.92 against 0.84) on a fifth of the data,
+and the ClinTox label is easier to predict than clinical toxicity should be.
+That much is worth reporting.
 
-The scaffold drop is the weaker half of that argument, and the reruns are why.
-The baseline loses only 0.021 — a third of what it loses on Tox21, which is
-the suspicious part. The GNN's drop read 0.082 before the determinism fix and
-0.074 after it; at ±0.05–±0.06 per arm both are consistent with one
-underlying value and neither is measurable. Only the baseline's small drop
-should be cited.
+### A claim this section used to make, and why it is withdrawn
 
-That small drop is more damning than it first looks, because the scaffold
-split works *harder* on ClinTox than on Tox21. Measuring each test molecule's
-Tanimoto similarity to its nearest training molecule, under both splits:
+An earlier draft argued from the first column of that table that ClinTox's
+score cannot be carried by structure, and therefore that the label leaks the
+provenance of the two source files it was assembled from. Three things are
+wrong with that argument.
 
-| Dataset | Median, random | Median, scaffold | Drop | Baseline ROC-AUC lost |
-|---|---|---|---|---|
-| Tox21 | 0.583 | 0.419 | −0.164 (28%) | **0.073** |
-| ClinTox | 0.523 | 0.333 | −0.190 (36%) | **0.021** |
+- **The 0.021 is noise.** Per seed the ClinTox baseline drop reads +0.091,
+  −0.070, +0.082, +0.074, −0.071 — two of the five are *negative*, meaning
+  the scaffold split made the model better. Mean 0.021, SD 0.084. Against
+  Tox21's 0.073 the difference is 0.052 ± 0.038 (SE), 1.4 SE from zero.
+- **The other arm says the opposite.** On the same splits the GNN loses 0.074
+  on ClinTox against 0.075 on Tox21 — a difference of 0.001, 0.05 SE. By the
+  GNN the two datasets lose *exactly the same amount*. The earlier draft cited
+  only the baseline, on the stated grounds that the GNN arm was too noisy to
+  cite; that reasoning selected the one arm which supported the conclusion.
+- **The structural shift is not bigger on ClinTox.** That claim came from a
+  single seed. Across five, the median nearest-neighbour similarity falls
+  29.5% ± 1.1% on Tox21 and 31.7% ± 2.6% on ClinTox, and in absolute terms the
+  two drops are the same: 0.170 ± 0.006 against 0.166 ± 0.015. Seed 0, the one
+  the figure draws, is ClinTox's most extreme of the five at 36%.
 
-ClinTox's test molecules end up *less* like its training molecules than
-Tox21's do, and its baseline still loses a third as much accuracy. If the
-score were carried by structure, a larger structural shift could not cost
-less. Something in the ClinTox label survives having the scaffolds pulled
-apart — which is what a label partly recoverable from provenance would do, and
-is the strongest version of the argument above. It is drawn from one seed of
-each split (`figures/clintox/train_test_similarity_clintox.png`), so read the
-medians rather than the shape of that histogram: with 146 test molecules its
-bars stand on three or four molecules each.
+The volatility has a plain cause. A ClinTox test set holds 146 molecules of
+which **7 to 17** are positive, so a handful crossing the decision boundary
+moves ROC-AUC further than the effect under discussion:
+
+| Split | Test positives, seeds 0–4 |
+|---|---|
+| Random | 11, 11, 12, 7, 10 |
+| Scaffold | 17, 10, 15, 17, 11 |
+
+Even had the numbers held, the inference would not. A model can rely on
+structural features that are not *scaffold* features — molecular size, a
+reactive group, gross physicochemistry — and those survive a scaffold split
+intact. "The score survives the shift" does not imply "the score is not
+structural", and that is the step the argument turned on.
+
+### What stands
+
+ClinTox is **underpowered**: 13 of its 16 gap intervals include zero, and the
+three that do not miss by less than a thousandth. It is also **dirty**: the
+cleaning step found 19 duplicate structures carrying *contradictory* labels,
+the same molecule appearing as approved and as failed-for-toxicity. Those
+duplicates are merged before any split, so they cannot leak across it — they
+show that the source labels disagree with each other, not that the label is
+recoverable from provenance.
+
+A suspiciously easy label on a small, internally inconsistent dataset is a
+good reason to distrust the score. It is not, on this evidence, a
+demonstration of provenance leakage, and this report no longer claims one.
 
 **Read ClinTox as a cautionary comparison of dataset sizes, not as a second
-test of H1 and H2.** A high score on a small, provenance-mixed dataset is the
-failure mode the study was designed to expose, not a success.
+test of H1 and H2.**
 
 ## 5. Runtime and compute
 
@@ -465,9 +486,10 @@ methods degrade most and where their difference matters least. The GNN also
 costs more compute to reach the same place — 3.8–5.5× the baseline at the full
 training set, on a GPU, with deterministic kernels pinned.
 
-ClinTox neither confirms nor contradicts this; it is too small to resolve a
-gap of this size, and the baseline's suspiciously small scaffold penalty on it
-is better explained by dataset provenance than by model quality.
+ClinTox neither confirms nor contradicts this: with 7 to 17 positives in a
+test set it is too small to resolve a gap of this size, and its one
+suspicious-looking number — a small scaffold penalty on the baseline — turned
+out to be noise that the GNN arm contradicts outright (§4).
 
 The grid has been run twice, before and after the GNN was made
 deterministic, and every one of these conclusions stood through both while

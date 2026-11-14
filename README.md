@@ -166,13 +166,14 @@ threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 - **Headline numbers** (Tox21 test ROC-AUC, five seeds): baseline
   **0.834 ± 0.009** random / **0.760 ± 0.013** scaffold; GNN
   **0.838 ± 0.016** random / **0.763 ± 0.010** scaffold.
-- **ClinTox is inconclusive, and informative anyway.** Every GNN-minus-baseline
-  gap on it is no larger than its own SD (+0.091 ± 0.088 at best), so it settles
-  nothing about H1 or H2. But it scores *higher* than Tox21 on a fifth of the
-  data and the baseline loses only 0.021 ROC-AUC to a scaffold split, where
-  Tox21 loses 0.073–0.075. Together with 19 duplicate structures carrying
-  contradictory labels, that points at dataset provenance rather than at model
-  quality.
+- **ClinTox is inconclusive, and that is the finding.** Its test set holds 146
+  molecules with 7–17 positives, so almost every number on it moves more
+  between seeds than the effects being measured: the baseline's scaffold
+  penalty reads +0.091, −0.070, +0.082, +0.074, −0.071 across the five. It
+  scores *higher* than Tox21 on a fifth of the data, which is worth
+  distrusting, and 19 of its structures carry contradictory labels. An earlier
+  draft read all that as evidence of provenance leakage; it is not, and §4 of
+  the report sets out why the argument failed.
 - **The GNN costs 3.8x the baseline on Tox21 and 5.5x on ClinTox** at the full
   training set, on the GPU, for no measurable gain. Pinning deterministic
   kernels tripled its cost (see *Reproducibility*).
