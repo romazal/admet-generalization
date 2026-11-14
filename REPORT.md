@@ -122,19 +122,33 @@ Learning curves (3 seeds), GNN − baseline:
 | 50% | −0.007 ± 0.011 | −0.002 ± 0.024 | −0.042 ± 0.017 | −0.027 ± 0.028 |
 | 100% | +0.005 ± 0.019 | +0.003 ± 0.016 | −0.011 ± 0.029 | −0.025 ± 0.025 |
 
-**The split type dominates.** Scaffold splitting costs the baseline 0.073
-ROC-AUC and the GNN 0.075 — roughly ten times the difference between the two
-models in any condition. This is the clearest result in the study, and the one
-that has survived every rerun unchanged to three decimal places (§5b).
+**The split type dominates.** Scaffold splitting costs the baseline
+0.073 ± 0.013 ROC-AUC and the GNN 0.075 ± 0.024, paired by seed — thirteen
+standard errors from zero, and about **fifteen times** the 0.005 that
+separates the two models at the full training set. Stated across the whole
+learning curve the multiple is smaller but the ordering is not in doubt: the
+penalty is at least five times the largest ROC-AUC gap between the models at
+any training size. (In PR-AUC the models differ by up to 0.059 at 10%, so the
+"order of magnitude" framing belongs to ROC-AUC and not to every metric.)
+This is the clearest result in the study, and the one that has survived every
+rerun unchanged to three decimal places (§5b).
 
-**H2 is supported, with a caveat on how cleanly.** The baseline is better than
-the GNN with little data and the advantage closes as data is added. The
-cleanest evidence is PR-AUC, where the 10% gap is more than twice its own SD
-in both splits and shrinks monotonically to −0.011 (random) and −0.025
-(scaffold) at 100%. Before the GNN was made deterministic the decline was
-monotone under one split and not the other (§5b) — that was its own
-run-to-run spread. The endpoints carry the claim either way, and the shape in
-between is not worth reading as a trend at 3 seeds.
+**H2 is supported, by one of the two splits.** The baseline is better than the
+GNN with little data and the advantage closes as data is added. The cleanest
+evidence is PR-AUC, where the 10% gap is more than twice its own SD in both
+splits and shrinks monotonically to −0.011 (random) and −0.025 (scaffold) at
+100%.
+
+The two arms do not support it equally. Measured as a change from 10% to
+100%, the narrowing is +0.048 ± 0.020 under the random split — 2.4 SE — and
++0.032 ± 0.022 under the scaffold split, which is 1.4 SE and does not
+establish anything on its own. **H2 is carried by the random split**; the
+scaffold arm agrees with it and no more.
+
+Before the GNN was made deterministic the decline was monotone under one
+split and not the other (§5b) — that was its own run-to-run spread. The
+endpoints carry the claim either way, and the shape in between is not worth
+reading as a trend at 3 seeds.
 
 **H1 is not supported, because its premise fails.** At the full training set
 there is no GNN advantage to shrink: +0.005 ± 0.019 and +0.003 ± 0.016, both
@@ -427,9 +441,12 @@ the numbers do not support.
 ## 7. Threats to validity
 
 - **Three seeds is not enough, and we have the evidence twice.** The same
-  Tox21 scaffold gap reads −0.008 ± 0.011 at 3 seeds — four times its own SD,
-  which looks like a real baseline win — and +0.003 ± 0.016 at 5 seeds, where
-  it flips sign. The apparent effect was seed noise. Independently, several
+  Tox21 scaffold gap reads −0.008 at 3 seeds, with the three paired
+  differences agreeing to an SD of 0.002 — tight enough to look like a real
+  baseline win — and +0.003 at 5 seeds, where it flips sign. (The ±0.011 in
+  the §3 table is the two arms' spreads combined in quadrature, which is a
+  different and larger quantity; the two should not be quoted against each
+  other.) The apparent effect was seed noise. Independently, several
   3-seed learning-curve gaps changed sign between passes (§5b). The
   learning-curve rows in §3 are 3-seed and are directional only.
 - **The GNN's numbers were not reproducible at all until they were made so.**

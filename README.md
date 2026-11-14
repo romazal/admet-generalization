@@ -149,16 +149,19 @@ threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 *[Findings](#findings)* below.
 
 - **The split type is the whole story.** Scaffold splitting costs the baseline
-  0.073 ROC-AUC and the GNN 0.075 — roughly ten times the difference between
-  the two models in any condition. When the test molecules stop resembling the
-  training molecules, both methods degrade far more than either gains from its
-  architecture.
-- **H2 (data size): supported, with one caveat.** The fingerprint baseline
+  0.073 ± 0.013 ROC-AUC and the GNN 0.075 ± 0.024 — about **fifteen times** the
+  0.005 that separates the two models at the full training set, and at least
+  five times the largest ROC-AUC gap between them at any training size. When
+  the test molecules stop resembling the training molecules, both methods
+  degrade far more than either gains from its architecture.
+- **H2 (data size): supported by the random split.** The fingerprint baseline
   beats the GNN with little data and the advantage closes as data is added —
-  in PR-AUC the gap runs from −0.057 at 10% of the training set to −0.025 at
-  100% under a scaffold split, and from −0.059 to −0.011 under a random split,
-  monotonically in both. An earlier pass had the random-split ordering break;
-  that turned out to be the GNN's own run-to-run noise (see *Reproducibility*).
+  in PR-AUC the gap runs from −0.059 at 10% of the training set to −0.011 at
+  100% under a random split, and from −0.057 to −0.025 under a scaffold split,
+  monotonically in both. The two arms are not equally strong: that narrowing
+  is 2.4 SE under the random split and 1.4 SE under the scaffold one, so the
+  random split carries the hypothesis and the scaffold split only agrees with
+  it.
 - **H1 (generalization): not supported, because its premise fails.** At the
   full training set there is no GNN advantage to shrink: +0.005 ± 0.019 under
   the random split, +0.003 ± 0.016 under the scaffold split, both within one
@@ -178,10 +181,12 @@ threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
   training set, on the GPU, for no measurable gain. Pinning deterministic
   kernels tripled its cost (see *Reproducibility*).
 - **A methodological result worth the same weight.** An intermediate three-seed
-  pass put the scaffold gap at −0.008 ± 0.011, which reads as a real effect at
-  four times its own SD; at five seeds it is +0.003 ± 0.016 and the sign flips.
-  The proposal's "target 5, minimum 3" is doing real work — three-seed numbers
-  are directional only.
+  pass put the scaffold gap at −0.008, and the three seeds agreed with each
+  other so closely (SD 0.002 across the paired differences) that it read as a
+  real baseline win. At five seeds it is +0.003 and the sign flips. The
+  proposal's "target 5, minimum 3" is doing real work — three-seed numbers are
+  directional only, and three seeds agreeing is not evidence that they are
+  right.
 
 The honest one-line answer to the research question: *on this dataset, at this
 tuning budget, the GNN and the fingerprint baseline are indistinguishable — and
@@ -243,11 +248,14 @@ Whatever is gained by choosing an architecture here is small next to what is
 lost when the test molecules stop resembling the training molecules. This is
 the result the research question was asked to expose, and it is unambiguous.
 
-**2. H2 is supported, with a caveat on how cleanly.** The baseline is clearly
+**2. H2 is supported, by one of the two splits.** The baseline is clearly
 better than the GNN with little data, and the advantage closes as data is
 added. The cleanest evidence is PR-AUC, where the 10% gap (−0.059 random,
 −0.057 scaffold) is more than twice its own SD and shrinks monotonically to
-−0.011 and −0.025 at 100%. An earlier, non-deterministic pass had the random
+−0.011 and −0.025 at 100%. As a measured change from 10% to 100%, that
+narrowing is **2.4 SE under the random split and 1.4 SE under the scaffold
+split** — so the random arm establishes H2 and the scaffold arm agrees without
+establishing it. An earlier, non-deterministic pass had the random
 split break monotonicity and the two splits disagree about which was smooth;
 that was the GNN's own run-to-run spread, not a property of the data. The
 *endpoints* carry the claim either way — treat H2 as supported by the 10%
@@ -262,13 +270,17 @@ outcome is compatible with H1 and equally compatible with a GNN that is simply
 undertrained at 8 tuning trials; this design cannot separate those.
 
 **4. Three seeds were not enough, and the data shows it.** At 3 seeds the
-scaffold ROC-AUC gap read −0.008 ± 0.011 — four times its own SD, which reads
-as a real baseline win; at 5 it reads +0.003 ± 0.016 and the sign flips. The
-apparent effect was seed noise. Treat every 3-seed row above as directional
-only.
+scaffold ROC-AUC gap read −0.008, with the three paired differences agreeing
+to an SD of 0.002 — which reads as a real baseline win. At 5 it reads +0.003
+and the sign flips. The apparent effect was seed noise, and the tightness of
+the first three seeds was itself the trap: a small sample can be consistent
+and wrong at once. Treat every 3-seed row above as directional only.
 
-Three sanity checks passed: the baseline's 0.834 under a random split sits in
-the range published for fingerprint models on Tox21; the scaffold-disjointness
+Two sanity checks passed, and one comparison is offered without proof. The
+baseline's 0.834 under a random split is in line with published fingerprint
+baselines on Tox21, but nothing in this repository verifies that and no
+citation is given, so treat it as orientation rather than as a check. The
+checks proper: the scaffold-disjointness
 check is recorded `true` in all 78 scaffold result files and `false` in all 78
 random ones; and the dummy's PR-AUC reproduces the measured test-set positive
 rate to three decimals (0.077 vs 0.0768 random, 0.100 vs 0.0997 scaffold),
@@ -286,6 +298,12 @@ training molecule, under each split. The median falls from 0.583 to 0.419,
 and the share of test molecules that have a *fingerprint-identical* training
 molecule falls from 7.8% to 0.6% — which is what the scaffold split is for,
 and a reminder of how much a random split flatters a model on this data.
+
+Those four numbers are seed 0, the seed the figure draws. Across all five
+seeds they are 0.578 ± 0.005 → 0.408 ± 0.007 and 7.5% ± 0.5% → 0.8% ± 0.3%, so
+on Tox21 the single seed is representative. It is quoted here because the
+figure and the text should agree; on ClinTox the same shortcut produced a
+claim that had to be withdrawn (REPORT §4).
 
 ClinTox results and the cross-dataset comparison are in
 [REPORT.md](REPORT.md) §4.

@@ -1229,3 +1229,61 @@ claim was correct and matched the committed tables. The 38-value audit passed
 on it throughout. What was wrong was comparing two quantities without
 comparing their spreads, and the audit cannot catch that.
 
+## The same check, applied to every other claim
+
+*Instruction:* check the other claims in the report the same way.
+
+Nine comparative claims tested the way the ClinTox one was — not "does the
+number match the table" but "does the comparison survive its own spread, and
+does the inference follow". Three failed, two were weaker than stated, one is
+unverifiable, and the rest held.
+
+**"Roughly ten times the difference between the two models in any condition."**
+Wrong twice. Within ROC-AUC the largest model gap at any training size is
+0.014, so the multiple is 5.3×, not ten. Counting PR-AUC, where the models
+differ by 0.059 at 10%, it is 1.2×. The ten came from the full-training-set
+condition alone, where it is really 15×. Restated with the condition named
+and the PR-AUC exception stated.
+
+**"−0.008 ± 0.011 at 3 seeds — four times its own SD."** Self-contradictory as
+written: 0.008/0.011 is 0.7. The ±0.011 is the two arms' spreads combined in
+quadrature, which is what the §3 table reports; the "four times" uses the
+paired per-seed SD of 0.0019. Two different quantities quoted against each
+other in one sentence. Rewritten to use the paired SD throughout, which also
+makes the point sharper: the three seeds agreed to 0.002 and were still
+wrong, so tightness in a small sample is not evidence.
+
+**"H2 is supported."** Measured as the change from 10% to 100%, the narrowing
+is 2.4 SE under the random split and **1.4 SE under the scaffold split**. The
+report presented both arms as equally supporting the hypothesis. H2 is
+carried by the random split; the scaffold arm agrees without establishing
+anything, and §3 now says so.
+
+**Weaker than stated, now flagged.** The "more than twice its own SD" at 10%
+is 2.5× and 2.4× on the quadrature measure the tables use, but 1.8× on the
+paired measure for the scaffold arm, from three seeds. And the Tox21
+similarity headline — 0.583 → 0.419, 7.8% → 0.6% — is seed 0, the same
+single-seed shortcut that produced the withdrawn ClinTox claim. Here it is
+representative (five seeds give 0.578 ± 0.005 → 0.408 ± 0.007 and 7.5% ± 0.5%
+→ 0.8% ± 0.3%), and the README now says both.
+
+**Unverifiable, now labelled as such.** "The baseline's 0.834 sits in the
+range published for fingerprint models on Tox21" was listed as one of three
+passed sanity checks. Nothing in the repository verifies it and no citation
+is given. It is now presented as orientation rather than as a check, and the
+count is two checks, not three.
+
+**Held, on checking.** The scaffold penalty itself is 0.073 ± 0.013, thirteen
+standard errors from zero. The per-assay heterogeneity is real: SR-ATAD5
+loses 0.159 ± 0.068 where NR-ER loses −0.015 ± 0.043, a difference of 2.2
+SD-units. The dummy floor matches the macro-averaged test positive rate to
+four decimals (0.0768 and 0.0997) — the first attempt to check it used the
+pooled rate and appeared to disagree; the report had used the right averaging
+and the check was wrong. The "six / seven / four times chance" multiples are
+6.2, 7.1 and 4.3. The determinism figures hold: spread 0.032 is 2.9× the seed
+SD and 6× the model difference.
+
+Every number newly written into the two reports was then re-derived from
+`results/runs.csv` by script before committing: eleven statistics, all
+matching.
+
