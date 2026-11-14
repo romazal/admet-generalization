@@ -84,15 +84,18 @@ for frac in (0.1, 0.25, 0.5):
             cell = "%s%s ± %s" % (sign, f3(abs(float(g["gap"]))), f3(g["gap_std"]))
             expect(cell)
 
-# --- ClinTox 100% table (REPORT only) --------------------------------------
-for split in ("random", "scaffold"):
-    for model in ("rf", "gnn"):
-        k = ("clintox", model, split, 1.0)
-        cell = "%s ± %s" % (f3(summary[k]["roc_auc_mean"]), f3(summary[k]["roc_auc_std"]))
-        expect(cell, "REPORT.md")
-    g = gap[("clintox", split, 1.0, "roc_auc")]
-    cell = "+%s ± %s" % (f3(g["gap"]), f3(g["gap_std"]))
-    expect(cell, "REPORT.md")
+# --- every secondary dataset needs its 100% table in the report -------------
+# Not just its name: "BBBP" appears the moment a make target is added, so
+# naming alone would pass on a dataset nobody wrote up. Requiring the actual
+# cells means the audit fails until the table is there.
+for name in sorted({k[0] for k in summary} - {"tox21"}):
+    for split in ("random", "scaffold"):
+        for model in ("rf", "gnn"):
+            k = (name, model, split, 1.0)
+            if k not in summary:
+                continue
+            cell = "%s ± %s" % (f3(summary[k]["roc_auc_mean"]), f3(summary[k]["roc_auc_std"]))
+            expect(cell, "REPORT.md")
 
 # --- every dataset that was run must be written up ---------------------------
 # A dataset can be added to the registry, run, aggregated and plotted without

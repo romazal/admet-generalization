@@ -131,7 +131,11 @@ SPLIT_STYLES: dict[str, dict[str, object]] = {
     "scaffold": {"linestyle": "--", "marker": "s"},
 }
 
-DATASET_LABELS: dict[str, str] = {"tox21": "Tox21", "clintox": "ClinTox"}
+DATASET_LABELS: dict[str, str] = {
+    "tox21": "Tox21",
+    "clintox": "ClinTox",
+    "bbbp": "BBBP",
+}
 
 SPLIT_LABELS: dict[str, str] = {
     "random": "Random split",

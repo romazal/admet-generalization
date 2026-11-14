@@ -704,3 +704,16 @@ def test_overview_refuses_an_empty_label_matrix(tmp_path: Path) -> None:
         )
         is None
     )
+
+
+def test_every_registered_dataset_has_a_display_label() -> None:
+    """A missing label silently titles the figure with the raw registry key.
+
+    BBBP shipped one round of figures titled "bbbp" because nothing caught it:
+    `_label` falls back to the key rather than raising, which is right at run
+    time and invisible in review.
+    """
+    from admet.data.loaders import DATASETS
+
+    missing = [n for n in DATASETS if n not in plots.DATASET_LABELS]
+    assert not missing, f"no DATASET_LABELS entry for {missing}"

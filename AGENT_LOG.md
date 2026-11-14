@@ -1316,3 +1316,73 @@ leaky". The leak is withdrawn; underpowered is the part that survives.
 
 216 tests pass, 38 quoted values re-derived, no broken links.
 
+## BBBP, and a presentation briefing
+
+*Instruction:* run BBBP without the milestone; make the artifact really usable
+on a phone during the presentation; add how the repository structure was
+decided and what was implemented; then check all the claims again.
+
+**BBBP went in by hand**, as §3 of `TODO.md` describes, not through the
+dataset-agnostic milestone. Columns were read off the real file rather than
+taken from the task text, which matters here: the file carries `num`, `name`,
+`p_np` and `smiles`, and `name` holds free text like "Propanolol", so
+`exclude_columns` would have made a compound name into an assay. A test now
+asserts that for every registered dataset and fails against a mutant.
+
+90 runs, 31 minutes. Two results are worth more than the rest.
+
+**The baseline beats the GNN, and on BBBP it is measurable** — 0.027 ± 0.008
+under a random split and **0.031 ± 0.003** under a scaffold split, all five
+seeds agreeing, 10.7 SE. Across the six dataset-split cells the gaps sit at
+1.1, 0.4, 2.3, 1.2, 3.3 and 10.7 SE, so this one is three times stronger than
+anything else in the study. A first draft called it "the only model difference
+that clears its own error bars"; checking the other five showed ClinTox's
+random arm nominally clears 2 SE too, so the sentence was corrected before it
+was committed. That is the fifth time the same check has changed a sentence.
+
+**BBBP is 76% positive**, which makes its PR-AUC meaningless — the dummy
+already scores 0.764 and the models reach 0.95. It is the ClinTox
+`FDA_APPROVED` trap again, this time on the only label the dataset has.
+
+**The small-penalty pattern came back, and this time it is real.** BBBP's
+scaffold penalty is 0.021 against Tox21's 0.073, a difference of 3.3 SE with
+*both* model arms agreeing — where the withdrawn ClinTox version had one arm
+at 1.4 SE and the other contradicting it. The explanation is ordinary
+chemistry rather than anything sinister: blood-brain-barrier penetration is
+driven largely by molecular weight, lipophilicity, polar surface area and
+hydrogen-bond counts, which are structural *and* scaffold-independent. That
+makes BBBP a worked example of the reasoning hole that sank the ClinTox claim,
+which is now stated in §4 beside both.
+
+**Two bugs found on the way.** `data/BBBP.csv` was gitignored — the allowlist
+names raw files one by one and BBBP was not on it, so the file every result
+came from would never have reached a clone while the README promised the
+opposite. And every BBBP figure was titled "bbbp", because `DATASET_LABELS`
+had no entry and `_label` falls back to the raw key rather than raising. Both
+fixed, the second with a test over the whole registry.
+
+**One self-inflicted blemish, documented rather than re-run.** BBBP's 90
+result files carry three different `git_commit` values, because commits were
+made while the grid was running. The code those runs executed was identical
+throughout — the only `src/` change across those commits is BBBP's own
+registry entry, which had to be on disk before the first run or none of them
+could have loaded the dataset. Re-running 90 jobs to correct a metadata field
+is the mistake already recorded under the determinism work, so §2 states the
+situation instead. The operational lesson is simpler: do not commit while a
+grid is running.
+
+**The briefing page was rebuilt for use during the talk** — a sticky jump bar,
+a cheat sheet of the twelve numbers most likely to be asked, and two new
+sections: how the repository is built (eight structural decisions and what
+each one buys, plus a module-by-module table of what was implemented) and
+nine likely questions with answers.
+
+**`scripts/recheck_claims.py` joins the repository**, wired into `make audit`
+beside the numeric check. It re-derives 31 comparative claims — every effect
+against its own spread, paired across seeds. The numeric audit answers "is
+this number right"; this one answers "is this comparison warranted", which is
+the question four withdrawn claims failed.
+
+223 tests pass. 246 runs, 34 figures, 43 quoted values and 31 comparisons all
+re-derived.
+

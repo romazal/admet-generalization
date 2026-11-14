@@ -64,6 +64,7 @@ plots:  ## Redraw every figure from the aggregated tables
 
 audit:  ## Re-derive every number quoted in README.md and REPORT.md
 	$(PYTHON) scripts/audit_numbers.py .
+	$(PYTHON) scripts/recheck_claims.py
 
 all: test main sweep dummy clintox bbbp aggregate plots  ## Everything, in order
 

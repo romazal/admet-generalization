@@ -97,7 +97,7 @@ records the device torch could *see*, not the one the model used — see
 | `make sweep` (the 36 cells below 100%) | ~1.5 h |
 | `make clintox` (4 configs x 5 seeds x 4 fractions) | ~18 min |
 | `make dummy` (4 configs x 5 seeds, both datasets) | ~35 s |
-| **Everything: 156 runs** | **4.19 h** |
+| **Everything: 246 runs** | **4.70 h** |
 
 The GNN costs about 3.8x the baseline on Tox21 and 5.5x on ClinTox, with
 deterministic kernels pinned (*Reproducibility* has what that costs). Early
@@ -143,10 +143,11 @@ baseline was never affected.
 
 ## Summary of results
 
-156 runs: both models and both splits on Tox21 (five seeds at the full
-training set, three along the learning curve) and the same grid on ClinTox
-(five seeds throughout), plus a dummy floor on both. 4.19 h of compute, GNN on a GPU
-with deterministic kernels pinned (see *Reproducibility*). Full tables and
+246 runs: both models and both splits on Tox21 (five seeds at the full
+training set, three along the learning curve) and the same grid on ClinTox and
+BBBP (five seeds throughout), plus a dummy floor on all three. 4.70 h of
+compute, GNN on a GPU with deterministic kernels pinned (see
+*Reproducibility*). Full tables and
 threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 *[Findings](#findings)* below.
 
@@ -171,6 +172,12 @@ threats to validity are in **[REPORT.md](REPORT.md)**; the Tox21 detail is in
 - **Headline numbers** (Tox21 test ROC-AUC, five seeds): baseline
   **0.834 ± 0.009** random / **0.760 ± 0.013** scaffold; GNN
   **0.838 ± 0.016** random / **0.763 ± 0.010** scaffold.
+- **BBBP is where a model difference finally shows.** On the third dataset the
+  fingerprint baseline beats the GNN by 0.027 ± 0.008 under a random split and
+  **0.031 ± 0.003** under a scaffold split, with all five seeds agreeing — at
+  10.7 SE the strongest model difference in the study by a factor of three,
+  and it favours the baseline. Read its ROC-AUC and ignore its PR-AUC: 76% of BBBP is
+  positive, so the dummy already scores 0.76 there.
 - **ClinTox is inconclusive, and that is the finding.** Its test set holds 146
   molecules with 7–17 positives, so almost every number on it moves more
   between seeds than the effects being measured: the baseline's scaffold
@@ -283,8 +290,8 @@ baseline's 0.834 under a random split is in line with published fingerprint
 baselines on Tox21, but nothing in this repository verifies that and no
 citation is given, so treat it as orientation rather than as a check. The
 checks proper: the scaffold-disjointness
-check is recorded `true` in all 78 scaffold result files and `false` in all 78
-random ones; and the dummy's PR-AUC reproduces the measured test-set positive
+check is recorded `true` in all 123 scaffold result files and `false` in all
+123 random ones; and the dummy's PR-AUC reproduces the measured test-set positive
 rate to three decimals (0.077 vs 0.0768 random, 0.100 vs 0.0997 scaffold),
 which is what a class-prior model must score if the metric is masking missing
 labels correctly.
@@ -337,7 +344,7 @@ speed-for-ordering trade — but both make a result impossible to repeat.
 **The fix** is three lines in [`src/admet/training.py`](src/admet/training.py):
 pin `CUBLAS_WORKSPACE_CONFIG=:4096:8`, turn off `cudnn.benchmark`, and call
 `torch.use_deterministic_algorithms(True)`. Every result file now records
-`"deterministic": true`, and all 156 files in `results/` come from a single
+`"deterministic": true`, and all 246 files in `results/` come from a single
 commit with it on. Re-running any of them reproduces the file bit for bit,
 every tuning-trial score included. `ADMET_NONDETERMINISTIC=1` opts out.
 
@@ -509,6 +516,7 @@ admet-generalization/
 ├── results/
 │   ├── tox21/              # 66 run files (56 main grid + 10 dummy)
 │   ├── clintox/            # 90 run files (80 main grid + 10 dummy)
+│   ├── bbbp/               # 90 run files (80 main grid + 10 dummy)
 │   └── {runs,summary,gap,per_task}.csv
 └── figures/
     ├── all_gaps_{roc,pr}_auc.png   # the only figure spanning both datasets
@@ -582,7 +590,7 @@ All are recorded in `AGENT_LOG.md` with the reasoning.
   gives `.gitignore` the job of keeping raw data and large result files out of
   version control. They are tracked instead so a clone reproduces the report
   offline and every number can be traced to its run file. The whole lot is
-  3.9 MB.
+  5.6 MB.
 - **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
   hours". The committed results use a GPU (RTX 5070 Ti) and take 4.19 h,
   inside that, though deterministic kernels tripled the GNN's share of it.

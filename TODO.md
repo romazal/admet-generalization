@@ -215,7 +215,7 @@ dataset, and it belongs in REPORT.md.
 
 ---
 
-## 3. Add a third dataset
+## 3. Add a third dataset — done (BBBP, 2026-11-14)
 
 Adding a dataset is still about fifteen lines of registry entry, because
 everything downstream — splitting, masking, tuning, metrics, figures — keys
@@ -223,10 +223,23 @@ off it. H1 and H2 rest on one real dataset (ClinTox was too small to resolve
 anything), so a third is the cheapest way to make the conclusion more than a
 Tox21 anecdote.
 
-*Instructions rewritten 2026-11-12. The task itself is unchanged and still
-open; what follows it had drifted out of date. See **What changed under this
-task** below before starting — three of the old steps would now produce a
-dataset that is half-wired into the project.*
+*Done 2026-11-14 with **BBBP**, following the steps below exactly: a
+`DatasetSpec`, six configs under `configs/bbbp/`, a `make bbbp` target in
+`.PHONY` and in `all`, registry tests, and the raw file added to
+`.gitignore`'s allowlist — which it was missing, so the file every BBBP result
+came from would not have reached a clone. 90 runs, 31 minutes. Results and
+their caveats are in REPORT §4.*
+
+*Two things the instructions did not warn about, now that they have been
+followed once. **Check the class balance before trusting PR-AUC:** 76% of BBBP
+is positive, so its PR-AUC runs just above a floor of 0.76 and says nothing —
+the same trap as ClinTox's `FDA_APPROVED`. And **add the dataset to
+`DATASET_LABELS` in `plots.py`**, or every figure is titled with the raw
+registry key; BBBP shipped one round of figures called "bbbp" before a test
+was added for it.*
+
+*SIDER remains the obvious fourth if anyone wants the multitask story; the
+instructions below still apply unchanged.*
 
 ### Hard constraint, read first
 

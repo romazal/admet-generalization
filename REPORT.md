@@ -29,29 +29,34 @@ lecture.
 
 ## 2. What was run
 
-| | Tox21 (primary) | ClinTox (second) |
-|---|---|---|
-| Molecules after cleaning | 7823 | 1461 |
-| Dropped as unparseable | 8 | 4 |
-| Duplicate structures merged | 0 | 19 (all 19 with conflicting labels) |
-| Assays scored | 12 | 1 (`CT_TOX`) |
-| Label density | 0.829 | 1.000 |
-| Positives per assay | 186–942 | 103 |
-| Train / valid / test | 6259 / 782 / 782 | 1169 / 146 / 146 |
+| | Tox21 (primary) | ClinTox (second) | BBBP (third) |
+|---|---|---|---|
+| Molecules after cleaning | 7823 | 1461 | 1975 |
+| Dropped as unparseable | 8 | 4 | 11 |
+| Duplicate structures merged | 0 | 19 (all 19 conflicting) | 64 (10 conflicting) |
+| Assays scored | 12 | 1 (`CT_TOX`) | 1 (`p_np`) |
+| Label density | 0.829 | 1.000 | 1.000 |
+| Positives per assay | 186–942 | 103 | 1501 (**76%**) |
+| Train / valid / test | 6259 / 782 / 782 | 1169 / 146 / 146 | 1580 / 198 / 197 |
 
 Both models, both splits, four training fractions. Tox21: 5 seeds at 100% and
-3 along the learning curve (56 runs). ClinTox: 5 seeds throughout (80 runs).
-**136 runs in total**, and with the dummy floor below, **156 result files**.
+3 along the learning curve (56 runs). ClinTox and BBBP: 5 seeds throughout
+(80 runs each). **216 runs in total**, and with the dummy floor below,
+**246 result files**.
 
 A dummy class-prior model was run separately on each dataset, both splits, 5
-seeds at 100% (20 runs), to establish the floor in §3 and §4. It is not part
-of the 136; it contributes 35 s to the §5 timings and nothing to the §5b
-comparison, both of which describe the main grid.
+seeds at 100% (30 runs), to establish the floor in §3 and §4. It is not part
+of the 216; it contributes under a minute to the §5 timings and nothing to the
+§5b comparison, both of which describe the main grid.
 
-Every one of the 156 files was produced with deterministic kernels pinned and
-records `"deterministic": true`; the 146 main-grid and Tox21-dummy files come
-from a single commit, and the ten ClinTox dummy runs were added afterwards.
-§5b says why that mattered and what it cost.
+Every one of the 246 files was produced with deterministic kernels pinned and
+records `"deterministic": true`. They do not all carry the same `git_commit`:
+the Tox21 and ClinTox grids come from one commit each, and BBBP's 90 files
+span three, because commits were made while that grid was running. The code
+those 90 runs executed was identical throughout — the only `src/` change
+across those commits is the addition of BBBP's own registry entry, which had
+to be on disk before the first run or none of them could have loaded the
+dataset. §5b says why determinism mattered and what it cost.
 
 `CT_TOX` is scored alone because ClinTox's second label is the same label
 inverted — `CT_TOX == NOT FDA_APPROVED` for 98.8% of molecules — and
@@ -74,7 +79,7 @@ artefact.
   of the same split type as the test set.
 - **No scaffold spans two parts.** Enforced by the splitter and re-checked at
   run time on the actual split of every scaffold run; `scaffold_disjointness_checked`
-  is `true` in all 78 scaffold result files. A positive control asserts that a
+  is `true` in all 123 scaffold result files. A positive control asserts that a
   *random* split does share scaffolds, so the check cannot pass trivially.
 - **Masking.** A missing label excludes a molecule from that assay only — never
   read as a negative, never dropped wholesale — from the moment the CSV cell is
@@ -157,7 +162,7 @@ advantage was detected under either split*. That is compatible with H1 and
 equally compatible with a GNN undertrained at 8 tuning trials; this design
 cannot separate the two.
 
-## 4. Results — ClinTox, and the comparison
+## 4. Results — the second and third datasets
 
 Test ROC-AUC, mean ± SD over 5 seeds, full training set:
 
@@ -246,11 +251,75 @@ demonstration of provenance leakage, and this report no longer claims one.
 **Read ClinTox as a cautionary comparison of dataset sizes, not as a second
 test of H1 and H2.**
 
+### BBBP — where a model difference finally clears its error bars
+
+Blood-brain-barrier penetration: the **D** in ADMET, and the dataset the
+proposal names in §3.1. 1975 molecules after cleaning, one label, five seeds.
+
+| Split | Dummy (floor) | Baseline | GNN | GNN − baseline, paired |
+|---|---|---|---|---|
+| Random | 0.500 | **0.920 ± 0.030** | **0.893 ± 0.029** | **−0.027 ± 0.008** |
+| Scaffold | 0.500 | **0.899 ± 0.017** | **0.868 ± 0.018** | **−0.031 ± 0.003** |
+
+**The baseline beats the GNN, and here it is measurable.** Paired by seed the
+gap is 3.3 SE from zero under a random split and **10.7 SE** under a scaffold
+split, where all five seeds agree and their spread is 0.0065.
+
+Across all six dataset-split cells in the study, the paired gaps sit at 1.1,
+0.4 (Tox21), 2.3, 1.2 (ClinTox) and 3.3, 10.7 SE (BBBP). BBBP's scaffold arm
+is stronger than everything else by a factor of three, and it is the only cell
+where all five seeds point the same way. ClinTox's random arm nominally clears
+2 SE as well, in the GNN's favour — but that is the arm measured on 7 to 17
+positives, and §4 above is an extended demonstration of why its numbers should
+not be leaned on. The direction here also matches what the Tox21 learning
+curve predicted: with little data the fingerprint wins. The usual caveat applies in full — 8 tuning trials may
+simply be too few for the GNN on this dataset, and a null result about a
+budget is not a result about architectures.
+
+**Read BBBP's PR-AUC as nothing at all.** 1501 of 1975 molecules are positive,
+so the positive class is the **76% majority** and the dummy already scores
+0.764 random / 0.753 scaffold. The models reach 0.95, a sliver above a floor
+that high. This is the same trap that keeps ClinTox's `FDA_APPROVED` out of
+the scoring; on BBBP it applies to the only label there is, so ROC-AUC is the
+metric and the configs say so.
+
+**Its scaffold penalty is genuinely smaller than Tox21's**: 0.021 ± 0.033 for
+the baseline and 0.025 ± 0.027 for the GNN, against Tox21's 0.073 and 0.075.
+The differences are **3.3 SE and 3.1 SE**, and — unlike the ClinTox claim
+withdrawn above — *both arms agree*.
+
+That is the same surface pattern as the withdrawn claim, a high score with a
+small scaffold penalty, so it is worth saying plainly why it does not lead to
+the same place. Blood-brain-barrier penetration is known to be driven largely
+by gross physicochemical properties: molecular weight, lipophilicity, polar
+surface area, hydrogen-bond counts. Those are structural **and**
+scaffold-independent, so a model using them keeps working when the scaffolds
+are pulled apart. BBBP's small penalty has an ordinary chemical explanation,
+and it is a worked example of the reasoning hole that sank the ClinTox
+argument: *survives a scaffold shift* and *is not structural* are different
+claims, and here the first is true while the second is false.
+
+The structural shift is smaller on BBBP as well — the median
+nearest-neighbour similarity falls 0.142 ± 0.030 against Tox21's
+0.170 ± 0.006, about 2 SE less. Smaller shift, smaller penalty, which is what
+a structure-driven score should do.
+
+**H2 is not tested here.** The gap does not narrow across BBBP's learning
+curve (−0.033, −0.040, −0.020, −0.027 under a random split), but the whole
+curve sits in the data-poor regime: 1580 training molecules at 100%, a quarter
+of Tox21's. BBBP never reaches the volume at which Tox21's gap closed, so it
+neither supports nor contradicts the hypothesis.
+
+**BBBP is mildly dirty too.** 2050 raw rows become 1975 molecules: 11
+unparseable SMILES dropped, 64 duplicate structures merged, and 10 of those
+merges carried contradictory labels. Less than ClinTox proportionally, and
+worth the same scepticism.
+
 ## 5. Runtime and compute
 
 Measured on a Windows desktop (16 threads, 31 GB RAM, RTX 5070 Ti) from the
-`timing_seconds` field of each result file. Total across all 156 result files:
-**4.19 h (251 min)** of wall clock, GNN on the GPU with deterministic kernels
+`timing_seconds` field of each result file. Total across all 246 result files:
+**4.70 h (282 min)** of wall clock, GNN on the GPU with deterministic kernels
 pinned. The same grid took 2.03 h before they were pinned (§5b).
 
 Per run, including the full 8-trial tuning search:
@@ -302,7 +371,7 @@ figures at roughly ±10%.
 
 Each result file also records the git commit it was produced at and, in
 `versions.torch_device`, the device torch had available —
-`cuda:NVIDIA GeForce RTX 5070 Ti` in all 156 committed runs. The field reports
+`cuda:NVIDIA GeForce RTX 5070 Ti` in all 246 committed runs. The field reports
 what torch could *see*, not what the model used, so it is only meaningful for
 the GNN runs; the baseline never calls torch. Read the `model` column to know
 what ran where.
@@ -508,9 +577,9 @@ re-derived the spreads either.
 - **`data/`, `results/` and `figures/` are committed**, where the §5 file
   table gives `.gitignore` the job of excluding them. Tracking them lets a
   clone reproduce this report offline and lets any number be traced to its
-  run file; the whole lot is 3.9 MB.
+  run file; the whole lot is 5.6 MB.
 - **Compute was never the constraint.** §8 budgets a 16 GB GPU and "a few GPU
-  hours". The committed results use an RTX 5070 Ti and take 4.19 h, inside
+  hours". The committed results use an RTX 5070 Ti and take 4.70 h, inside
   that budget, with deterministic kernels accounting for most of the increase
   over the 2.03 h the same grid took without them. `models/gnn.py` selects
   CUDA automatically when it is available and falls back to CPU otherwise, so
@@ -524,8 +593,9 @@ re-derived the spreads either.
 
 ## 9. Conclusion
 
-On Tox21, at an equal tuning budget, **the GNN never measurably outperformed
-the fingerprint baseline** — the two are separated by less than one SD in
+On none of the three datasets did the GNN measurably outperform the
+fingerprint baseline, and on BBBP it measurably lost (§4). On Tox21, at an
+equal tuning budget, **the GNN never measurably outperformed the baseline** — the two are separated by less than one SD in
 every condition at the full training set, and with little training data the
 baseline is clearly ahead. What dominates both models is the structural shift:
 forcing the test molecules to be scaffold-novel costs about 0.07 ROC-AUC, an
