@@ -13,15 +13,16 @@ __pycache__/
 # serve the same bytes. Committing them means every teammate trains on the
 # same file, a changed upstream distribution shows up as a diff instead of
 # as an unexplained change in the numbers, and the project runs offline.
-# They are small: 123 KB for Tox21, 20 KB for ClinTox.
+# They are small: 123 KB for Tox21, 20 KB for ClinTox, 145 KB for BBBP.
 #
 # Anything else that lands here is a scratch download and stays ignored.
 /data/*
 !/data/tox21.csv.gz
 !/data/clintox.csv.gz
+!/data/BBBP.csv
 
 # Run outputs are COMMITTED too, so results are readable without rerunning
-# 2 h of training (3.8 h without a GPU). The per-run JSON is the provenance
+# hours of training. The per-run JSON is the provenance
 # for every number in the CSVs - it carries the config, the seed, the split
 # sizes, the device it ran on, every tuning trial, the library versions and
 # the git commit - so committing the tables without it would leave the
