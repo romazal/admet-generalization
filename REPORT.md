@@ -99,6 +99,13 @@ models have to clear:
 | Random | 0.500 ± 0.000 | 0.834 ± 0.009 | 0.838 ± 0.016 | **+0.005 ± 0.019** |
 | Scaffold | 0.500 ± 0.000 | 0.760 ± 0.013 | 0.763 ± 0.010 | **+0.003 ± 0.016** |
 
+**The ± on the gap column is combined in quadrature** from the two models'
+separate spreads, which is what `results/gap.csv` stores. Paired across seeds
+— the spread §7 asks for — the same gaps are **+0.005 ± 0.009** (1.1 SE) and
+**+0.003 ± 0.015** (0.4 SE). The quadrature figure is the wider of the two
+here, so "within one SD of zero" holds under either, but the paired numbers
+are the ones every claim below is tested against.
+
 Test PR-AUC, same runs:
 
 | Split | Dummy (floor) | Baseline | GNN | GNN − baseline |
@@ -267,8 +274,12 @@ split, where all five seeds agree and their spread is 0.0065.
 
 Across all six dataset-split cells in the study, the paired gaps sit at 1.1,
 0.4 (Tox21), 2.3, 1.2 (ClinTox) and 3.3, 10.7 SE (BBBP). BBBP's scaffold arm
-is stronger than everything else by a factor of three, and it is the only cell
-where all five seeds point the same way. ClinTox's random arm nominally clears
+is stronger than everything else by a factor of three, and **both** BBBP arms
+are the only cells where all five seeds point the same way — the random arm's
+five are −0.038, −0.029, −0.049, −0.015, −0.003 and the scaffold arm's
+−0.022, −0.032, −0.039, −0.034, −0.027. (An earlier draft of this paragraph
+called the scaffold arm the only unanimous cell; it is one of two, and
+`scripts/recheck_claims.py` now checks the pair.) ClinTox's random arm nominally clears
 2 SE as well, in the GNN's favour — but that is the arm measured on 7 to 17
 positives, and §4 above is an extended demonstration of why its numbers should
 not be leaned on. The direction here also matches what the Tox21 learning
@@ -552,11 +563,23 @@ corrected.
 | "H2 is supported" (§3) | two splits offered as equal evidence | 2.4 SE and 1.4 SE |
 
 In every case each individual number was correct and matched the committed
-tables. `scripts/audit_numbers.py` re-derives all 38 values quoted in this
+tables. `scripts/audit_numbers.py` re-derives all 43 values quoted in this
 report and the README from `results/*.csv`, and it passed on all four
 throughout — because it checks whether a number is right, never whether a
 comparison between two of them is warranted. No amount of that kind of
 checking would have caught any of these.
+
+The second script exists for exactly this gap. `scripts/recheck_claims.py`
+re-derives the 36 *comparative* claims in this report — every gap paired
+across seeds, every "N times" and "N SE", the withdrawn claims kept as
+regression cases, and the paired-against-quadrature pair from §3 — and
+`make audit` runs both.
+
+A fifth claim of the same family turned up while these slides were being
+built: §4 called BBBP's scaffold arm *the only* cell where all five seeds
+agree. Both of BBBP's arms are unanimous. Nothing downstream depended on it,
+but it is the same reflex — a superlative asserted rather than counted — and
+the script now counts the unanimous cells instead of trusting the sentence.
 
 Two habits would have caught all four. **Quote a difference with the spread
 of the difference**, not of its parts, and compute it paired across seeds

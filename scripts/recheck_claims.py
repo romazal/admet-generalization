@@ -104,6 +104,30 @@ chk("ClinTox rf penalty (withdrawn claim)", st.mean(c), 0.021, 0.0006)
 chk("  its SD", st.stdev(c), 0.084, 0.0006)
 chk("  negative seeds", float(sum(1 for x in c if x < 0)), 2, 0)
 
+# A fifth claim of the same family: §4 called BBBP's scaffold arm the only cell
+# where every seed agrees. Both of BBBP's arms are unanimous, and neither
+# Tox21 nor ClinTox has one. Superlatives get counted, not asserted.
+print("\n=== which cells have unanimous seeds ===")
+unanimous = [(ds, sp) for ds in ("tox21", "clintox", "bbbp")
+             for sp in ("random", "scaffold")
+             if len({x < 0 for x in model_gap(ds, sp)}) == 1]
+print("  unanimous cells:", unanimous)
+if unanimous == [("bbbp", "random"), ("bbbp", "scaffold")]:
+    ok.append("both BBBP arms unanimous, and only those")
+else:
+    bad.append(f"unanimous cells are {unanimous}, not both BBBP arms alone")
+
+# §3's gap column is quadrature; every claim is tested against the paired SD.
+# Keep both on the record so the two can never be silently swapped again.
+print("\n=== Tox21 gap spreads, paired against quadrature ===")
+for sp, want_paired, want_quad in (("random", 0.009, 0.019), ("scaffold", 0.015, 0.016)):
+    g = model_gap("tox21", sp)
+    rf = [seeds("tox21", "rf", sp)[i] for i in sorted(seeds("tox21", "rf", sp))]
+    gn = [seeds("tox21", "gnn", sp)[i] for i in sorted(seeds("tox21", "gnn", sp))]
+    chk(f"{sp}: paired SD", st.stdev(g), want_paired, 0.0006)
+    chk(f"{sp}: quadrature SD", math.sqrt(st.stdev(rf) ** 2 + st.stdev(gn) ** 2),
+        want_quad, 0.0006)
+
 print(f"\n{len(ok)} passed, {len(bad)} failed")
 for f in bad:
     print("  FAILED: " + f)
